@@ -1,0 +1,35 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2010 The Ginsu Project Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+""" Main scons script for Ginsu builds.
+"""
+
+environment_list = []
+
+base_env = Environment(
+  tools = ['component_setup'],
+  BUILD_SCONSCRIPTS = [
+    '$MAIN_DIR/third_party/openscenegraph/openscenegraph.scons',
+    'ginsu/ginsu.scons',
+  ],
+  CPPPATH = [
+    '$SOURCE_ROOT',
+    '$MAIN_DIR/third_party/openscenegraph/include',
+    '$MAIN_DIR/third_party/openscenegraph/trunk/include',
+  ],
+  SOURCE_ROOT = '$MAIN_DIR',
+)
+
+linux_env = base_env.Clone(tools = ['target_platform_linux'])
+
+linux_dbg_env = linux_env.Clone(
+    BUILD_GROUPS = ['default'],
+    BUILD_TYPE = 'dbg',
+    tools = ['target_debug']
+)
+environment_list.append(linux_dbg_env)
+
+BuildEnvironments(environment_list)
