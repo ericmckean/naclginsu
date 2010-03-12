@@ -1,7 +1,19 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2010 The Ginsu Project Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
 Import('env')
 
-ginsu_inputs = ['ginsu.cc']
+ginsu_sources = ['ginsu.cc']
+ginsu_input_libs = [
+  'libosg',
+  'libosgViewer',
+]
 
 env.ComponentProgram(
-    'ginsu',
-    ginsu_inputs)
+  'ginsu',
+  ginsu_sources,
+  LIBS = ginsu_input_libs,
+)
