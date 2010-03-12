@@ -1,0 +1,7 @@
+Import('env')
+
+ginsu_inputs = ['ginsu.cc']
+
+env.ComponentProgram(
+    'ginsu',
+    ginsu_inputs)
