@@ -4,41 +4,47 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import os
-import re
 Import('env')
 
-src_pattern = re.compile('.*\.cpp')
-linux_pattern = re.compile('.X11\.cpp')
-mac_pattern = re.compile('.Carbon\.cpp')
-windows_pattern = re.compile('.*Win32\.cpp')
+def Glob(dir, include_patterns, exclude_patterns):
+  files = set()
+  for pattern in include_patterns:
+    files.update(env.Glob(dir + '/' + pattern))
+  for pattern in exclude_patterns:
+    files.difference_update(env.Glob(dir + '/' + pattern))
+  return list(files)
 
-def IsSourceFile(file_name):
-  if not src_pattern.match(file_name): return False
-  if env.Bit('linux'):
-    if mac_pattern.match(file_name): return False
-    if windows_pattern.match(file_name): return False
-  elif env.Bit('mac'):
-    if linux_pattern.match(file_name): return False
-    if windows_pattern.match(file_name): return False
-  elif env.Bit('windows'):
-    if linux_pattern.match(file_name): return False
-    if mac_pattern.match(file_name): return False
-  return True
+# OpenThreads
+srcs = Glob('trunk/src/OpenThreads/common', ['*.cpp'], [])
+srcs += Glob('trunk/src/OpenThreads/pthreads', ['*.c++'], [])
+env.ComponentLibrary('OpenThreads', srcs, COMPONENT_STATIC=True)
+env.Append(LIBS=['OpenThreads'])
 
-def GetLocalFilePath(file_name, module):
-  return 'trunk/src/' + module + '/' + file_name
+# osg
+srcs = Glob('trunk/src/osg', ['*.cpp'], ['Matrix_implementation.cpp'])
+env.Append(CPPDEFINES=['OSG_LIBRARY_STATIC'])
+env.ComponentLibrary('osg', srcs, COMPONENT_STATIC=True)
+env.Append(LIBS=['osg'])
 
-def GetSourceFiles(module):
-  module_src_dir = env['SOURCE_ROOT'] + '/third_party/openscenegraph/trunk/src/' + module;
-  all_files = os.listdir(module_src_dir)
-  src_files = filter(IsSourceFile, all_files)
-  return [GetLocalFilePath(f, module) for f in src_files]
+# osgDB
+srcs = Glob('trunk/src/osgDB', ['*.cpp'], [])
+env.ComponentLibrary('osgDB', srcs, COMPONENT_STATIC=True)
+env.Append(LIBS=['osgDB'])
 
-osg_srcs = GetSourceFiles('osg')
-env.ComponentLibrary('libosg', osg_srcs, COMPONENT_STATIC=True)
-env.Append(LIBS=['libosg'])
+# osgUtil
+srcs = Glob('trunk/src/osgUtil', ['*.cpp'], [])
+srcs += Glob('trunk/src/osgUtil/tristripper/src', ['*.cpp'], [])
+env.Append(CPPPATH=['trunk/src/osgUtil/tristripper/include'])
+env.ComponentLibrary('osgUtil', srcs, COMPONENT_STATIC=True)
+env.Append(LIBS=['osgUtil'])
 
-osgViewer_srcs = GetSourceFiles('osgViewer')
-env.ComponentLibrary('libosgViewer', osgViewer_srcs, COMPONENT_STATIC=True)
-env.Append(LIBS=['libosgViewer'])
+# osgGA
+srcs = Glob('trunk/src/osgGA', ['*.cpp'], [])
+env.ComponentLibrary('osgGA', srcs, COMPONENT_STATIC=True)
+env.Append(LIBS=['osgGA'])
+
+# osgViewer
+srcs = Glob('trunk/src/osgViewer', ['*.cpp'], ['*Carbon.cpp', '*Win32.cpp'])
+#env.Append(CPPDEFINES=['OSGVIEWER_USE_XRANDR'])
+env.ComponentLibrary('osgViewer', srcs, COMPONENT_STATIC=True)
+env.Append(LIBS=['osgViewer'])
