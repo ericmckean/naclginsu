@@ -8,8 +8,19 @@ Import('env')
 
 ginsu_sources = ['ginsu.cc']
 ginsu_input_libs = [
-  'libosg',
   'libosgViewer',
+  'libosgGA',
+  'libosgUtil',
+  'libosgDB',
+  'libosg',
+  'libOpenThreads',
+  'libGL',
+  'libGLU',
+  'libpthread',
+  'libdl',
+  'librt',
+  'libX11',
+  #'libxrandr',
 ]
 
 env.ComponentProgram(
