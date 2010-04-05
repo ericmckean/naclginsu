@@ -20,16 +20,45 @@ base_env = Environment(
     '$MAIN_DIR/third_party/openscenegraph/include',
     '$MAIN_DIR/third_party/openscenegraph/trunk/include',
   ],
+  CPPDEFINES = [
+    'OSG_LIBRARY_STATIC',
+  ],
   SOURCE_ROOT = '$MAIN_DIR',
 )
 
-linux_env = base_env.Clone(tools = ['target_platform_linux'])
+# -----------------------------------------------------------------------------
+# Linux environment
+linux_env = base_env.Clone(
+  tools = ['target_platform_linux'],
+)
 
 linux_dbg_env = linux_env.Clone(
-    BUILD_GROUPS = ['default'],
-    BUILD_TYPE = 'dbg',
-    tools = ['target_debug']
+  BUILD_GROUPS = ['default'],
+  BUILD_TYPE = 'dbg',
+  tools = ['target_debug'],
 )
 environment_list.append(linux_dbg_env)
 
+# -----------------------------------------------------------------------------
+# Windows environment
+windows_env = base_env.Clone(
+  tools = ['target_platform_windows'],
+)
+windows_env.Append(CPPDEFINES = [
+  '_WINDOWS',
+  'WIN32',
+  '_CRT_SECURE_NO_DEPRECATE',
+  '_SCL_SECURE_NO_WARNINGS',
+  ]
+)
+
+windows_dbg_env = windows_env.Clone(
+  BUILD_GROUPS = ['default'],
+  BUILD_TYPE = 'dbg',
+  tools = ['target_debug'],
+)
+environment_list.append(windows_dbg_env)
+
+# -----------------------------------------------------------------------------
+# Process the build environments
 BuildEnvironments(environment_list)

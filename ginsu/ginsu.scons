@@ -8,20 +8,20 @@ Import('env')
 
 ginsu_sources = ['ginsu.cc']
 ginsu_input_libs = [
-  'libosgViewer',
-  'libosgGA',
-  'libosgUtil',
-  'libosgDB',
-  'libosg',
-  'libOpenThreads',
-  'libGL',
-  'libGLU',
-  'libpthread',
-  'libdl',
-  'librt',
-  'libX11',
-  #'libxrandr',
+  'osgViewer',
+  'osgText',
+  'osgGA',
+  'osgUtil',
+  'osgDB',
+  'osg',
+  'OpenThreads'
 ]
+
+if env.Bit('windows'):
+  ginsu_input_libs += ['glu32', 'opengl32', 'gdi32', 'user32']
+else:
+  ginsu_input_libs += ['GLU', 'GL', 'pthread', 'dl', 'rt', 'X11']
+      
 
 env.ComponentProgram(
   'ginsu',
