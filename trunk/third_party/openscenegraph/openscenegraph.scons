@@ -14,15 +14,20 @@ def Glob(dir, include_patterns, exclude_patterns):
     files.difference_update(env.Glob(dir + '/' + pattern))
   return list(files)
 
+# OpenSceneGraph uses exceptions. Enable it.
+env['ENABLE_EXCEPTIONS'] = True
+
 # OpenThreads
 srcs = Glob('trunk/src/OpenThreads/common', ['*.cpp'], [])
-srcs += Glob('trunk/src/OpenThreads/pthreads', ['*.c++'], [])
+if env.Bit('windows'):
+  srcs += Glob('trunk/src/OpenThreads/win32', ['*.cpp'], [])
+else:
+  srcs += Glob('trunk/src/OpenThreads/pthreads', ['*.c++'], [])
 env.ComponentLibrary('OpenThreads', srcs, COMPONENT_STATIC=True)
 env.Append(LIBS=['OpenThreads'])
 
 # osg
 srcs = Glob('trunk/src/osg', ['*.cpp'], ['Matrix_implementation.cpp'])
-env.Append(CPPDEFINES=['OSG_LIBRARY_STATIC'])
 env.ComponentLibrary('osg', srcs, COMPONENT_STATIC=True)
 env.Append(LIBS=['osg'])
 
@@ -43,8 +48,15 @@ srcs = Glob('trunk/src/osgGA', ['*.cpp'], [])
 env.ComponentLibrary('osgGA', srcs, COMPONENT_STATIC=True)
 env.Append(LIBS=['osgGA'])
 
+# osgText
+srcs = Glob('trunk/src/osgText', ['*.cpp'], [])
+env.ComponentLibrary('osgText', srcs, COMPONENT_STATIC=True)
+env.Append(LIBS=['osgText'])
+
 # osgViewer
-srcs = Glob('trunk/src/osgViewer', ['*.cpp'], ['*Carbon.cpp', '*Win32.cpp'])
-#env.Append(CPPDEFINES=['OSGVIEWER_USE_XRANDR'])
+if env.Bit('windows'):
+  srcs = Glob('trunk/src/osgViewer', ['*.cpp'], ['*Carbon.cpp', '*X11.cpp'])
+else:
+  srcs = Glob('trunk/src/osgViewer', ['*.cpp'], ['*Carbon.cpp', '*Win32.cpp'])
 env.ComponentLibrary('osgViewer', srcs, COMPONENT_STATIC=True)
 env.Append(LIBS=['osgViewer'])
