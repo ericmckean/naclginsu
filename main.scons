@@ -40,6 +40,19 @@ linux_dbg_env = linux_env.Clone(
 environment_list.append(linux_dbg_env)
 
 # -----------------------------------------------------------------------------
+# OS X environment
+mac_env = base_env.Clone(
+  tools = ['target_platform_mac'],
+)
+
+mac_dbg_env = mac_env.Clone(
+  BUILD_GROUPS = ['default'],
+  BUILD_TYPE = 'dbg',
+  tools = ['target_debug'],
+)
+environment_list.append(mac_dbg_env)
+
+# -----------------------------------------------------------------------------
 # Windows environment
 windows_env = base_env.Clone(
   tools = ['target_platform_windows'],

@@ -8,23 +8,25 @@ Import('env')
 
 ginsu_sources = ['ginsu.cc']
 ginsu_input_libs = [
-  'osgViewer',
-  'osgText',
-  'osgGA',
   'osgUtil',
-  'osgDB',
   'osg',
   'OpenThreads'
 ]
 
+link_flags = []
 if env.Bit('windows'):
   ginsu_input_libs += ['glu32', 'opengl32', 'gdi32', 'user32']
-else:
+elif env.Bit('linux'):
   ginsu_input_libs += ['GLU', 'GL', 'pthread', 'dl', 'rt', 'X11']
-      
+elif env.Bit('mac'):
+  link_flags += ['-framework', 'OpenGL', '-framework', 'AppKit',
+                 '-framework', 'Carbon']
 
-env.ComponentProgram(
-  'ginsu',
-  ginsu_sources,
-  LIBS = ginsu_input_libs,
-)
+if env['BUILD_TYPE'] is 'dbg':
+  ginsu_input_libs += ['osgViewer', 'osgText', 'osgGA', 'osgDB', 'OpenThreads']
+  env.ComponentProgram(
+    'ginsu',
+    ginsu_sources,
+    LIBS = ginsu_input_libs,
+    LINKFLAGS = link_flags
+  )

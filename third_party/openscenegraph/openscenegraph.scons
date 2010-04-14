@@ -56,7 +56,9 @@ env.Append(LIBS=['osgText'])
 # osgViewer
 if env.Bit('windows'):
   srcs = Glob('trunk/src/osgViewer', ['*.cpp'], ['*Carbon.cpp', '*X11.cpp'])
-else:
+elif env.Bit('linux'):
   srcs = Glob('trunk/src/osgViewer', ['*.cpp'], ['*Carbon.cpp', '*Win32.cpp'])
+elif env.Bit('mac'):
+  srcs = Glob('trunk/src/osgViewer', ['*.cpp', '*.mm'], ['*Carbon.cpp', '*Win32.cpp', '*X11.cpp'])
 env.ComponentLibrary('osgViewer', srcs, COMPONENT_STATIC=True)
 env.Append(LIBS=['osgViewer'])

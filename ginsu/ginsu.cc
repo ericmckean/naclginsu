@@ -45,7 +45,15 @@ osg::Node* CreateSimpleTestModel()
 }  // namespace
 
 // Instantiate platform-specific GraphicsWindow implementation.
-USE_GRAPHICSWINDOW()
+#if defined(__APPLE__)
+    #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
+        USE_GRAPICSWINDOW_IMPLEMENTATION(Cocoa)
+    #else
+        USE_GRAPICSWINDOW_IMPLEMENTATION(Carbon)
+    #endif
+#else
+    USE_GRAPHICSWINDOW()
+#endif
 
 int main(int argc, char* argv[]) {
   //ginsu::model::Model model;
