@@ -1,0 +1,18 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2010 The Ginsu Project Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+Import('env')
+
+# CGAL needs Boost.Thread.
+if env.Bit('mac'):
+  srcs = env.Glob('trunk/libs/thread/src/pthread/*.cpp')
+# TODO(gwink): linux & windows
+#elif env.Bit('linux'):
+#  srcs = Glob('trunk/src/osgViewer', ['*.cpp'], ['*Carbon.cpp', '*Win32.cpp'])
+#elif env.Bit('mac'):
+#  srcs = Glob('trunk/src/osgViewer', ['*.cpp', '*.mm'], ['*Carbon.cpp', '*Win32.cpp', '*X11.cpp'])
+env.ComponentLibrary('boost_thread', srcs, COMPONENT_STATIC=True)
+env.Append(LIBS=['boost_thread'])
