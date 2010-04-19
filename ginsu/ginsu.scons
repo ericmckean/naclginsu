@@ -24,9 +24,9 @@ elif env.Bit('mac'):
 
 if env['BUILD_TYPE'] is 'dbg':
   ginsu_input_libs += ['osgViewer', 'osgText', 'osgGA', 'osgDB', 'OpenThreads']
+  env.Append(LINKFLAGS = link_flags)
   env.ComponentProgram(
     'ginsu',
     ginsu_sources,
     LIBS = ginsu_input_libs,
-    LINKFLAGS = link_flags
   )
