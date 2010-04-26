@@ -13,6 +13,7 @@ base_env = Environment(
   tools = ['component_setup'],
   BUILD_SCONSCRIPTS = [
     '$MAIN_DIR/third_party/boost/boost.scons',
+    '$MAIN_DIR/third_party/cgal/cgal.scons',
     '$MAIN_DIR/third_party/openscenegraph/openscenegraph.scons',
     'ginsu/ginsu.scons',
   ],
