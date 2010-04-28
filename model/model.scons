@@ -1,0 +1,22 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2010 The Ginsu Project Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+Import('env')
+
+env.Append(
+  CPPDEFINES = [
+  ],
+  CPPPATH = [
+    '$MAIN_DIR/third_party/boost/trunk',
+    '$MAIN_DIR/third_party/cgal/trunk/include',
+  ],
+)
+
+
+# Build the model library.
+model_sources = ['component.cc']
+env.ComponentLibrary('ginsu_model', model_sources, COMPONENT_STATIC = True)
+env.Append(LIBS=['ginsu_model'])
