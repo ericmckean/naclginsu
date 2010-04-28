@@ -11,6 +11,7 @@
 namespace ginsu {
 namespace model {
 
+// A mesh is a nef-polyhedron, which support robust boolean operations.
 typedef CGAL::Nef_polyhedron_3<Kernel> Mesh;
 
 }  // namespace model

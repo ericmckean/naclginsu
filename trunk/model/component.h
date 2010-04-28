@@ -11,7 +11,23 @@ namespace ginsu {
 namespace model {
 
 class Component {
+ public:
+  // Make a unit cube from (0, 0, 0) to (1, 1, 1).
+  static Component* MakeCube();
+  // TODO(gwink): other primitives; sphere, cone.
+  
+  // TODO(gwink):
+  //  - Iterators to extract geometry for viewing.
+  //  - Modify associated transform.
+
+ protected:
+  // Can't instantiate directly. Use the Make*** functions above.
+  Component();
+
  private:
+  // Component transform; defaults to identity.
+  Aff_transformation_3 transform_;
+  // The geometry.
   Mesh mesh_;
 };
 
