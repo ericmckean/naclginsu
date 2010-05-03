@@ -6,27 +6,37 @@
 
 Import('env')
 
-ginsu_sources = ['ginsu.cc']
+env.Append(
+  CPPPATH = [
+    '$MAIN_DIR/third_party/boost/trunk',
+    '$MAIN_DIR/third_party/chromium/src',
+    '$MAIN_DIR/third_party/chromium/src/gpu',
+    '$MAIN_DIR/third_party/npapi/bindings',
+  ],
+)
+
+ginsu_sources = [
+  'ginsu.cc',
+  'plugin.cc',
+]
+if env.Bit('windows'):
+  ginsu_sources += ['plugin.def']
+  ginsu_sources += env.RES('plugin.rc')
+
 ginsu_input_libs = [
+  'ginsu_view',
   'osgUtil',
   'osg',
-  'OpenThreads'
+  'OpenThreads',
+  'pgl',
+  'gles2',
 ]
 
-link_flags = []
-if env.Bit('windows'):
-  ginsu_input_libs += ['glu32', 'opengl32', 'gdi32', 'user32']
-elif env.Bit('linux'):
-  ginsu_input_libs += ['GLU', 'GL', 'pthread', 'dl', 'rt', 'X11']
-elif env.Bit('mac'):
-  link_flags += ['-framework', 'OpenGL', '-framework', 'AppKit',
-                 '-framework', 'Carbon']
-
-if env['BUILD_TYPE'] is 'dbg':
-  ginsu_input_libs += ['osgViewer', 'osgText', 'osgGA', 'osgDB', 'OpenThreads']
-  env.Append(LINKFLAGS = link_flags)
-  env.ComponentProgram(
-    'ginsu',
-    ginsu_sources,
-    LIBS = ginsu_input_libs,
-  )
+env.ComponentLibrary(
+  'ginsu',
+  ginsu_sources,
+  LIBS = ginsu_input_libs,
+  COMPONENT_STATIC=False,
+  COMPONENT_LIBRARY_PUBLISH=True,
+  COMPONENT_LIBRARY_LINK_SUFFIXES=[],
+)

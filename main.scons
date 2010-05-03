@@ -14,18 +14,12 @@ base_env = Environment(
   BUILD_SCONSCRIPTS = [
     '$MAIN_DIR/third_party/boost/boost.scons',
     '$MAIN_DIR/third_party/cgal/cgal.scons',
+    '$MAIN_DIR/third_party/chromium/chromium.scons',
     '$MAIN_DIR/third_party/openscenegraph/openscenegraph.scons',
-    'ginsu/ginsu.scons',
+    '$MAIN_DIR/ginsu/ginsu.scons',
+    '$MAIN_DIR/view/view.scons',
   ],
-  CPPPATH = [
-    '$SOURCE_ROOT',
-    '$MAIN_DIR/third_party/openscenegraph/include',
-    '$MAIN_DIR/third_party/openscenegraph/trunk/include',
-  ],
-  CPPDEFINES = [
-    'OSG_LIBRARY_STATIC',
-  ],
-  SOURCE_ROOT = '$MAIN_DIR',
+  CPPPATH = ['$MAIN_DIR'],
 )
 
 # -----------------------------------------------------------------------------
@@ -59,12 +53,18 @@ environment_list.append(mac_dbg_env)
 windows_env = base_env.Clone(
   tools = ['target_platform_windows'],
 )
-windows_env.Append(CPPDEFINES = [
-  '_WINDOWS',
-  'WIN32',
-  '_CRT_SECURE_NO_DEPRECATE',
-  '_SCL_SECURE_NO_WARNINGS',
-  ]
+windows_env.Append(
+  CPPDEFINES = [
+    '_CRT_SECURE_NO_DEPRECATE',
+    '_SCL_SECURE_NO_WARNINGS',
+    'NOMINMAX',
+    '_UNICODE',
+    'UNICODE',
+    '_WINDOWS',
+    'WIN32',
+    'WIN32_LEAN_AND_MEAN',
+  ],
+  ENABLE_EXCEPTIONS = True,
 )
 
 windows_dbg_env = windows_env.Clone(

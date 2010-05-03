@@ -6,9 +6,6 @@
 
 Import('env')
 
-# Boost uses exceptions.
-env['ENABLE_EXCEPTIONS'] = True
-
 # Includes and defines specific to Boost.
 env.Append(
   CPPDEFINES = [
@@ -18,7 +15,6 @@ env.Append(
     '$MAIN_DIR/third_party/boost/trunk',
   ],
 )
-
 
 # Build Boost.Thread, needed for CGAL.
 if env.Bit('windows'):
