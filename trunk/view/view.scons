@@ -1,0 +1,28 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2010 The Ginsu Project Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+Import('env')
+
+env.Append(
+  CPPPATH = [
+    '$MAIN_DIR/third_party/boost/trunk',
+    '$MAIN_DIR/third_party/chromium/src/gpu',
+    '$MAIN_DIR/third_party/openscenegraph/include',
+    '$MAIN_DIR/third_party/openscenegraph/trunk/include',
+  ],
+  CPPDEFINES = [
+    'OSG_LIBRARY_STATIC',
+  ],
+)
+
+srcs = [
+  'scene.cc',
+  'scene_view.cc',
+  'view.cc',
+]
+
+env.ComponentLibrary('ginsu_view', srcs, COMPONENT_STATIC=True)
+env.Append(LIBS=['ginsu_view'])
