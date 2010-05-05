@@ -1,0 +1,9 @@
+Polygon tessellator from SGI's sample openGL(tm) implementation.
+Author: Eric Veach
+Source: http://oss.sgi.com/
+
+Local Modifications:
+  - Added local include file ginsuglu.h as a substitute for GL/glu.h.
+  - Removed unavailable includes assert.h, glu.h, gl.h, gluos.h, string.h.
+  - Other minor changes to type definition and forward declaration to compile
+    with NaCl SDK.
