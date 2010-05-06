@@ -3,7 +3,8 @@ Author: Eric Veach
 Source: http://oss.sgi.com/
 
 Local Modifications:
-  - Added local include file ginsuglu.h as a substitute for GL/glu.h.
-  - Removed unavailable includes assert.h, glu.h, gl.h, gluos.h, string.h.
+  - Added local include file glu_tessellator.h as a substitute for GL/glu.h.
+  - Removed unavailable includes glu.h, gl.h, gluos.h, string.h.
+  - Fixed a few warnings.
   - Other minor changes to type definition and forward declaration to compile
     with NaCl SDK.

@@ -39,8 +39,10 @@
 ** $Header: //depot/main/gfx/lib/glu/libtess/mesh.c#6 $
 */
 
+#include <assert.h>
 #include <stddef.h>
 #include "mesh.h"
+#include "memalloc.h"
 
 #ifndef TRUE
 #define TRUE 1

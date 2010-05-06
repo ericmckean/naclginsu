@@ -41,10 +41,12 @@
 
 #include <stddef.h>
 #include <setjmp.h>
+#include <assert.h>
 #include "memalloc.h"
 #include "tess.h"
 #include "mesh.h"
 #include "normal.h"
+#include "render.h"
 #include "sweep.h"
 #include "tessmono.h"
 

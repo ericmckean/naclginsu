@@ -52,14 +52,13 @@ typedef unsigned int GLenum;
 typedef double GLdouble;
 typedef float GLfloat;
 typedef unsigned char GLboolean;
+typedef void (*CallbackFunc )();
 
-// The tessellator and associated types & functions.
+// The tessellator.
 #ifdef __cplusplus
 class GLUtesselator;
-typedef void (*CallbackFunc )();
 #else
 typedef struct GLUtesselator GLUtesselator;
-typedef void (*CallbackFunc )(void);
 #endif
 
 extern GLUtesselator* gluNewTess();
