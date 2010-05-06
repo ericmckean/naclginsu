@@ -21,7 +21,6 @@ tessellator_sources = [
   'mesh.c',
   'normal.c',
   'priorityq.c',
-  'priorityq-heap.c',
   'sweep.c',
   'tess.c',
   'tessmono.c',

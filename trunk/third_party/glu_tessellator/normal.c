@@ -42,6 +42,7 @@
 #include "mesh.h"
 #include "tess.h"
 #include "normal.h"
+#include <assert.h>
 #include <math.h>
 
 #ifndef TRUE
@@ -198,7 +199,7 @@ extern int RandomSweep;
 void __gl_projectPolygon( struct GLUtesselator *tess )
 {
   GLUvertex *v, *vHead = &tess->mesh->vHead;
-  GLdouble w, norm[3];
+  GLdouble norm[3];
   GLdouble *sUnit, *tUnit;
   int i, computedNormal = FALSE;
 
@@ -214,6 +215,7 @@ void __gl_projectPolygon( struct GLUtesselator *tess )
   i = LongAxis( norm );
 
 #if defined(FOR_TRITE_TEST_PROGRAM) || defined(TRUE_PROJECT)
+  GLdouble w;
   /* Choose the initial sUnit vector to be approximately perpendicular
    * to the normal.
    */
