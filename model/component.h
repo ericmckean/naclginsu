@@ -24,6 +24,10 @@ class Component {
   // Can't instantiate directly. Use the Make*** functions above.
   Component();
 
+  // Get embedded Mesh instance.
+  friend class Tessellator;
+  const Mesh& mesh() const { return mesh_; }
+
  private:
   // Component transform; defaults to identity.
   Aff_transformation_3 transform_;
