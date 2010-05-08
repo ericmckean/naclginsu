@@ -17,6 +17,9 @@ env.Append(
 
 
 # Build the model library.
-model_sources = ['component.cc']
+model_sources = [
+  'component.cc',
+  'tessellator.cc',
+]
 env.ComponentLibrary('ginsu_model', model_sources, COMPONENT_STATIC = True)
 env.Append(LIBS=['ginsu_model'])
