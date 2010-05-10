@@ -18,7 +18,7 @@ env.Append(
 
 # Build Boost.Thread, needed for CGAL.
 if env.Bit('windows'):
-  srcs = Glob('trunk/libs/thread/src/win32/*.cpp')
+  srcs = env.Glob('trunk/libs/thread/src/win32/*.cpp')
 else:
   srcs = env.Glob('trunk/libs/thread/src/pthread/*.cpp')
 env.ComponentLibrary('boost_thread', srcs, COMPONENT_STATIC = True)

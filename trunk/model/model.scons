@@ -11,10 +11,19 @@ env.Append(
   ],
   CPPPATH = [
     '$MAIN_DIR/third_party/boost/trunk',
+    '$MAIN_DIR/third_party/boost/trunk/boost/tr1',
     '$MAIN_DIR/third_party/cgal/trunk/include',
   ],
 )
 
+# A little bit of TLC for CGAL on Windows.
+if env.Bit('windows'):
+  env.Append(
+    CPPDEFINES = [
+      'CGAL_CFG_NO_NEXTAFTER',
+      'CGAL_CFG_NO_STATEMENT_EXPRESSIONS'
+    ],
+  )
 
 # Build the model library.
 model_sources = [

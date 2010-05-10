@@ -14,7 +14,9 @@ class Component {
  public:
   // Make a unit cube from (0, 0, 0) to (1, 1, 1).
   static Component* MakeCube();
-  // TODO(gwink): other primitives; sphere, cone.
+  // Make a truncated cone centered on the y-axis, between Z = 0 and Z =1 and
+  // of given radii. At least one radius must be non-zero.
+  static Component* MakeTruncatedCone(float top_radius, float bottom_radius);
   
   // TODO(gwink):
   //  - Iterators to extract geometry for viewing.
