@@ -39,6 +39,7 @@
 ** $Header: //depot/main/gfx/lib/glu/libtess/priorityq.c#5 $
 */
 
+#include <assert.h>
 #include <stddef.h>
 #include <limits.h>		/* LONG_MAX */
 #include "memalloc.h"

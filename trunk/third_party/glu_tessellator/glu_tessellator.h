@@ -11,6 +11,7 @@ extern "C" {
 // These are the essential defines and typedefs needed to build and use the 
 // tessellator in Ginsu.
 #define GLAPIENTRY
+
 #define GLU_TESS_MAX_COORD 1.0e150
 #define GLU_TESS_BEGIN                       100100
 #define GLU_TESS_VERTEX                      100101
@@ -44,6 +45,7 @@ extern "C" {
 #define GLU_INVALID_VALUE                    100901
 #define GLU_OUT_OF_MEMORY                    100902
 
+#define GL_LINE_LOOP                         0x0002
 #define GL_TRIANGLES                         0x0004
 #define GL_TRIANGLE_STRIP                    0x0005
 #define GL_TRIANGLE_FAN                      0x0006
