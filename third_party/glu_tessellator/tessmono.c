@@ -39,6 +39,7 @@
 ** $Header: //depot/main/gfx/lib/glu/libtess/tessmono.c#5 $
 */
 
+#include <assert.h>
 #include <stdlib.h>
 #include "glu_tessellator.h"
 #include "geom.h"

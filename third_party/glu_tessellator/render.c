@@ -39,6 +39,7 @@
 ** $Header: //depot/main/gfx/lib/glu/libtess/render.c#5 $
 */
 
+#include <assert.h>
 #include <stddef.h>
 #include "mesh.h"
 #include "tess.h"
