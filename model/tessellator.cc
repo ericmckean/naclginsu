@@ -5,6 +5,7 @@
 #include "model/tessellator.h"
 #include "model/component.h"
 #include "model/kernel.h"
+#include "model/mesh.h"
 #include <CGAL/Nef_3/SNC_decorator.h>
 #include <CGAL/Polyhedron_3.h>
 
@@ -28,7 +29,7 @@ void Tessellator::Tessellate(const Component& component) {
   GLUtesselator* glu_tess = CreateGluTessellator();
   // Iterate over the faces in the component.
   Mesh::Halffacet_const_iterator facet;
-  CGAL_forall_facets(facet, *(component.mesh().sncp())) {
+  CGAL_forall_facets(facet, *(component.mesh()->sncp())) {
     UserData user_data;
     Vector_3 normal = facet->plane().orthogonal_vector();
     user_data.triangle_data.normal_x = ToFloat(normal.x());

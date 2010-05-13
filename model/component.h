@@ -5,10 +5,13 @@
 #ifndef GINSU_MODEL_COMPONENT_H_
 #define GINSU_MODEL_COMPONENT_H_
 
-#include "model/mesh.h"
+#include "boost/scoped_ptr.hpp"
 
 namespace ginsu {
 namespace model {
+
+class AffineTransform3D;
+class Mesh;
 
 class Component {
  public:
@@ -25,16 +28,18 @@ class Component {
  protected:
   // Can't instantiate directly. Use the Make*** functions above.
   Component();
+  void Init(Mesh* mesh);
 
   // Get embedded Mesh instance.
-  friend class Tessellator;
-  const Mesh& mesh() const { return mesh_; }
+  const Mesh* mesh() const { return mesh_.get(); }
 
  private:
+  // Tessellator requires access to mesh().
+  friend class Tessellator;
   // Component transform; defaults to identity.
-  Aff_transformation_3 transform_;
+  boost::scoped_ptr<AffineTransform3D> transform_;
   // The geometry.
-  Mesh mesh_;
+  boost::scoped_ptr<Mesh> mesh_;
 };
 
 }  // namespace model

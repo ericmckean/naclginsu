@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "model/component.h"
+#include "model/mesh.h"
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 
@@ -170,7 +171,7 @@ Component* Component::MakeCube() {
 
   // Now make a mesh (nef polyhedron) from the polyhedron.
   Component* component = new Component();
-  component->mesh_ = Mesh(p);
+  component->Init(new Mesh(p));
   return component;
 }
 
@@ -187,14 +188,17 @@ Component* Component::MakeTruncatedCone(float top_radius,
   Component* component = NULL;
   if (cone.is_valid()) {
     component = new Component();
-    component->mesh_ = Mesh(cone);
+    component->Init(new Mesh(cone));
   }
   return component;
 }
 
-Component::Component() 
-  : transform_(CGAL::Identity_transformation()),
-    mesh_(Mesh::EMPTY) {
+Component::Component() {
+}
+
+void Component::Init(Mesh* mesh) {
+  transform_.reset(new AffineTransform3D(CGAL::Identity_transformation()));
+  mesh_.reset(mesh);
 }
 
 }  // namespace model

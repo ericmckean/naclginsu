@@ -28,6 +28,7 @@ if env.Bit('windows'):
 # Build the model library.
 model_sources = [
   'component.cc',
+  'model.cc',
   'tessellator.cc',
 ]
 env.ComponentLibrary('ginsu_model', model_sources, COMPONENT_STATIC = True)
