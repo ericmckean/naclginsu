@@ -12,7 +12,16 @@ namespace ginsu {
 namespace model {
 
 // A mesh is a nef-polyhedron, which support robust boolean operations.
-typedef CGAL::Nef_polyhedron_3<Kernel> Mesh;
+class Mesh : public CGAL::Nef_polyhedron_3<Kernel> {
+ public:
+  Mesh(Content space) : CGAL::Nef_polyhedron_3<Kernel>(space) {}
+  Mesh(const CGAL::Nef_polyhedron_3<Kernel>& poly)
+      : CGAL::Nef_polyhedron_3<Kernel>(poly) {}
+
+ private:
+  // Per Google style guide, disallow assigment operator.
+  Mesh& operator=(const Mesh& mesh);
+};
 
 }  // namespace model
 }  // namespace ginsu

@@ -18,7 +18,22 @@ typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
 // Related types.
 typedef Kernel::Point_3 Point_3;
 typedef Kernel::Vector_3 Vector_3;
-typedef CGAL::Aff_transformation_3<Kernel> Aff_transformation_3;
+
+
+class AffineTransform3D : public CGAL::Aff_transformation_3<Kernel> {
+ public:
+  AffineTransform3D() {}
+  AffineTransform3D(const CGAL::Aff_transformation_3<Kernel>& t)
+      : CGAL::Aff_transformation_3<Kernel>(t) {}
+  AffineTransform3D(const CGAL::Identity_transformation& tag)
+      : CGAL::Aff_transformation_3<Kernel>(tag) {}
+  AffineTransform3D(const CGAL::Translation tag, const Kernel::Vector_3& v)
+      : CGAL::Aff_transformation_3<Kernel>(tag, v) {}
+  AffineTransform3D(const CGAL::Scaling tag,
+                    const Kernel::RT& s,
+                    const Kernel::RT& w = Kernel::RT(1.0f))
+      : CGAL::Aff_transformation_3<Kernel>(tag, s, w) {}
+};
 
 }  // namespace model
 }  // namespace ginsu
