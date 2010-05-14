@@ -22,6 +22,10 @@ base_env = Environment(
     '$MAIN_DIR/view/view.scons',
   ],
   CPPPATH = ['$MAIN_DIR'],
+  CPPDEFINES = [
+    'CGAL_NO_AUTOLINK_CGAL',
+    'BOOST_AUTO_LINK_NOMANGLE',
+  ],
 )
 
 # -----------------------------------------------------------------------------
