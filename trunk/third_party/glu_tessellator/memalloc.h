@@ -43,11 +43,6 @@
 #define __memalloc_simple_h_
 
 #include <stdlib.h>
-#ifdef _WIN32
-#include <malloc.h>
-#else
-#include <sys/malloc.h>
-#endif
 
 #define memRealloc	realloc
 #define memFree		free

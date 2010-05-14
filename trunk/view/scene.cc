@@ -4,10 +4,10 @@
 
 #include "view/scene.h"
 
-#include "model/Component.h"
+#include "model/component.h"
 #include "osg/Geode"
 #include "osg/Geometry"
-#include "view/Converter.h"
+#include "view/converter.h"
 
 namespace {
 osg::Node* CreateSimpleTestModel() {

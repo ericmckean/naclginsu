@@ -28,6 +28,9 @@ base_env = Environment(
 # Linux environment
 linux_env = base_env.Clone(
   tools = ['target_platform_linux'],
+  CCFLAGS = [
+    '-fPIC',
+  ],
 )
 
 linux_dbg_env = linux_env.Clone(

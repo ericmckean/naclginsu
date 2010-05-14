@@ -5,7 +5,7 @@
 #include "ginsu/plugin.h"
 
 #include <cassert>
-#include "view/View.h"
+#include "view/view.h"
 
 namespace {
 using ginsu::Plugin;
