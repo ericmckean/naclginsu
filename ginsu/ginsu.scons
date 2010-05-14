@@ -25,11 +25,15 @@ if env.Bit('windows'):
 
 ginsu_input_libs = [
   'ginsu_view',
+  'ginsu_model',
   'osgUtil',
   'osg',
   'OpenThreads',
   'pgl',
   'gles2',
+  'CGAL',
+  'boost_thread',
+  'glu_tessellator',
 ]
 
 env.ComponentLibrary(

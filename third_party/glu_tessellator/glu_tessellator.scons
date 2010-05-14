@@ -6,15 +6,8 @@
 
 Import('env')
 
-env.Append(
-  CPPDEFINES = [
-  ],
-  CPPPATH = [
-  ],
-)
-
 # Build the model library.
-tessellator_sources = [
+srcs = [
   'dict.c',
   'geom.c',
   'memalloc.c',
@@ -26,5 +19,5 @@ tessellator_sources = [
   'tess.c',
   'tessmono.c',
 ]
-env.ComponentLibrary('ginsu_tessellator', tessellator_sources, COMPONENT_STATIC = True)
-env.Append(LIBS=['ginsu_tessellator'])
+env.ComponentLibrary('glu_tessellator', srcs, COMPONENT_STATIC = True)
+env.Append(LIBS=['glu_tessellator'])
