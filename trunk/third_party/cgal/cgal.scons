@@ -8,17 +8,12 @@ Import('env')
 
 # Includes and defines specific to Boost.
 env.Append(
-  CPPDEFINES = [
-  ],
   CPPPATH = [
     '$MAIN_DIR/third_party/boost/trunk',
     '$MAIN_DIR/third_party/boost/trunk/boost/tr1',
     '$MAIN_DIR/third_party/cgal/trunk/include',
   ],
 )
-
-# CGAL uses exceptions. Enable it.
-env['ENABLE_EXCEPTIONS'] = True
 
 # CGAL
 if env.Bit('windows'):
@@ -28,6 +23,7 @@ if env.Bit('windows'):
       'CGAL_CFG_NO_STATEMENT_EXPRESSIONS'
     ],
   )
+
 srcs = Glob('trunk/src/CGAL/*.cpp')
 env.ComponentLibrary('CGAL', srcs, COMPONENT_STATIC=True)
 env.Append(LIBS=['CGAL'])

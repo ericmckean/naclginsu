@@ -10,6 +10,7 @@
 
 namespace osg {
 class Node;
+class Program;
 }
 
 namespace ginsu {
@@ -28,6 +29,7 @@ class Scene {
 
  private:
   osg::ref_ptr<osg::Node> root_;
+  osg::ref_ptr<osg::Program> face_shader_;
 };
 
 }  // namespace view

@@ -6,6 +6,7 @@
 #define GINSU_VIEW_CONVERTER_H_
 
 #include "model/tessellator.h"
+#include "osg/Array"
 
 namespace osg {
 class Geometry;
@@ -17,10 +18,12 @@ namespace view {
 // Convert a model Component instance to triangle data for viewing in the
 // scene graph. Usage:
 //   Converter converter(node_to_receive_triangle_arrays);
-//   converte.Tessellate(component);
-class Converter : model::Tessellator {
+//   converter.Tessellate(component);
+class Converter : protected model::Tessellator {
  public:
   Converter(osg::Geometry* node);
+
+  void Convert(const ginsu::model::Component& component);
 
  protected:
   virtual void BeginTriangleData(const TriangleData& triangles);
@@ -29,6 +32,9 @@ class Converter : model::Tessellator {
 
  private:
   osg::Geometry* node_;
+
+  osg::ref_ptr<osg::Vec3Array> vertex_array_;
+  TriangleData triangle_data_;
 };
 
 }  // namespace view

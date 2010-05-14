@@ -19,6 +19,7 @@ env.Append(
 )
 
 srcs = [
+  'converter.cc',
   'scene.cc',
   'scene_view.cc',
   'view.cc',
