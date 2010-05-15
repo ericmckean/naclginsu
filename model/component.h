@@ -15,15 +15,28 @@ class Mesh;
 
 class Component {
  public:
+  // Make an empty-set component.
+  static Component* MakeEmpty();
   // Make a unit cube from (0, 0, 0) to (1, 1, 1).
   static Component* MakeCube();
   // Make a truncated cone centered on the y-axis, between Z = 0 and Z =1 and
   // of given radii. At least one radius must be non-zero.
   static Component* MakeTruncatedCone(float top_radius, float bottom_radius);
   
-  // TODO(gwink):
-  //  - Iterators to extract geometry for viewing.
-  //  - Modify associated transform.
+  // Store the intersection of c1 * c2 into this.
+  void Intersect(const Component* component1, const Component* component2);
+
+  
+  // Load the component affine transform in transform[4][4], in row-major
+  // order. (The translation parts are stored in t[3[0-2].)
+  void GetTransformMatrix44(float transform[4][4]) const;
+
+  // Set the component transform.
+  void SetIdentityTranform();
+  void SetTransform(const float transform[4][4]) const;
+
+  // Is it an empty set?
+  bool IsEmpty() const;
 
  protected:
   // Can't instantiate directly. Use the Make*** functions above.

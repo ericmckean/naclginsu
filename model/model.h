@@ -27,6 +27,9 @@ class Model {
   // Iterate over components in model.
   const_iterator begin_component() const { return components_.begin(); }
   const_iterator end_component() const { return components_.end(); }
+
+  // Demo only.
+  void DemoComputeIntersection();
   
  protected:
   // Remove all geometry from the model.
