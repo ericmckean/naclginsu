@@ -23,8 +23,8 @@ base_env = Environment(
   ],
   CPPPATH = ['$MAIN_DIR'],
   CPPDEFINES = [
+    'BOOST_ALL_NO_LIB',
     'CGAL_NO_AUTOLINK_CGAL',
-    'BOOST_AUTO_LINK_NOMANGLE',
   ],
 )
 
