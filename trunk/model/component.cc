@@ -146,6 +146,12 @@ class PolyhedronBuilder : public CGAL::Modifier_base<HalfedgeDS> {
   float cone_bottom_radius_;
 };
 
+Component* Component::MakeEmpty() {
+  Component* component = new Component();
+  component->Init(new Mesh(CGAL::Nef_polyhedron_3<Kernel>::EMPTY));
+  return component;
+}
+
 
 Component* Component::MakeCube() {
   // Make a cube per CGAL::Polyhedron_3 user manual. Start with a tetrahedron,
@@ -191,6 +197,42 @@ Component* Component::MakeTruncatedCone(float top_radius,
     component->Init(new Mesh(cone));
   }
   return component;
+}
+
+void Component::Intersect(const Component* component1,
+                          const Component* component2) {
+  // Form new result mesh to c1 mapped to model space.
+  Mesh* result = new Mesh(*(component1->mesh_));
+  result->transform(*(component1->transform_));
+  // Map c2 to model space.
+  Mesh transformed_component2(*(component2->mesh_));
+  transformed_component2.transform(*(component2->transform_));
+  // Compute intersection.
+  *(result) *= transformed_component2;
+  Init(result);
+}
+
+void Component::GetTransformMatrix44(float transform[4][4]) const {
+  for (int j = 0; j < 4; ++j) {
+    for (int i = 0; i < 4; ++i) {
+      // Transpose the matrix to get the row-major format.
+      transform[i][j] =
+          static_cast<float>(CGAL::to_double(transform_->m(j, i)));
+    }
+  }
+}
+
+void Component::SetTransform(const float transform[4][4]) const {
+  for (int j = 0; j < 4; ++j) {
+    for (int i = 0; i < 4; ++i) {
+      // Transpose format to cgal's column-major.
+      transform_->m(i, j) = transform[j][i];
+    }
+  }
+}
+
+bool Component::IsEmpty() const {
+  return mesh_->is_empty();
 }
 
 Component::Component() {
