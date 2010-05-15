@@ -34,6 +34,9 @@ linux_env = base_env.Clone(
   tools = ['target_platform_linux'],
   CCFLAGS = [
     '-fPIC',
+    '-frounding-math',
+    '-fvisibility=hidden',
+    '-fvisibility-inlines-hidden',
   ],
 )
 
