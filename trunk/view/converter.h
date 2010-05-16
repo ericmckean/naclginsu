@@ -9,6 +9,7 @@
 #include "osg/Array"
 
 namespace osg {
+class DrawArrays;
 class Geometry;
 }
 
@@ -26,15 +27,15 @@ class Converter : protected model::Tessellator {
   void Convert(const ginsu::model::Component& component);
 
  protected:
-  virtual void BeginTriangleData(const TriangleData& triangles);
+  virtual void BeginTriangleData(const TriangleData& tri_data);
   virtual void AddVertex(const Vertex& vertex);
   virtual void EndTriangleData();
 
  private:
   osg::Geometry* node_;
 
+  osg::ref_ptr<osg::DrawArrays> primitive_set_;
   osg::ref_ptr<osg::Vec3Array> vertex_array_;
-  TriangleData triangle_data_;
 };
 
 }  // namespace view

@@ -5,49 +5,15 @@
 #include "view/scene.h"
 
 #include "model/component.h"
+#include "model/model.h"
 #include "osg/Geode"
 #include "osg/Geometry"
 #include "view/converter.h"
 
+using ginsu::model::Component;
+using ginsu::model::Model;
+
 namespace {
-osg::Node* CreateSimpleTestModel() {
-  osg::Vec3Array* vtx_array = new osg::Vec3Array;
-  vtx_array->setName("osg_Vertex");
-  vtx_array->push_back(osg::Vec3(0.0,0.0,0.0));
-  vtx_array->push_back(osg::Vec3(0.0,0.0,1.0));
-  vtx_array->push_back(osg::Vec3(1.0,0.0,0.0));
-  vtx_array->push_back(osg::Vec3(1.0,0.0,1.0));
-
-  char vtx_shader_src[] =
-      "uniform mat4 osg_ModelViewProjectionMatrix;\n"
-      "attribute vec4 osg_Vertex;\n"
-      "void main(void)\n"
-      "{\n"
-      "  gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
-      "}\n";
-  char frag_shader_src[] =
-      "void main(void)\n"
-      "{\n"
-      "  gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);\n"
-      "}\n";
-  osg::Program* program = new osg::Program;
-  program->addShader(new osg::Shader(osg::Shader::VERTEX, vtx_shader_src));
-  program->addShader(new osg::Shader(osg::Shader::FRAGMENT, frag_shader_src));
-  program->addBindAttribLocation("osg_Vertex", 0);
-
-  osg::Geometry* geometry = new osg::Geometry;
-  geometry->setUseDisplayList(false);
-  geometry->setUseVertexBufferObjects(true);
-  geometry->setVertexAttribArray(0, vtx_array);
-  geometry->setVertexAttribBinding(0, osg::Geometry::BIND_PER_VERTEX);
-  geometry->getOrCreateStateSet()->setAttribute(program);
-  geometry->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-
-  osg::Geode* geode = new osg::Geode;
-  geode->addDrawable(geometry);
-  return geode;
-}
-
 osg::Program* BuildFaceShader() {
   char vtx_shader_src[] =
       "uniform mat4 osg_ModelViewProjectionMatrix;\n"
@@ -69,7 +35,7 @@ osg::Program* BuildFaceShader() {
   return program;
 }
 
-osg::Node* BuildComponentNode(const ginsu::model::Component& component,
+osg::Node* BuildComponentNode(const Component& component,
                               osg::Program* face_shader) {
   osg::Geometry* geometry = new osg::Geometry;
   ginsu::view::Converter converter(geometry);
@@ -85,7 +51,7 @@ osg::Node* BuildComponentNode(const ginsu::model::Component& component,
 namespace ginsu {
 namespace view {
 
-Scene::Scene() {
+Scene::Scene(Model* model) : model_(model) {
 }
 
 Scene::~Scene() {
@@ -95,7 +61,11 @@ void Scene::Init() {
   face_shader_ = BuildFaceShader();
 
   osg::ref_ptr<osg::Group> root = new osg::Group;
-  root->addChild(CreateSimpleTestModel());
+  for (Model::const_iterator iter = model_->begin_component();
+       iter != model_->end_component(); ++iter) {
+    osg::Node* node = BuildComponentNode(*(iter->get()), face_shader_.get());
+    root->addChild(node);
+  }
 
   root_ = root;
 }

@@ -8,6 +8,11 @@
 #include "boost/scoped_ptr.hpp"
 
 namespace ginsu {
+
+namespace model {
+class Model;
+}
+
 namespace view {
 
 class Scene;
@@ -15,7 +20,7 @@ class SceneView;
 
 class View {
  public:
-  View();
+  View(model::Model* model);
   ~View();
 
   void InitGL();
@@ -24,6 +29,7 @@ class View {
   void Draw();
 
  private:
+  model::Model* model_;
   boost::scoped_ptr<Scene> scene_;
   boost::scoped_ptr<SceneView> scene_view_;
 };

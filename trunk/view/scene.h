@@ -14,11 +14,16 @@ class Program;
 }
 
 namespace ginsu {
+
+namespace model {
+class Model;
+}  // namespace model
+
 namespace view {
 
 class Scene {
  public:
-  Scene();
+  Scene(model::Model* model);
   ~Scene();
 
   void Init();
@@ -28,6 +33,7 @@ class Scene {
   const osg::BoundingSphere& GetBound() const;
 
  private:
+  model::Model* model_;
   osg::ref_ptr<osg::Node> root_;
   osg::ref_ptr<osg::Program> face_shader_;
 };
