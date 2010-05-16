@@ -24,11 +24,25 @@ void Converter::Convert(const ginsu::model::Component& component) {
   node_->setUseVertexBufferObjects(true);
   node_->setVertexAttribArray(0, vertex_array_);
   node_->setVertexAttribBinding(0, osg::Geometry::BIND_PER_VERTEX);
-  node_->addPrimitiveSet(
-      new osg::DrawArrays(GL_TRIANGLES, 0, vertex_array_->size()));
 }
 
-void Converter::BeginTriangleData(const TriangleData& triangles) {
+void Converter::BeginTriangleData(const TriangleData& tri_data) {
+  GLenum mode = 0;
+  switch (tri_data.flavor) {
+    case kTriangles:
+      mode = GL_TRIANGLES;
+      break;
+    case kTriangleStrip:
+      mode = GL_TRIANGLE_STRIP;
+      break;
+    case kTriangleFan:
+      mode = GL_TRIANGLE_FAN;
+      break;
+    default:
+      assert(false);
+  }
+  primitive_set_ = new osg::DrawArrays(mode);
+  primitive_set_->setFirst(vertex_array_->size());
 }
 
 void Converter::AddVertex(const Vertex& vertex) {
@@ -36,6 +50,11 @@ void Converter::AddVertex(const Vertex& vertex) {
 }
 
 void Converter::EndTriangleData() {
+  GLsizei count = vertex_array_->size() - primitive_set_->getFirst();
+  if (count > 0) {
+    primitive_set_->setCount(count);
+    node_->addPrimitiveSet(primitive_set_.get());
+  }
 }
 
 }  // namespace view

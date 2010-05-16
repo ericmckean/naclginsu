@@ -11,9 +11,12 @@
 
 namespace ginsu {
 
+namespace model {
+class Model;
+}  // namespace model
 namespace view {
 class View;
-}
+}  // namespace view
 
 class Plugin : public NPObject {
  public:
@@ -41,6 +44,8 @@ class Plugin : public NPObject {
   NPDevice* device3d_;
   NPDeviceContext3D context3d_;
   PGLContext pgl_context_;
+
+  boost::scoped_ptr<model::Model> model_;
   boost::scoped_ptr<view::View> view_;
 };
 

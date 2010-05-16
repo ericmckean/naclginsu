@@ -5,6 +5,9 @@
 #include "ginsu/plugin.h"
 
 #include <cassert>
+
+#include "model/component.h"
+#include "model/model.h"
 #include "view/view.h"
 
 namespace {
@@ -105,7 +108,10 @@ void Plugin::New(NPMIMEType pluginType,
 
   device3d_ = g_extensions->acquireDevice(npp_, NPPepper3DDevice);
   assert(device3d_);
-  view_.reset(new view::View());
+
+  model_.reset(new model::Model);
+  model_->AddComponent(model::Component::MakeCube());
+  view_.reset(new view::View(model_.get()));
 }
 
 void Plugin::SetWindow(const NPWindow& window) {

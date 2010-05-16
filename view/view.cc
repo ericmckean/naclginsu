@@ -11,14 +11,16 @@
 namespace ginsu {
 namespace view {
 
-View::View() {
+View::View(model::Model* model) : model_(model) {
 }
 
 View::~View() {
 }
 
 void View::InitGL() {
-  scene_.reset(new Scene);
+  assert(model_ != NULL);
+
+  scene_.reset(new Scene(model_));
   scene_->Init();
 
   scene_view_.reset(new SceneView);
