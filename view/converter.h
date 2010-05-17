@@ -34,8 +34,10 @@ class Converter : protected model::Tessellator {
  private:
   osg::Geometry* node_;
 
+  osg::Vec3 normal_;
   osg::ref_ptr<osg::DrawArrays> primitive_set_;
   osg::ref_ptr<osg::Vec3Array> vertex_array_;
+  osg::ref_ptr<osg::Vec3Array> normal_array_;
 };
 
 }  // namespace view

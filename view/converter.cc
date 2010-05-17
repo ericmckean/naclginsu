@@ -7,6 +7,13 @@
 #include "model/component.h"
 #include "osg/Geometry"
 
+namespace {
+enum AttribIndex {
+  kAttribIndexVertex,
+  kAttribIndexNormal,
+};
+}  // namespace
+
 namespace ginsu {
 namespace view {
 
@@ -16,17 +23,26 @@ Converter::Converter(osg::Geometry* node) : node_(node) {
 void Converter::Convert(const ginsu::model::Component& component) {
   vertex_array_ = new osg::Vec3Array;
   vertex_array_->setName("osg_Vertex");
+  normal_array_ = new osg::Vec3Array;
+  normal_array_->setName("osg_Normal");
 
   // Tesselate component faces and collect all vertices into vertex_array_.
   Tessellate(component);
 
   node_->setUseDisplayList(false);
   node_->setUseVertexBufferObjects(true);
-  node_->setVertexAttribArray(0, vertex_array_);
-  node_->setVertexAttribBinding(0, osg::Geometry::BIND_PER_VERTEX);
+  node_->setVertexAttribArray(kAttribIndexVertex, vertex_array_);
+  node_->setVertexAttribBinding(kAttribIndexVertex,
+      osg::Geometry::BIND_PER_VERTEX);
+  node_->setVertexAttribArray(kAttribIndexNormal, normal_array_);
+  node_->setVertexAttribNormalize(kAttribIndexNormal, true);
+  node_->setVertexAttribBinding(kAttribIndexNormal,
+      osg::Geometry::BIND_PER_VERTEX);
 }
 
 void Converter::BeginTriangleData(const TriangleData& tri_data) {
+  normal_.set(tri_data.normal_x, tri_data.normal_y, tri_data.normal_z);
+
   GLenum mode = 0;
   switch (tri_data.flavor) {
     case kTriangles:
@@ -46,6 +62,7 @@ void Converter::BeginTriangleData(const TriangleData& tri_data) {
 }
 
 void Converter::AddVertex(const Vertex& vertex) {
+  normal_array_->push_back(normal_);
   vertex_array_->push_back(osg::Vec3(vertex.x, vertex.y, vertex.z));
 }
 
