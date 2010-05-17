@@ -27,6 +27,9 @@ namespace model {
 
 void Tessellator::Tessellate(const Component& component) {
   GLUtesselator* glu_tess = CreateGluTessellator();
+  // TODO(gwink): Using a fixed-size array to accumulate vertices, for now.
+  double vertices[64][3];
+  int vertex_count = 0;
   // Iterate over the faces in the component.
   Mesh::Halffacet_const_iterator facet;
   CGAL_forall_facets(facet, *(component.mesh()->sncp())) {
@@ -51,12 +54,13 @@ void Tessellator::Tessellate(const Component& component) {
         Mesh::SHalfedge_around_facet_const_circulator end(circulator);
         CGAL_For_all(circulator, end) {
           Point_3 point = circulator->source()->source()->point();
-          double glu_vertex[3];
 
-          glu_vertex[0] = ToFloat(point.x());
-          glu_vertex[1] = ToFloat(point.y());
-          glu_vertex[2] = ToFloat(point.z());
-          gluTessVertex(glu_tess, glu_vertex, &user_data);
+          vertices[vertex_count][0] = ToFloat(point.x());
+          vertices[vertex_count][1] = ToFloat(point.y());
+          vertices[vertex_count][2] = ToFloat(point.z());
+          gluTessVertex(glu_tess, vertices[vertex_count],
+                        vertices[vertex_count]);
+          ++vertex_count;
         }
         gluTessEndContour(glu_tess);
       }
