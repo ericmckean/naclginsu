@@ -17,21 +17,27 @@ namespace {
 osg::Program* BuildFaceShader() {
   char vtx_shader_src[] =
       "uniform mat4 osg_ModelViewProjectionMatrix;\n"
+      "uniform mat3 osg_NormalMatrix;\n"
       "attribute vec4 osg_Vertex;\n"
-      "void main(void)\n"
-      "{\n"
+      "attribute vec3 osg_Normal;\n"
+      "varying vec4 color;\n"
+      "void main(void) {\n"
+      "  vec3 normal_eye = normalize(osg_NormalMatrix * osg_Normal);\n"
+      "  float normal_comp = max(normal_eye.z, 0.0);\n"
+      "  float color_comp = (0.8 * normal_comp) + 0.2;\n"
+      "  color = vec4(color_comp, color_comp, color_comp, 1.0);\n"
       "  gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
       "}\n";
   char frag_shader_src[] =
-      "void main(void)\n"
-      "{\n"
-      "  gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);\n"
+      "precision highp float;\n"
+      "varying vec4 color;\n"
+      "void main(void) {\n"
+      "  gl_FragColor = color;\n"
       "}\n";
 
   osg::Program* program = new osg::Program;
   program->addShader(new osg::Shader(osg::Shader::VERTEX, vtx_shader_src));
   program->addShader(new osg::Shader(osg::Shader::FRAGMENT, frag_shader_src));
-  program->addBindAttribLocation("osg_Vertex", 0);
   return program;
 }
 
@@ -66,7 +72,6 @@ void Scene::Init() {
     osg::Node* node = BuildComponentNode(*(iter->get()), face_shader_.get());
     root->addChild(node);
   }
-
   root_ = root;
 }
 
