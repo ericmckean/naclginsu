@@ -143,8 +143,8 @@ void Plugin::TickCallback(void* data) {
 }
 
 void Plugin::Tick() {
-  UpdateAnimation();
-  Paint();
+  if (UpdateAnimation())
+    Paint();
 
   // Schedule another call to Tick.
   g_browser->pluginthreadasynccall(npp_, TickCallback, this);
@@ -190,14 +190,16 @@ void Plugin::DestroyContext() {
   device3d_->destroyContext(npp_, &context3d_);
 }
 
-void Plugin::UpdateAnimation() {
+bool Plugin::UpdateAnimation() {
   time_t now;
   time(&now);
   double time_laps = difftime(now, last_update_);
-  if (time_laps > 0.1) {
-    model_->DemoAnimationUpdate(time_laps);
-    last_update_ = now;
-  }
+  if (time_laps < 0.1)
+    return false;
+
+  model_->DemoAnimationUpdate(time_laps);
+  last_update_ = now;
+  return true;
 }
 
 }  // namespace ginsu
