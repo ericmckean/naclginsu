@@ -29,6 +29,8 @@ class Scene {
   void Init();
   void Update();
 
+  void InvalidateModel();
+
   osg::Node* root() const { return root_.get(); }
   const osg::BoundingSphere& GetBound() const;
 

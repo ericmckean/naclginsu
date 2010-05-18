@@ -33,6 +33,14 @@ class AffineTransform3D : public CGAL::Aff_transformation_3<Kernel> {
                     const Kernel::RT& s,
                     const Kernel::RT& w = Kernel::RT(1.0f))
       : CGAL::Aff_transformation_3<Kernel>(tag, s, w) {}
+
+  void Set(float m11, float m12, float m13, float m14,
+           float m21, float m22, float m23, float m24,
+           float m31, float m32, float m33, float m34) {
+    *this = CGAL::Aff_transformation_3<Kernel>(m11, m12, m13, m14,
+                                               m21, m22, m23, m24,
+                                               m31, m32, m33, m34, 1.0f);
+  }
 };
 
 }  // namespace model

@@ -5,6 +5,8 @@
 #include "model/model.h"
 #include "model/component.h"
 #include "model/mesh.h"
+#include "osg/Matrix"
+#include "osg/Vec3"
 
 namespace ginsu {
 namespace model {
@@ -33,6 +35,17 @@ void Model::DemoComputeIntersection() {
     }
     
     components_[2]->Intersect(components_[0].get(), components_[1].get());
+  }
+}
+
+void Model::DemoAnimationUpdate(double time_laps) {
+  if(components_[0] != NULL) {
+    // TODO(gwink): Use cgal AffineTransform3D instead, to be consistent. Then
+    // remove dependency on osg from scons file. 
+    osg::Matrix rotate;
+    const static osg::Vec3 axis(0.2f, 0.0f, 0.5f);
+    rotate.makeRotate(0.1f * static_cast<float>(time_laps), axis);
+    components_[0]->Transform(rotate.ptr());
   }
 }
 

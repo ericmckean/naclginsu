@@ -27,13 +27,17 @@ class Component {
   void Intersect(const Component* component1, const Component* component2);
 
   
-  // Load the component affine transform in transform[4][4], in row-major
-  // order. (The translation parts are stored in t[3[0-2].)
-  void GetTransformMatrix44(float transform[4][4]) const;
+  // Load the component affine transform in transform[16], in row-major
+  // order. (The translation parts are stored in t[3][0-2].)
+  void GetTransformMatrix44(float transform[16]) const;
 
   // Set the component transform.
   void SetIdentityTranform();
-  void SetTransform(const float transform[4][4]) const;
+  void SetTransform(const float transform[16]) const;
+
+  // Immediately transform the component with the given transform. Does not
+  // modify the transform associate with the component.
+  void Transform(const float transform[16]);
 
   // Is it an empty set?
   bool IsEmpty() const;

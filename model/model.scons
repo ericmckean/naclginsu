@@ -8,11 +8,14 @@ Import('env')
 
 env.Append(
   CPPDEFINES = [
+    'OSG_LIBRARY_STATIC',
   ],
   CPPPATH = [
     '$MAIN_DIR/third_party/boost/trunk',
     '$MAIN_DIR/third_party/boost/trunk/boost/tr1',
     '$MAIN_DIR/third_party/cgal/trunk/include',
+    '$MAIN_DIR/third_party/openscenegraph/include',
+    '$MAIN_DIR/third_party/openscenegraph/trunk/include',
   ],
 )
 

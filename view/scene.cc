@@ -66,16 +66,26 @@ Scene::~Scene() {
 void Scene::Init() {
   face_shader_ = BuildFaceShader();
 
-  osg::ref_ptr<osg::Group> root = new osg::Group;
-  for (Model::const_iterator iter = model_->begin_component();
-       iter != model_->end_component(); ++iter) {
-    osg::Node* node = BuildComponentNode(*(iter->get()), face_shader_.get());
-    root->addChild(node);
-  }
-  root_ = root;
+  root_ = new osg::Group;
+  Update();
 }
 
 void Scene::Update() {
+  // If the root has no child, rebuild the scene graph from the model.
+  osg::Group* root = root_->asGroup();
+  if (root->getNumChildren() == 0) {
+    for (Model::const_iterator iter = model_->begin_component();
+         iter != model_->end_component(); ++iter) {
+      osg::Node* node = BuildComponentNode(*(iter->get()), face_shader_.get());
+      root->addChild(node);
+    }
+  }
+}
+
+void Scene::InvalidateModel() {
+  // Get rid of all the node below the root.
+  osg::Group* root = root_->asGroup();
+  root->removeChildren(0, root->getNumChildren());
 }
 
 const osg::BoundingSphere& Scene::GetBound() const {

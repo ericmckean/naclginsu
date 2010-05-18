@@ -28,6 +28,8 @@ class View {
   void SetWindowSize(int width, int height);
   void Draw();
 
+  void InvalidateModel();
+
  private:
   model::Model* model_;
   boost::scoped_ptr<Scene> scene_;

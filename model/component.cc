@@ -212,27 +212,35 @@ void Component::Intersect(const Component* component1,
   Init(result);
 }
 
-void Component::GetTransformMatrix44(float transform[4][4]) const {
-  for (int j = 0; j < 4; ++j) {
-    for (int i = 0; i < 4; ++i) {
+void Component::GetTransformMatrix44(float transform[16]) const {
+  int index = 0;
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
       // Transpose the matrix to get the row-major format.
-      transform[i][j] =
+      transform[index++] =
           static_cast<float>(CGAL::to_double(transform_->m(j, i)));
     }
   }
 }
 
-void Component::SetTransform(const float transform[4][4]) const {
-  for (int j = 0; j < 4; ++j) {
-    for (int i = 0; i < 4; ++i) {
-      // Transpose format to cgal's column-major.
-      transform_->m(i, j) = transform[j][i];
-    }
-  }
+void Component::SetTransform(const float transform[16]) const {
+  transform_->Set(
+    transform[0], transform[4], transform[8], transform[12],
+    transform[1], transform[5], transform[9], transform[13],
+    transform[2], transform[6], transform[10], transform[14]);
 }
 
 bool Component::IsEmpty() const {
   return mesh_->is_empty();
+}
+
+void Component::Transform(const float transform[16]) {
+  AffineTransform3D cgal_transform;
+  cgal_transform.Set(
+    transform[0], transform[4], transform[8], transform[12],
+    transform[1], transform[5], transform[9], transform[13],
+    transform[2], transform[6], transform[10], transform[14]);
+  mesh_->transform(cgal_transform);
 }
 
 Component::Component() {
