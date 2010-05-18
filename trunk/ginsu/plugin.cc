@@ -75,6 +75,7 @@ NPClass plugin_class = {
   PluginGetProperty,
   PluginSetProperty,
 };
+
 }
 
 namespace ginsu {
@@ -112,6 +113,7 @@ void Plugin::New(NPMIMEType pluginType,
   model_.reset(new model::Model);
   model_->AddComponent(model::Component::MakeCube());
   view_.reset(new view::View(model_.get()));
+  time(&last_update_);
 }
 
 void Plugin::SetWindow(const NPWindow& window) {
@@ -119,6 +121,8 @@ void Plugin::SetWindow(const NPWindow& window) {
     CreateContext();
   }
   view_->SetWindowSize(window.width, window.height);
+  g_browser->pluginthreadasynccall(npp_, TickCallback, this);
+
 }
 
 int32 Plugin::HandleEvent(const NPPepperEvent& event) {
@@ -128,6 +132,19 @@ int32 Plugin::HandleEvent(const NPPepperEvent& event) {
 void Plugin::RepaintCallback(NPP npp, NPDeviceContext3D* /* context */) {
   Plugin* plugin = static_cast<Plugin*>(npp->pdata);
   plugin->Paint();
+}
+
+void Plugin::TickCallback(void* data) {
+  reinterpret_cast<ginsu::Plugin*>(data)->Tick();
+}
+
+
+void Plugin::Tick() {
+  UpdateAnimation();
+  Paint();
+
+  // Schedule another call to Tick.
+  g_browser->pluginthreadasynccall(npp_, TickCallback, this);
 }
 
 void Plugin::Paint() {
@@ -167,6 +184,17 @@ void Plugin::DestroyContext() {
   pgl_context_ = PGL_NO_CONTEXT;
 
   device3d_->destroyContext(npp_, &context3d_);
+}
+
+void Plugin::UpdateAnimation() {
+  time_t now;
+  time(&now);
+  double time_laps = difftime(now, last_update_);
+  if (time_laps > 0.1) {
+    model_->DemoAnimationUpdate(time_laps);
+    view_->InvalidateModel();
+    last_update_ = now;
+  }
 }
 
 }  // namespace ginsu

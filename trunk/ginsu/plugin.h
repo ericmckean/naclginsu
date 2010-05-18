@@ -5,6 +5,7 @@
 #ifndef GINSU_PLUGIN_H_
 #define GINSU_PLUGIN_H_
 
+#include <time.h>
 #include "boost/scoped_ptr.hpp"
 #include "nphostapi.h"
 #include "pgl/pgl.h"
@@ -32,9 +33,13 @@ class Plugin : public NPObject {
 
  private:
   static void RepaintCallback(NPP npp, NPDeviceContext3D* context);
+  static void TickCallback(void* data);
   void Paint();
+  void Tick();
   void CreateContext();
   void DestroyContext();
+
+  void UpdateAnimation();
 
   // This class object needs to be safely casted to NPObject* and cross
   // c-c++ module boundaries. To accomplish that this class should not have
@@ -47,6 +52,8 @@ class Plugin : public NPObject {
 
   boost::scoped_ptr<model::Model> model_;
   boost::scoped_ptr<view::View> view_;
+
+  time_t last_update_;
 };
 
 extern NPNetscapeFuncs* g_browser;

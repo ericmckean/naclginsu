@@ -30,6 +30,7 @@ class Model {
 
   // Demo only.
   void DemoComputeIntersection();
+  void DemoAnimationUpdate(double time_laps);
   
  protected:
   // Remove all geometry from the model.
