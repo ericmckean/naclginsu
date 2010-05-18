@@ -33,11 +33,7 @@ class Component {
 
   // Set the component transform.
   void SetIdentityTranform();
-  void SetTransform(const float transform[16]) const;
-
-  // Immediately transform the component with the given transform. Does not
-  // modify the transform associate with the component.
-  void Transform(const float transform[16]);
+  void SetTransform(const float transform[16]);
 
   // Is it an empty set?
   bool IsEmpty() const;
@@ -48,7 +44,7 @@ class Component {
   void Init(Mesh* mesh);
 
   // Get embedded Mesh instance.
-  const Mesh* mesh() const { return mesh_.get(); }
+  const Mesh* mesh() const;
 
  private:
   // Tessellator requires access to mesh().
@@ -56,7 +52,9 @@ class Component {
   // Component transform; defaults to identity.
   boost::scoped_ptr<AffineTransform3D> transform_;
   // The geometry.
-  boost::scoped_ptr<Mesh> mesh_;
+  boost::scoped_ptr<Mesh> original_mesh_;
+  // A copy of the geometry transform with transform_.
+  mutable boost::scoped_ptr<Mesh> mesh_;
 };
 
 }  // namespace model

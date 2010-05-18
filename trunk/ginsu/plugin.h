@@ -55,6 +55,7 @@ class Plugin : public NPObject {
   boost::scoped_ptr<view::View> view_;
 
   time_t last_update_;
+  time_t start_time_;
 };
 
 extern NPNetscapeFuncs* g_browser;

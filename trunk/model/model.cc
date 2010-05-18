@@ -39,13 +39,26 @@ void Model::DemoComputeIntersection() {
 }
 
 void Model::DemoAnimationUpdate(double time_laps) {
-  if(components_[0] != NULL) {
+  static const float kTwoPi = 6.283f;
+  if(components_.size() > 0 && components_[0] != NULL) {
     // TODO(gwink): Use cgal AffineTransform3D instead, to be consistent. Then
     // remove dependency on osg from scons file. 
     osg::Matrix rotate;
     const static osg::Vec3 axis(0.2f, 0.0f, 0.5f);
-    rotate.makeRotate(0.1f * static_cast<float>(time_laps), axis);
-    components_[0]->Transform(rotate.ptr());
+    float rotation = 0.1f * static_cast<float>(time_laps);
+    if (rotation > kTwoPi) rotation -= kTwoPi;
+    rotate.makeRotate(rotation, axis);
+    components_[0]->SetTransform(rotate.ptr());
+  }
+  if(components_.size() > 1 && components_[1] != NULL) {
+    // TODO(gwink): Use cgal AffineTransform3D instead, to be consistent. Then
+    // remove dependency on osg from scons file. 
+    osg::Matrix rotate;
+    const static osg::Vec3 axis(0.7f, 0.2f, 0.0f);
+    float rotation = 0.2f * static_cast<float>(time_laps);
+    if (rotation > kTwoPi) rotation -= kTwoPi;
+    rotate.makeRotate(rotation, axis);
+    components_[1]->SetTransform(rotate.ptr());
   }
 }
 

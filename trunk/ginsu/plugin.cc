@@ -112,8 +112,10 @@ void Plugin::New(NPMIMEType pluginType,
 
   model_.reset(new model::Model);
   model_->AddComponent(model::Component::MakeCube());
+  //model_->AddComponent(model::Component::MakeTruncatedCone(0.3, 1.0));
   view_.reset(new view::View(model_.get()));
   time(&last_update_);
+  start_time_ = last_update_;
 }
 
 void Plugin::SetWindow(const NPWindow& window) {
@@ -197,7 +199,7 @@ bool Plugin::UpdateAnimation() {
   if (time_laps < 0.1)
     return false;
 
-  model_->DemoAnimationUpdate(time_laps);
+  model_->DemoAnimationUpdate(difftime(now, start_time_));
   last_update_ = now;
   return true;
 }
