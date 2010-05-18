@@ -22,7 +22,7 @@ namespace view {
 //   converter.Tessellate(component);
 class Converter : protected model::Tessellator {
  public:
-  Converter(osg::Geometry* node);
+  Converter(osg::Geometry* face_geom, osg::Geometry* edge_geom);
 
   void Convert(const ginsu::model::Component& component);
 
@@ -30,14 +30,25 @@ class Converter : protected model::Tessellator {
   virtual void BeginTriangleData(const TriangleData& tri_data);
   virtual void AddVertex(const Vertex& vertex);
   virtual void EndTriangleData();
+  virtual void EdgeFlag(bool flag);
 
  private:
-  osg::Geometry* node_;
+  osg::Geometry* face_geom_;
+  osg::Geometry* edge_geom_;
 
-  osg::Vec3 normal_;
-  osg::ref_ptr<osg::DrawArrays> primitive_set_;
-  osg::ref_ptr<osg::Vec3Array> vertex_array_;
-  osg::ref_ptr<osg::Vec3Array> normal_array_;
+  // Data for constructing face node.
+  struct FaceData {
+    osg::Vec3 normal_;
+    osg::ref_ptr<osg::DrawArrays> primitive_set_;
+    osg::ref_ptr<osg::Vec3Array> vertex_array_;
+    osg::ref_ptr<osg::Vec3Array> normal_array_;
+  } face_data_;
+
+  // Data for constructing edge node.
+  struct EdgeData {
+    bool edge_flag_;
+    osg::ref_ptr<osg::Vec3Array> vertex_array_;
+  } edge_data_;
 };
 
 }  // namespace view

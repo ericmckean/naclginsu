@@ -36,6 +36,7 @@ class Scene {
   model::Model* model_;
   osg::ref_ptr<osg::Node> root_;
   osg::ref_ptr<osg::Program> face_shader_;
+  osg::ref_ptr<osg::Program> edge_shader_;
 };
 
 }  // namespace view

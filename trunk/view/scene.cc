@@ -41,15 +41,52 @@ osg::Program* BuildFaceShader() {
   return program;
 }
 
+osg::Program* BuildEdgeShader() {
+  char vtx_shader_src[] =
+      "uniform mat4 osg_ModelViewProjectionMatrix;\n"
+      "attribute vec4 osg_Vertex;\n"
+      "void main(void) {\n"
+      "  gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
+      "}\n";
+  char frag_shader_src[] =
+      "precision highp float;\n"
+      "void main(void) {\n"
+      "  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n"
+      "}\n";
+
+  osg::Program* program = new osg::Program;
+  program->addShader(new osg::Shader(osg::Shader::VERTEX, vtx_shader_src));
+  program->addShader(new osg::Shader(osg::Shader::FRAGMENT, frag_shader_src));
+  return program;
+}
+
+// Builds a scenegraph node for the given component.
+// Faces are added to the node if face_shader is non-null.
+// Edges are added to the node if edge_shader is non-null.
+// At least one of them should be non-null.
 osg::Node* BuildComponentNode(const Component& component,
-                              osg::Program* face_shader) {
-  osg::Geometry* geometry = new osg::Geometry;
-  ginsu::view::Converter converter(geometry);
+                              osg::Program* face_shader,
+                              osg::Program* edge_shader) {
+  assert((face_shader != NULL) || (edge_shader != NULL));
+  osg::ref_ptr<osg::Geometry> face_geom;
+  if (face_shader != NULL) {
+    face_geom = new osg::Geometry;
+    face_geom->getOrCreateStateSet()->setAttribute(face_shader);
+  }
+  osg::ref_ptr<osg::Geometry> edge_geom;
+  if (edge_shader != NULL) {
+    edge_geom = new osg::Geometry;
+    edge_geom->getOrCreateStateSet()->setAttribute(edge_shader);
+  }
+
+  ginsu::view::Converter converter(face_geom, edge_geom);
   converter.Convert(component);
-  geometry->getOrCreateStateSet()->setAttribute(face_shader);
 
   osg::Geode* geode = new osg::Geode;
-  geode->addDrawable(geometry);
+  if (face_geom != NULL)
+    geode->addDrawable(face_geom);
+  if (edge_geom != NULL)
+    geode->addDrawable(edge_geom);
   return geode;
 }
 }  // namespace
@@ -65,6 +102,7 @@ Scene::~Scene() {
 
 void Scene::Init() {
   face_shader_ = BuildFaceShader();
+  edge_shader_ = BuildEdgeShader();
 
   root_ = new osg::Group;
   Update();
@@ -78,7 +116,8 @@ void Scene::Update() {
 
   for (Model::const_iterator iter = model_->begin_component();
        iter != model_->end_component(); ++iter) {
-    osg::Node* node = BuildComponentNode(*(iter->get()), face_shader_.get());
+    osg::Node* node = BuildComponentNode(*(iter->get()),
+        face_shader_, edge_shader_);
     root->addChild(node);
   }
 }
