@@ -47,12 +47,14 @@ class Tessellator {
   virtual void BeginTriangleData(const TriangleData& triangles);
   virtual void AddVertex(const Vertex& vertex);
   virtual void EndTriangleData();
+  virtual void EdgeFlag(bool flag);
 
   // Callbacks for the glu tessellator.
   static void BeginGluCallback(GLenum which, void* user_data);
   static void EndGluCallback(void* user_data);
   static void ErrorGluCallback(GLenum errorCode, void* user_data);
   static void VertexGluCallback(void* vertex, void* user_data);
+  static void EdgeFlagGluCallback(GLboolean flag, void *user_data);
 
   // Create and configure a glu tessellator.
   static GLUtesselator* CreateGluTessellator();

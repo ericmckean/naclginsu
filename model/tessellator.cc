@@ -83,6 +83,10 @@ void Tessellator::EndTriangleData() {
   // Subclass implements.
 }
 
+void Tessellator::EdgeFlag(bool flag) {
+  // Subclass implements.
+}
+
 GLUtesselator* Tessellator::CreateGluTessellator() {
   GLUtesselator* glu_tess = gluNewTess();
   gluTessCallback(glu_tess, GLenum(GLU_TESS_VERTEX_DATA),
@@ -93,6 +97,8 @@ GLUtesselator* Tessellator::CreateGluTessellator() {
                   (CallbackFunc) &EndGluCallback);
   gluTessCallback(glu_tess, GLenum(GLU_TESS_ERROR_DATA),
                   (CallbackFunc) &ErrorGluCallback);
+  gluTessCallback(glu_tess, GLenum(GLU_TESS_EDGE_FLAG_DATA),
+                  (CallbackFunc) &EdgeFlagGluCallback);
   gluTessProperty(glu_tess, GLenum(GLU_TESS_WINDING_RULE),
                   GLU_TESS_WINDING_POSITIVE);
   return glu_tess;
@@ -135,6 +141,11 @@ void Tessellator::VertexGluCallback(void* vertex, void* user_data) {
   v.y = ToFloat(point[1]);
   v.z = ToFloat(point[2]);
   data->tessellator->AddVertex(v);
+}
+
+void Tessellator::EdgeFlagGluCallback(GLboolean flag, void *user_data) {
+  UserData* data = static_cast<UserData*>(user_data);
+  data->tessellator->EdgeFlag(flag);
 }
 
 }  // namespace model
