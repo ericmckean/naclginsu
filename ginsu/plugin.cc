@@ -119,10 +119,11 @@ void Plugin::New(NPMIMEType pluginType,
 void Plugin::SetWindow(const NPWindow& window) {
   if (!pgl_context_) {
     CreateContext();
+
+    // Schedule the first call to Tick.
+    g_browser->pluginthreadasynccall(npp_, TickCallback, this);
   }
   view_->SetWindowSize(window.width, window.height);
-  g_browser->pluginthreadasynccall(npp_, TickCallback, this);
-
 }
 
 int32 Plugin::HandleEvent(const NPPepperEvent& event) {
@@ -130,14 +131,16 @@ int32 Plugin::HandleEvent(const NPPepperEvent& event) {
 }
 
 void Plugin::RepaintCallback(NPP npp, NPDeviceContext3D* /* context */) {
-  Plugin* plugin = static_cast<Plugin*>(npp->pdata);
-  plugin->Paint();
+  // TODO(alokp): No need to handle this callback because we are
+  // continously refreshing the view for animation. It may also be competing
+  // with TickCallback. Uncomment it when we are rendering on demand.
+  //Plugin* plugin = static_cast<Plugin*>(npp->pdata);
+  //plugin->Paint();
 }
 
 void Plugin::TickCallback(void* data) {
-  reinterpret_cast<ginsu::Plugin*>(data)->Tick();
+  static_cast<ginsu::Plugin*>(data)->Tick();
 }
-
 
 void Plugin::Tick() {
   UpdateAnimation();
@@ -155,6 +158,7 @@ void Plugin::Paint() {
   }
 
   view_->Draw();
+
   pglSwapBuffers();
   pglMakeCurrent(PGL_NO_CONTEXT);
 }
@@ -192,7 +196,6 @@ void Plugin::UpdateAnimation() {
   double time_laps = difftime(now, last_update_);
   if (time_laps > 0.1) {
     model_->DemoAnimationUpdate(time_laps);
-    view_->InvalidateModel();
     last_update_ = now;
   }
 }

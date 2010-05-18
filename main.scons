@@ -86,6 +86,12 @@ windows_dbg_env = windows_env.Clone(
 )
 environment_list.append(windows_dbg_env)
 
+windows_opt_env = windows_env.Clone(
+  BUILD_TYPE = 'opt',
+  tools = ['target_optimized'],
+)
+environment_list.append(windows_opt_env)
+
 # -----------------------------------------------------------------------------
 # Process the build environments
 BuildEnvironments(environment_list)
