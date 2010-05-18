@@ -59,9 +59,5 @@ void View::Draw() {
   scene_view_->Draw();
 }
 
-void View::InvalidateModel() {
-  scene_->InvalidateModel();
-}
-
 }  // namespace view
 }  // namespace ginsu
