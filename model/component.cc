@@ -201,14 +201,10 @@ Component* Component::MakeTruncatedCone(float top_radius,
 
 void Component::Intersect(const Component* component1,
                           const Component* component2) {
-  // Form new result mesh to c1 mapped to model space.
-  Mesh* result = new Mesh(*(component1->mesh_));
-  result->transform(*(component1->transform_));
-  // Map c2 to model space.
-  Mesh transformed_component2(*(component2->mesh_));
-  transformed_component2.transform(*(component2->transform_));
-  // Compute intersection.
-  *(result) *= transformed_component2;
+  // Make a copy of mesh 1.
+  Mesh* result = new Mesh(*(component1->mesh()));
+  // Intersect with mesh 2.
+  *(result) *= *(component2->mesh());
   Init(result);
 }
 
@@ -218,29 +214,21 @@ void Component::GetTransformMatrix44(float transform[16]) const {
     for (int j = 0; j < 4; ++j) {
       // Transpose the matrix to get the row-major format.
       transform[index++] =
-          static_cast<float>(CGAL::to_double(transform_->m(j, i)));
+          static_cast<float>(CGAL::to_double(transform_->m(i, j)));
     }
   }
 }
 
-void Component::SetTransform(const float transform[16]) const {
+void Component::SetTransform(const float transform[16]) {
   transform_->Set(
     transform[0], transform[4], transform[8], transform[12],
     transform[1], transform[5], transform[9], transform[13],
     transform[2], transform[6], transform[10], transform[14]);
+  mesh_.reset(NULL);
 }
 
 bool Component::IsEmpty() const {
-  return mesh_->is_empty();
-}
-
-void Component::Transform(const float transform[16]) {
-  AffineTransform3D cgal_transform;
-  cgal_transform.Set(
-    transform[0], transform[4], transform[8], transform[12],
-    transform[1], transform[5], transform[9], transform[13],
-    transform[2], transform[6], transform[10], transform[14]);
-  mesh_->transform(cgal_transform);
+  return original_mesh_->is_empty();
 }
 
 Component::Component() {
@@ -248,7 +236,16 @@ Component::Component() {
 
 void Component::Init(Mesh* mesh) {
   transform_.reset(new AffineTransform3D(CGAL::Identity_transformation()));
-  mesh_.reset(mesh);
+  original_mesh_.reset (new Mesh(*mesh));
+  mesh_.reset(NULL);
+}
+
+const Mesh* Component::mesh() const {
+  if (mesh_ == NULL) {
+    mesh_.reset(new Mesh(*original_mesh_));
+    mesh_->transform(*transform_);
+  }
+  return mesh_.get();
 }
 
 }  // namespace model
