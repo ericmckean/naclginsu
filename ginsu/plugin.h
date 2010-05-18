@@ -39,7 +39,8 @@ class Plugin : public NPObject {
   void CreateContext();
   void DestroyContext();
 
-  void UpdateAnimation();
+  // Returns true if anything was updated.
+  bool UpdateAnimation();
 
   // This class object needs to be safely casted to NPObject* and cross
   // c-c++ module boundaries. To accomplish that this class should not have
