@@ -25,6 +25,7 @@ base_env = Environment(
   CPPDEFINES = [
     'BOOST_ALL_NO_LIB',
     'CGAL_NO_AUTOLINK_CGAL',
+    'CGAL_NDEBUG',
   ],
 )
 
