@@ -6,17 +6,17 @@
 #define GINSU_MODEL_MESH_H_
 
 #include "model/kernel.h"
-#include <CGAL/Nef_polyhedron_3.h>
+#include <CGAL/Polyhedron_3.h>
 
 namespace ginsu {
 namespace model {
 
 // A mesh is a nef-polyhedron, which support robust boolean operations.
-class Mesh : public CGAL::Nef_polyhedron_3<Kernel> {
+class Mesh : public CGAL::Polyhedron_3<Kernel> {
  public:
-  Mesh(Content space) : CGAL::Nef_polyhedron_3<Kernel>(space) {}
-  Mesh(const CGAL::Nef_polyhedron_3<Kernel>& poly)
-      : CGAL::Nef_polyhedron_3<Kernel>(poly) {}
+  Mesh() : CGAL::Polyhedron_3<Kernel>() {}
+  Mesh(const CGAL::Polyhedron_3<Kernel>& poly)
+      : CGAL::Polyhedron_3<Kernel>(poly) {}
 
  private:
   // Per Google style guide, disallow assigment operator.

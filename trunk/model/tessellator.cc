@@ -25,46 +25,89 @@ template<typename T> float ToFloat(T val) {
 namespace ginsu {
 namespace model {
 
+//void Tessellator::Tessellate(const Component& component) {
+//  GLUtesselator* glu_tess = CreateGluTessellator();
+//  // TODO(gwink): Using a fixed-size array to accumulate vertices, for now.
+//  double vertices[64][3];
+//  int vertex_count = 0;
+//  // Iterate over the faces in the component.
+//  Mesh::Halffacet_const_iterator facet;
+//  CGAL_forall_facets(facet, *(component.mesh()->sncp())) {
+//    UserData user_data;
+//    Vector_3 normal = facet->plane().orthogonal_vector();
+//    user_data.triangle_data.normal_x = ToFloat(normal.x());
+//    user_data.triangle_data.normal_y = ToFloat(normal.y());
+//    user_data.triangle_data.normal_z = ToFloat(normal.z());
+//    user_data.tessellator = this;
+//
+//    gluTessBeginPolygon(glu_tess, &user_data);
+//
+//    Mesh::Halffacet_cycle_const_iterator cycle;
+//    CGAL_forall_facet_cycles_of(cycle, facet) {
+//      // Only consider non-trivial cycles.
+//      if (cycle.is_shalfedge()) {
+//        gluTessBeginContour(glu_tess);
+//
+//        // Iterate over vertices of cycle.
+//        Mesh::SHalfedge_const_handle half_edge = cycle;
+//        Mesh::SHalfedge_around_facet_const_circulator circulator(half_edge);
+//        Mesh::SHalfedge_around_facet_const_circulator end(circulator);
+//        CGAL_For_all(circulator, end) {
+//          Point_3 point = circulator->source()->source()->point();
+//
+//          vertices[vertex_count][0] = ToFloat(point.x());
+//          vertices[vertex_count][1] = ToFloat(point.y());
+//          vertices[vertex_count][2] = ToFloat(point.z());
+//          gluTessVertex(glu_tess, vertices[vertex_count],
+//                        vertices[vertex_count]);
+//          ++vertex_count;
+//        }
+//        gluTessEndContour(glu_tess);
+//      }
+//    }
+//    gluTessEndPolygon(glu_tess);
+//  }
+//
+//  gluDeleteTess(glu_tess);
+//}
+
 void Tessellator::Tessellate(const Component& component) {
   GLUtesselator* glu_tess = CreateGluTessellator();
   // TODO(gwink): Using a fixed-size array to accumulate vertices, for now.
   double vertices[64][3];
   int vertex_count = 0;
-  // Iterate over the faces in the component.
-  Mesh::Halffacet_const_iterator facet;
-  CGAL_forall_facets(facet, *(component.mesh()->sncp())) {
+  // Iterate over the facets in the component.
+  Mesh::Facet_const_iterator facet;
+  for (facet = component.mesh()->facets_begin();
+       facet != component.mesh()->facets_end();
+       ++facet) {
     UserData user_data;
-    Vector_3 normal = facet->plane().orthogonal_vector();
+    Mesh::Facet::Halfedge_around_facet_const_circulator  edge;
+    edge = facet->facet_begin();
+
+    // Compute a plane from the first three vertices.
+    Mesh::Facet::Plane_3  plane(edge->vertex()->point(),
+                                edge->next()->vertex()->point(),
+                                edge->next()->next()->vertex()->point());
+    Vector_3 normal = plane.orthogonal_vector();
     user_data.triangle_data.normal_x = ToFloat(normal.x());
     user_data.triangle_data.normal_y = ToFloat(normal.y());
     user_data.triangle_data.normal_z = ToFloat(normal.z());
     user_data.tessellator = this;
 
     gluTessBeginPolygon(glu_tess, &user_data);
+    gluTessBeginContour(glu_tess);
+    do {
+      Point_3 point = edge->vertex()->point();
 
-    Mesh::Halffacet_cycle_const_iterator cycle;
-    CGAL_forall_facet_cycles_of(cycle, facet) {
-      // Only consider non-trivial cycles.
-      if (cycle.is_shalfedge()) {
-        gluTessBeginContour(glu_tess);
-
-        // Iterate over vertices of cycle.
-        Mesh::SHalfedge_const_handle half_edge = cycle;
-        Mesh::SHalfedge_around_facet_const_circulator circulator(half_edge);
-        Mesh::SHalfedge_around_facet_const_circulator end(circulator);
-        CGAL_For_all(circulator, end) {
-          Point_3 point = circulator->source()->source()->point();
-
-          vertices[vertex_count][0] = ToFloat(point.x());
-          vertices[vertex_count][1] = ToFloat(point.y());
-          vertices[vertex_count][2] = ToFloat(point.z());
-          gluTessVertex(glu_tess, vertices[vertex_count],
-                        vertices[vertex_count]);
-          ++vertex_count;
-        }
-        gluTessEndContour(glu_tess);
-      }
-    }
+      vertices[vertex_count][0] = ToFloat(point.x());
+      vertices[vertex_count][1] = ToFloat(point.y());
+      vertices[vertex_count][2] = ToFloat(point.z());
+      gluTessVertex(glu_tess, vertices[vertex_count],
+                    vertices[vertex_count]);
+      ++vertex_count;
+    } while(++edge != facet->facet_begin());
+    gluTessEndContour(glu_tess);
     gluTessEndPolygon(glu_tess);
   }
 
