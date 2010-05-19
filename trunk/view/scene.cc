@@ -8,6 +8,7 @@
 #include "model/model.h"
 #include "osg/Geode"
 #include "osg/Geometry"
+#include "osg/PolygonOffset"
 #include "view/converter.h"
 
 using ginsu::model::Component;
@@ -71,7 +72,10 @@ osg::Node* BuildComponentNode(const Component& component,
   osg::ref_ptr<osg::Geometry> face_geom;
   if (face_shader != NULL) {
     face_geom = new osg::Geometry;
-    face_geom->getOrCreateStateSet()->setAttribute(face_shader);
+    osg::StateSet* state_set = face_geom->getOrCreateStateSet();
+    state_set->setAttribute(face_shader);
+    state_set->setAttributeAndModes(new osg::PolygonOffset(1.0f, 1.0f),
+        osg::StateAttribute::ON);
   }
   osg::ref_ptr<osg::Geometry> edge_geom;
   if (edge_shader != NULL) {
