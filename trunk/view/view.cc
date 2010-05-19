@@ -31,11 +31,11 @@ void View::InitGL() {
   const osg::BoundingSphere& bound = scene_->GetBound();
   const osg::Vec3f& target = bound.center();
   // Eye is along (1.0, -1.0, 0.5) axis.
-  float eye_dist = 4.0f * bound.radius();
+  float eye_dist = 2.5f * bound.radius();
   osg::Vec3 eye = target + osg::Vec3(eye_dist, -eye_dist, 0.5f * eye_dist);
   // Up is along the z-axis.
   osg::Vec3 up(0.0f, 0.0f, 1.0f);
-  scene_view_->SetViewMatrix(osg::Matrix::lookAt(eye, target, up));
+  scene_view_->SetLookAt(eye, target, up);
 }
 
 void View::ReleaseGL() {
