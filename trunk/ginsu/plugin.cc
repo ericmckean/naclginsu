@@ -115,8 +115,7 @@ void Plugin::New(NPMIMEType pluginType,
   //model_->AddComponent(model::Component::MakeCube());
   //model_->AddComponent(model::Component::MakeTruncatedCone(0.3, 1.0));
   view_.reset(new view::View(model_.get()));
-  time(&last_update_);
-  start_time_ = last_update_;
+  last_update_ = clock();
 }
 
 void Plugin::SetWindow(const NPWindow& window) {
@@ -191,13 +190,17 @@ void Plugin::DestroyContext() {
 }
 
 bool Plugin::UpdateAnimation() {
-  time_t now;
-  time(&now);
-  double time_laps = difftime(now, last_update_);
-  if (time_laps < 0.1)
+  static int all_count = 0;
+  static int update_count = 0;
+
+  ++all_count;
+  clock_t now = clock();
+  float time_laps = static_cast<float>(now - last_update_) / CLOCKS_PER_SEC;
+  if (time_laps < 0.2)
     return false;
 
-  model_->UpdateDemo(difftime(now, start_time_));
+  ++update_count;
+  model_->UpdateDemo(difftime(now, last_update_));
   last_update_ = now;
   return true;
 }

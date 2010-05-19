@@ -40,6 +40,10 @@ class Model {
 
  private:
   std::vector<ComponentItem> components_;
+
+  // Subdivision demo.
+  int subdiv_steps_;
+  int steps_increment_;
 };
 
 }  // namespace model

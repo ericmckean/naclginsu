@@ -60,7 +60,9 @@ const char kDemoMesh[] =
 namespace ginsu {
 namespace model {
 
-Model::Model() {
+Model::Model() 
+: subdiv_steps_(0),
+  steps_increment_(1) {
 }
 
 Model::~Model() {
@@ -105,8 +107,14 @@ void Model::UpdateDemo(double time_laps) {
     } else {
       components_[1].reset(Component::MakeCopy(*(components_[0].get())));
     }
-    int steps = static_cast<int>(2.5f + 2.5f * sin(rotation));
-    components_[1]->Subdivide(steps);
+    components_[1]->Subdivide(subdiv_steps_);
+
+    // Increment/decrement the subdivision level. Reverse at 5 and 0.
+    subdiv_steps_ += steps_increment_;
+    if (subdiv_steps_ == 5)
+      steps_increment_ = -1;
+    else if(subdiv_steps_ == 0)
+      steps_increment_ = 1;
   }
 }
 
