@@ -24,7 +24,7 @@ class Component {
   static Component* MakeTruncatedCone(float top_radius, float bottom_radius);
   
   // Store the intersection of c1 * c2 into this.
-  void Intersect(const Component* component1, const Component* component2);
+  //void Intersect(const Component* component1, const Component* component2);
 
   
   // Load the component affine transform in transform[16], in row-major

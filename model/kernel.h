@@ -5,7 +5,8 @@
 #ifndef GINSU_MODEL_KERNEL_H_
 #define GINSU_MODEL_KERNEL_H_
 
-#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+//#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Cartesian.h>
 
 namespace ginsu {
 namespace model {
@@ -13,7 +14,9 @@ namespace model {
 // An exact kernel that supports cartesian coordinates. An exact kernel is
 // required for boolean computations. The cartesian coordinates make it easier
 // to interface with openSceneGraph.
-typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
+//typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
+typedef CGAL::Cartesian<double>     Kernel;
+
 
 // Related types.
 typedef Kernel::Point_3 Point_3;

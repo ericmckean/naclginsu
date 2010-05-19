@@ -148,7 +148,7 @@ class PolyhedronBuilder : public CGAL::Modifier_base<HalfedgeDS> {
 
 Component* Component::MakeEmpty() {
   Component* component = new Component();
-  component->Init(new Mesh(CGAL::Nef_polyhedron_3<Kernel>::EMPTY));
+  component->Init(new Mesh());
   return component;
 }
 
@@ -199,14 +199,14 @@ Component* Component::MakeTruncatedCone(float top_radius,
   return component;
 }
 
-void Component::Intersect(const Component* component1,
-                          const Component* component2) {
-  // Make a copy of mesh 1.
-  Mesh* result = new Mesh(*(component1->mesh()));
-  // Intersect with mesh 2.
-  *(result) *= *(component2->mesh());
-  Init(result);
-}
+//void Component::Intersect(const Component* component1,
+//                          const Component* component2) {
+//  // Make a copy of mesh 1.
+//  Mesh* result = new Mesh(*(component1->mesh()));
+//  // Intersect with mesh 2.
+//  *(result) *= *(component2->mesh());
+//  Init(result);
+//}
 
 void Component::GetTransformMatrix44(float transform[16]) const {
   int index = 0;
@@ -228,7 +228,7 @@ void Component::SetTransform(const float transform[16]) {
 }
 
 bool Component::IsEmpty() const {
-  return original_mesh_->is_empty();
+  return original_mesh_->empty();
 }
 
 Component::Component() {
@@ -243,7 +243,7 @@ void Component::Init(Mesh* mesh) {
 const Mesh* Component::mesh() const {
   if (mesh_ == NULL) {
     mesh_.reset(new Mesh(*original_mesh_));
-    mesh_->transform(*transform_);
+    //mesh_->transform(*transform_);
   }
   return mesh_.get();
 }
