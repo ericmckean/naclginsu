@@ -114,10 +114,11 @@ void Scene::Update() {
   osg::Group* root = root_->asGroup();
   root->removeChildren(0, root->getNumChildren());
 
+  int i = 0;
   for (Model::const_iterator iter = model_->begin_component();
-       iter != model_->end_component(); ++iter) {
+       iter != model_->end_component(); ++iter, ++i) {
     osg::Node* node = BuildComponentNode(*(iter->get()),
-        face_shader_, edge_shader_);
+      (i < 1) ? NULL : face_shader_, edge_shader_);
     root->addChild(node);
   }
 }

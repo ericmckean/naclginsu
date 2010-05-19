@@ -22,10 +22,15 @@ class Component {
   // Make a truncated cone centered on the y-axis, between Z = 0 and Z =1 and
   // of given radii. At least one radius must be non-zero.
   static Component* MakeTruncatedCone(float top_radius, float bottom_radius);
-  
+  // Make a copy.
+  static Component* MakeCopy(const Component& component);
+
   // Store the intersection of c1 * c2 into this.
   //void Intersect(const Component* component1, const Component* component2);
 
+  // Subdivide the mesh using num_steps steps of Catmull-Clark.
+  void Subdivide(int num_steps);
+  
   void ReadOffStream(std::istream& input_stream);
 
   // Load the component affine transform in transform[16], in row-major

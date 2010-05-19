@@ -77,6 +77,7 @@ void Model::Clear() {
   components_.clear();
 }
 
+
 void Model::InitDemo() {
   std::stringstream off_stream;
   off_stream.str(kDemoMesh);
@@ -87,6 +88,26 @@ void Model::InitDemo() {
 }
 
 void Model::UpdateDemo(double time_laps) {
+  static const float kTwoPi = 6.283f;
+  if(components_.size() > 0 && components_[0] != NULL) {
+    // TODO(gwink): Use cgal AffineTransform3D instead, to be consistent. Then
+    // remove dependency on osg from scons file. 
+    osg::Matrix rotate;
+    const static osg::Vec3 axis(0.2f, 0.0f, 0.5f);
+    float rotation = 0.1f * static_cast<float>(time_laps);
+    if (rotation > kTwoPi) rotation -= kTwoPi;
+    rotate.makeRotate(rotation, axis);
+    components_[0]->SetTransform(rotate.ptr());
+
+    // Make a copy of component 0 and subdivide it.
+    if (components_.size() < 2) {
+      AddComponent(Component::MakeCopy(*(components_[0].get())));
+    } else {
+      components_[1].reset(Component::MakeCopy(*(components_[0].get())));
+    }
+    int steps = static_cast<int>(2.5f + 2.5f * sin(rotation));
+    components_[1]->Subdivide(steps);
+  }
 }
 
 //void Model::DemoComputeIntersection() {

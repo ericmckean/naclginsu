@@ -7,6 +7,7 @@
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
+#include <CGAL/Subdivision_method_3.h>
 
 namespace ginsu {
 namespace model {
@@ -159,17 +160,17 @@ Component* Component::MakeCube() {
   // and use a series of euler operator to transform it into a cube.
   Polyhedron_3 p;
   HalfEdge e, f, g, h;
-  h = p.make_tetrahedron(Point_3(1.0, 0.0, 0.0),
-                         Point_3(0.0, 0.0, 1.0),
-                         Point_3(0.0, 0.0, 0.0),
-                         Point_3(0.0, 1.0, 0.0));
+  h = p.make_tetrahedron(Point_3(1.0, -1.0, -1.0),
+                         Point_3(-1.0, -1.0, 1.0),
+                         Point_3(-1.0, -1.0, -1.0),
+                         Point_3(-1.0, 1.0, -1.0));
   g = h->next()->opposite()->next();
   p.split_edge(h->next());
   p.split_edge(g->next());
   p.split_edge(g);
-  h->next()->vertex()->point() = Point_3(1.0, 0.0, 1.0);
-  g->next()->vertex()->point() = Point_3(0.0, 1.0, 1.0);
-  g->opposite()->vertex()->point() = Point_3(1.0, 1.0, 0.0);
+  h->next()->vertex()->point() = Point_3(1.0, -1.0, 1.0);
+  g->next()->vertex()->point() = Point_3(-1.0, 1.0, 1.0);
+  g->opposite()->vertex()->point() = Point_3(1.0, 1.0, -1.0);
   f = p.split_facet(g->next(), g->next()->next()->next());
   e = p.split_edge(f);
   e->vertex()->point() = Point_3(1.0, 1.0, 1.0);
@@ -200,6 +201,12 @@ Component* Component::MakeTruncatedCone(float top_radius,
   return component;
 }
 
+Component* Component::MakeCopy(const Component& component) {
+  Component* copy = MakeEmpty();
+  copy->Init(new Mesh(*(component.mesh())));
+  return copy;
+}
+
 void Component::ReadOffStream(std::istream& input_stream) {
   //CGAL::Polyhedron_3<Kernel> polyhedron;
   //input_stream >> polyhedron;
@@ -215,6 +222,12 @@ void Component::ReadOffStream(std::istream& input_stream) {
 //  *(result) *= *(component2->mesh());
 //  Init(result);
 //}
+
+void Component::Subdivide(int num_steps) {
+  CGAL::Subdivision_method_3::CatmullClark_subdivision(
+      *(original_mesh_.get()), num_steps);
+
+}
 
 void Component::GetTransformMatrix44(float transform[16]) const {
   int index = 0;
@@ -249,11 +262,11 @@ void Component::Init(Mesh* mesh) {
 }
 
 const Mesh* Component::mesh() const {
-  if (mesh_ == NULL) {
-    mesh_.reset(new Mesh(*original_mesh_));
+  //if (mesh_ == NULL) {
+  //  mesh_.reset(new Mesh(*original_mesh_));
     //mesh_->transform(*transform_);
-  }
-  return mesh_.get();
+  //}
+  return original_mesh_.get();
 }
 
 }  // namespace model

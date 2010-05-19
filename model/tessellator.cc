@@ -73,9 +73,6 @@ namespace model {
 
 void Tessellator::Tessellate(const Component& component) {
   GLUtesselator* glu_tess = CreateGluTessellator();
-  // TODO(gwink): Using a fixed-size array to accumulate vertices, for now.
-  double vertices[64][3];
-  int vertex_count = 0;
   // Iterate over the facets in the component.
   Mesh::Facet_const_iterator facet;
   for (facet = component.mesh()->facets_begin();
@@ -95,6 +92,9 @@ void Tessellator::Tessellate(const Component& component) {
     user_data.triangle_data.normal_z = ToFloat(normal.z());
     user_data.tessellator = this;
 
+    // TODO(gwink): Using a fixed-size array to accumulate vertices, for now.
+    double vertices[64][3];
+    int vertex_count = 0;
     gluTessBeginPolygon(glu_tess, &user_data);
     gluTessBeginContour(glu_tess);
     do {
