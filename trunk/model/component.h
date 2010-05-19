@@ -26,7 +26,8 @@ class Component {
   // Store the intersection of c1 * c2 into this.
   //void Intersect(const Component* component1, const Component* component2);
 
-  
+  void ReadOffStream(std::istream& input_stream);
+
   // Load the component affine transform in transform[16], in row-major
   // order. (The translation parts are stored in t[3][0-2].)
   void GetTransformMatrix44(float transform[16]) const;

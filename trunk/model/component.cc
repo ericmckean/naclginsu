@@ -4,6 +4,7 @@
 
 #include "model/component.h"
 #include "model/mesh.h"
+#include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 
@@ -197,6 +198,13 @@ Component* Component::MakeTruncatedCone(float top_radius,
     component->Init(new Mesh(cone));
   }
   return component;
+}
+
+void Component::ReadOffStream(std::istream& input_stream) {
+  //CGAL::Polyhedron_3<Kernel> polyhedron;
+  //input_stream >> polyhedron;
+  //Init(new Mesh(polyhedron));
+  input_stream >> *original_mesh_;
 }
 
 //void Component::Intersect(const Component* component1,
