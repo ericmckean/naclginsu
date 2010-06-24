@@ -30,6 +30,13 @@ deps = {
     Var("nativeclient-sdk_version"),
 }
 
+deps_os = {
+  "mac": {
+  "trunk/third_party/chromium/src/gpu/OpenGLES/ES2":
+    Var("chromium_trunk") + "src/gpu/GLES2@" + Var("chromium_version"),
+  },
+}
+
 hooks = [
    {
      "pattern": ".",

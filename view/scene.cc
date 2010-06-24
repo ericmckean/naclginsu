@@ -30,7 +30,7 @@ osg::Program* BuildFaceShader() {
       "  gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
       "}\n";
   char frag_shader_src[] =
-      "precision highp float;\n"
+      "//precision highp float;\n"
       "varying vec4 color;\n"
       "void main(void) {\n"
       "  gl_FragColor = color;\n"
@@ -50,7 +50,7 @@ osg::Program* BuildEdgeShader() {
       "  gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
       "}\n";
   char frag_shader_src[] =
-      "precision highp float;\n"
+      "//precision highp float;\n"
       "void main(void) {\n"
       "  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n"
       "}\n";

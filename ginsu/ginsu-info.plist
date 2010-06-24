@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>ginsu</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.google.ginsu</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>ginsu</string>
+	<key>CFBundlePackageType</key>
+	<string>BRPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+	<key>WebPluginDescription</key>
+	<string>Ginsu application</string>
+	<key>WebPluginMIMETypes</key>
+	<dict>
+		<key>pepper-application/ginsu</key>
+		<dict>
+			<key>WebPluginTypeDescription</key>
+			<string>Ginsu</string>
+			<key>WebPluginExtensions</key>
+			<array>
+				<string>plugin</string>
+			</array>
+		</dict>
+	</dict>
+	<key>WebPluginName</key>
+	<string>Google Ginsu</string>
+	<key>CSResourcesFileMapped</key>
+	<string>yes</string>
+</dict>
+</plist>
