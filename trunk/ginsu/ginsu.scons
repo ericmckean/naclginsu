@@ -19,9 +19,6 @@ ginsu_sources = [
   'ginsu.cc',
   'plugin.cc',
 ]
-if env.Bit('windows'):
-  ginsu_sources += ['plugin.def']
-  ginsu_sources += env.RES('plugin.rc')
 
 ginsu_input_libs = [
   'ginsu_view',
@@ -36,11 +33,53 @@ ginsu_input_libs = [
   'glu_tessellator',
 ]
 
-env.ComponentLibrary(
-  'ginsu',
-  ginsu_sources,
-  LIBS = ginsu_input_libs,
-  COMPONENT_STATIC=False,
-  COMPONENT_LIBRARY_PUBLISH=True,
-  COMPONENT_LIBRARY_LINK_SUFFIXES=[],
-)
+if env.Bit('windows'):
+  ginsu_sources += ['plugin.def']
+  ginsu_sources += env.RES('plugin.rc')
+  
+  env.ComponentLibrary(
+    'ginsu',
+    ginsu_sources,
+    LIBS = ginsu_input_libs,
+    COMPONENT_STATIC=False,
+    COMPONENT_LIBRARY_PUBLISH=True,
+    COMPONENT_LIBRARY_LINK_SUFFIXES=[],
+  )
+
+if env.Bit('mac'):
+  mac_plugin_env = env.Clone(
+        LINKFLAGS = ['-bundle', '-framework', 'Foundation'])
+  # Build the ginsu binary
+  binary = mac_plugin_env.ComponentProgram('ginsu',
+                                           ginsu_sources,
+                                           LIBS = ginsu_input_libs,
+                                           COMPONENT_STATIC=False,
+                                           COMPONENT_LIBRARY_PUBLISH=True,
+                                           COMPONENT_LIBRARY_LINK_SUFFIXES=[])
+  # Create resource fork
+  RESOURCE_DIR = env.SubstList2('${MAIN_DIR}')[0] + '/ginsu/'
+  RESOURCE_DESC = RESOURCE_DIR + 'ginsu.r' 
+  RESOURCE_FORK = 'ginsu.rsrc'
+  REZ = '/Developer/Tools/Rez'
+  env.Command(target = RESOURCE_FORK,
+              source = RESOURCE_DESC,
+              action = [Action(REZ + ' -o ${TARGET} ${SOURCE} -useDF')])
+  # Create bundle plist
+  PLIST_FILE = 'Info.plist'
+  ACTION = ("cp -f ${SOURCE} ${TARGET};"
+            "chmod +w ${TARGET};"
+            "/usr/libexec/PlistBuddy -c 'Set :CFBundleExecutable ginsu' ${TARGET};"
+            "/usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.google.ginsu' ${TARGET};"
+            "/usr/libexec/PlistBuddy -c 'Set :CFBundleName ginsu' ${TARGET}")
+
+  env.Command(target = PLIST_FILE,
+              source = RESOURCE_DIR + 'ginsu-info.plist',
+              action = [Action(ACTION)])
+
+
+  plugin_name = '${STAGING_DIR}/' + 'ginsu.plugin'
+  mac_plugin_env.Bundle(plugin_name,
+                        BUNDLE_EXE = binary[0],
+                        BUNDLE_INFO_PLIST = [PLIST_FILE],
+                        BUNDLE_PKGINFO_FILENAME = 0,
+                        BUNDLE_RESOURCES = RESOURCE_FORK)

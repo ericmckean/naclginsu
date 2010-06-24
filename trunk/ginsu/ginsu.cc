@@ -171,7 +171,7 @@ EXPORT NPError API_CALL NP_GetValue(NPP instance, NPPVariable variable,
 }
 
 EXPORT char* API_CALL NP_GetMIMEDescription() {
-  return "pepper-application/x-ginsu:ginsu:3D modeling application";
+  return "pepper-application/ginsu:3D modeling application";
 }
 #endif  // OS_LINUX
 }  // extern "C"

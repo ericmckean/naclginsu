@@ -56,8 +56,8 @@ mac_env = base_env.Clone(
 
 mac_dbg_env = mac_env.Clone(
   BUILD_GROUPS = ['default'],
-  BUILD_TYPE = 'dbg',
-  tools = ['target_debug'],
+  BUILD_TYPE = 'opt-mac',
+  tools = ['target_optimized'],
 )
 environment_list.append(mac_dbg_env)
 
