@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "model/component.h"
+
 #include "model/mesh.h"
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/Polyhedron_3.h>

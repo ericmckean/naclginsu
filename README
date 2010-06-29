@@ -1,0 +1,30 @@
+Welcome to the Ginsu
+
+Updated: 29 June 2010
+
+If you want to contribute to Ginsu development, please follow the instructions below.
+Ginsu development is done primarily on Linux, either 32-bit or 64-bit.
+
+DEVLEOPMENT ENVIRONMENT
+Download the Native Client SDK from
+http://build.chromium.org/buildbot/nacl_archive/nacl_new_sdk/naclsdk_linux.tgz and
+unpack at any desired location <naclsdk_root>.
+Set environment variable NACL_SDK_BASE so the toolchain can be found by the
+development environment.  It should be set to <naclsdk_root>/toolchain/linux_x86
+This can be done in the command line as follows.
+
+  export NACL_SDK_BASE=<naclsdk_root>/toolchain/linux_x86
+
+Ginsu depends on the following packages from NalPorts:
+  boost
+  OpenScegeGraph
+
+Install the packages Ginsu into the toolchain using a python script in the Ginsu
+project:
+
+  python <ginsu_root>/scripts/setup_naclports_packages.py
+
+Finally, build Ginsu:
+
+  cd <ginsu_root>
+  ./hammer.sh
