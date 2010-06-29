@@ -7,16 +7,17 @@
 """ Main scons script for Ginsu builds.
 """
 
+import os
+
+if os.getenv('NACL_SDK_BASE') is None:
+    raise AssertionError, "NACL_SDK_BASE must be defined."
+
 environment_list = []
 
 base_env = Environment(
   tools = ['component_setup'],
   BUILD_SCONSCRIPTS = [
-    '$MAIN_DIR/third_party/boost/boost.scons',
-    '$MAIN_DIR/third_party/cgal/cgal.scons',
-    '$MAIN_DIR/third_party/chromium/chromium.scons',
     '$MAIN_DIR/third_party/glu_tessellator/glu_tessellator.scons',
-    '$MAIN_DIR/third_party/openscenegraph/openscenegraph.scons',
     '$MAIN_DIR/ginsu/ginsu.scons',
     '$MAIN_DIR/model/model.scons',
     '$MAIN_DIR/view/view.scons',
@@ -24,75 +25,36 @@ base_env = Environment(
   CPPPATH = ['$MAIN_DIR'],
   CPPDEFINES = [
     'BOOST_ALL_NO_LIB',
-    'CGAL_NO_AUTOLINK_CGAL',
-    'CGAL_NDEBUG',
+    'CGAL_NO_AUTOLINK_CGAL'
   ],
 )
 
-# -----------------------------------------------------------------------------
-# Linux environment
-linux_env = base_env.Clone(
-  tools = ['target_platform_linux'],
-  CCFLAGS = [
-    '-fPIC',
-    '-frounding-math',
-    '-fvisibility=hidden',
-    '-fvisibility-inlines-hidden',
-  ],
+#-----------------------------------------------------------------------------
+# Build environment for NaCl module
+nacl_env = base_env.Clone(
+    tools = ['naclsdk'],
+    BUILD_GROUPS = ['default'],
+    BUILD_TYPE_DESCRIPTION = 'NaCl module',
+    BUILD_TYPE = 'nacl',
+    LIBS = ['google_nacl_imc',
+            'google_nacl_npruntime',
+            'pthread',
+            'srpc'],
+    NATIVE_CLIENT_SDK_DEFAULT_MODE='custom:' + os.getenv('NACL_SDK_BASE')
 )
 
-linux_dbg_env = linux_env.Clone(
-  BUILD_GROUPS = ['default'],
-  BUILD_TYPE = 'dbg',
-  tools = ['target_debug'],
+nacl_dbg_env = nacl_env.Clone(
+        BUILD_GROUPS = ['default'],
+        BUILD_TYPE = 'dbg',
+        tools = ['target_debug']
 )
-environment_list.append(linux_dbg_env)
+environment_list.append(nacl_dbg_env)
 
-# -----------------------------------------------------------------------------
-# OS X environment
-mac_env = base_env.Clone(
-  tools = ['target_platform_mac'],
+nacl_opt_env = nacl_env.Clone(
+        BUILD_GROUPS = ['default'],
+        BUILD_TYPE = 'opt',
+        tools = ['target_optimized']
 )
+environment_list.append(nacl_opt_env)
 
-mac_dbg_env = mac_env.Clone(
-  BUILD_GROUPS = ['default'],
-  BUILD_TYPE = 'opt-mac',
-  tools = ['target_optimized'],
-)
-environment_list.append(mac_dbg_env)
-
-# -----------------------------------------------------------------------------
-# Windows environment
-windows_env = base_env.Clone(
-  tools = ['target_platform_windows'],
-)
-windows_env.Append(
-  CPPDEFINES = [
-    '_CRT_SECURE_NO_DEPRECATE',
-    '_SCL_SECURE_NO_WARNINGS',
-    'NOMINMAX',
-    '_UNICODE',
-    'UNICODE',
-    '_WINDOWS',
-    'WIN32',
-    'WIN32_LEAN_AND_MEAN',
-  ],
-  ENABLE_EXCEPTIONS = True,
-)
-
-windows_dbg_env = windows_env.Clone(
-  BUILD_GROUPS = ['default'],
-  BUILD_TYPE = 'dbg',
-  tools = ['target_debug'],
-)
-environment_list.append(windows_dbg_env)
-
-windows_opt_env = windows_env.Clone(
-  BUILD_TYPE = 'opt',
-  tools = ['target_optimized'],
-)
-environment_list.append(windows_opt_env)
-
-# -----------------------------------------------------------------------------
-# Process the build environments
-BuildEnvironments(environment_list)
+BuildComponents(environment_list)

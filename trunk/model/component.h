@@ -5,6 +5,8 @@
 #ifndef GINSU_MODEL_COMPONENT_H_
 #define GINSU_MODEL_COMPONENT_H_
 
+#include <istream>
+
 #include "boost/scoped_ptr.hpp"
 
 namespace ginsu {

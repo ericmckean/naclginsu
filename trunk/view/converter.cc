@@ -4,6 +4,8 @@
 
 #include "view/converter.h"
 
+#include <string.h>
+
 #include "model/component.h"
 #include "osg/Geometry"
 
