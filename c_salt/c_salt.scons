@@ -6,14 +6,10 @@
 
 Import('env')
 
-ginsu_input_libs = [
-  'ginsu_view',
-  'ginsu_model',
-  'osgUtil',
-  'osg',
-  'OpenThreads',
-  'pgl',
-  'gles2',
-  'CGAL',
-  'glu_tessellator',
+# Build the model library.
+c_salt_sources = [
+  'npp_gate.cc'
 ]
+
+env.ComponentLibrary('c_salt_sources', c_salt_sources, COMPONENT_STATIC = True)
+env.Append(LIBS=['c_salt'])

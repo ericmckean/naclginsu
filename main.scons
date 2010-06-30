@@ -8,9 +8,17 @@
 """
 
 import os
+import sys
 
 if os.getenv('NACL_SDK_BASE') is None:
-    raise AssertionError, "NACL_SDK_BASE must be defined."
+  sys.stderr.write('NACL_SDK_BASE must be defined as the root directory of NaCl'
+                   'toolchain.\n')
+  sys.exit(1)
+if not os.path.exists(os.path.join(os.getenv('NACL_SDK_BASE'), 'nacl', 'usr',
+                                             'include', 'boost')):
+  sys.stderr.write('Your NaCl toolchain does not have the necessary packages\n'
+                   'Run scripts/setup_naclports_packages.py\n')
+  sys.exit(1)
 
 environment_list = []
 
@@ -18,6 +26,7 @@ base_env = Environment(
   tools = ['component_setup'],
   BUILD_SCONSCRIPTS = [
     '$MAIN_DIR/third_party/glu_tessellator/glu_tessellator.scons',
+    '$MAIN_DIR/c_salt/c_salt.scons',
     '$MAIN_DIR/ginsu/ginsu.scons',
     '$MAIN_DIR/model/model.scons',
     '$MAIN_DIR/view/view.scons',
