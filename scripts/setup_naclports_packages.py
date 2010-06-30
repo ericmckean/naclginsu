@@ -11,6 +11,7 @@ __author__ = 'sanga@google.com (Sang Ahn)'
 
 
 import os
+import shutil
 import subprocess
 
 def setup_packages():
@@ -19,10 +20,10 @@ def setup_packages():
   # get the packages from svn
   subprocess.call(["svn",
                    "checkout",
-                   "http://naclports.googlecode.com/svn/trunk@40",
-                   "naclports"])
+                   "http://naclports.googlecode.com/svn/trunk@42",
+                   ".naclports"])
   # cd in the packages directory.
-  path = os.path.join("naclports", "src", "packages", "scripts")
+  path = os.path.join(".naclports", "src", "packages", "scripts")
   os.chdir(path)
   # cd into boost
   os.chdir('boost_1_43_0')
@@ -32,6 +33,9 @@ def setup_packages():
   os.chdir('../OpenSceneGraph-2.9.7')
   # kick off script
   subprocess.call(['./nacl-OpenSceneGraph-2.9.7.sh'])
+  # cleanup
+  os.chdir('../../../../..')
+  shutil.rmtree('.naclports')
 
 if __name__ == '__main__':
   setup_packages()
