@@ -1,16 +1,13 @@
-// Copyright 2010 The Native Client SDK Authors. All rights reserved.
+// Copyright 2010 The Ginsu Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can
 // be found in the LICENSE file.
 
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#if defined (__native_client__)
+
 #include <nacl/npupp.h>
-#else
-#include "third_party/npapi/bindings/npapi.h"
-#include "third_party/npapi/bindings/nphostapi.h"
-#endif
+
 #include <new>
 
 #include "c_salt/module.h"
@@ -18,8 +15,6 @@
 using c_salt::Module;
 using c_salt::ScriptingBridge;
 
-// Please refer to the Gecko Plugin API Reference for the description of
-// NPP_New.
 NPError NPP_New(NPMIMEType mime_type,
                 NPP instance,
                 uint16_t mode,
@@ -60,7 +55,7 @@ NPError NPP_Destroy(NPP instance, NPSavedData** save) {
   return NPERR_NO_ERROR;
 }
 
-// NPP_GetScriptableInstance retruns the NPObject pointer that corresponds to
+// NPP_GetScriptableInstance returns the NPObject pointer that corresponds to
 // NPPVpluginScriptableNPObject queried by NPP_GetValue() from the browser.
 NPObject* NPP_GetScriptableInstance(NPP instance) {
   if (instance == NULL || instance->pdata == NULL) {

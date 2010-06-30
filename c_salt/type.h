@@ -1,4 +1,4 @@
-// Copyright 2010 The Native Client SDK Authors. All rights reserved.
+// Copyright 2010 The Ginsu Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can
 // be found in the LICENSE file.
 
@@ -43,7 +43,7 @@ class Type {
   static Type* CreateFromNPVariant(const NPVariant& np_var);
 
   // Create a new TypeArray from the contents of |np_array|.  The caller is
-  // responsible for freeing the resulting array.
+  // responsible for deleting the resulting array.
   static TypeArray* CreateArrayFromNPVariant(const ScriptingBridge* bridge,
                                              const NPVariant& np_array);
 
