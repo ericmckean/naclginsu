@@ -1,4 +1,4 @@
-// Copyright 2010 The Native Client SDK Authors. All rights reserved.
+// Copyright 2010 The Ginsu Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can
 // be found in the LICENSE file.
 
@@ -15,7 +15,7 @@ namespace c_salt {
 
 class ScriptingBridge;
 
-// The main class for the Native Client module.  Subclassers must implement the
+// The main class for the Native Client module.  Subclasses must implement the
 // CreateModule() factory method.  An instance of this object is owned by the
 // ScriptingBridge.
 
