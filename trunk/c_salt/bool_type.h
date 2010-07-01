@@ -14,7 +14,7 @@ class BoolType : public Type {
   explicit BoolType(bool bool_value);
   virtual ~BoolType();
 
-  virtual int32 int32_value() const {
+  virtual int32_t int32_value() const {
     return bool_value() ? 1 : 0;
   }
   virtual double double_value() const {

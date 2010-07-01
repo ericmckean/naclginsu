@@ -38,7 +38,7 @@ bool StringType::bool_value() const {
   return ch == 'y' || ch == '1' || ch == 't';
 }
 
-int32 StringType::int32_value() const {
+int32_t StringType::int32_value() const {
   return string_value() ? atol(string_value()->c_str()) : 0;
 }
 

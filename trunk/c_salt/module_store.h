@@ -21,13 +21,7 @@ class Module;
 class ModuleStore {
  public:
   // Return the singleton, creating it if needed.
-  ModuleStore* SharedModuleStore();
-
-  void AddModuleForInstance(Module* module, NPP instance);
-  void RemoveModule(Module* module);
-
-  NPP InstanceForModule(const Module* module) const;
-  Module* ModuleForInstance(const NPP instance) const;
+  static ModuleStore* SharedModuleStore();
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(ModuleStore);

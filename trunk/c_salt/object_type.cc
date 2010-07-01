@@ -31,7 +31,7 @@ bool ObjectType::bool_value() const {
   return false;
 }
 
-int32 ObjectType::int32_value() const {
+int32_t ObjectType::int32_value() const {
   return 0;
 }
 

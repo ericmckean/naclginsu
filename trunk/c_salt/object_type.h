@@ -20,7 +20,7 @@ class ObjectType : public Type {
   bool CreateNPVariantCopy(NPVariant& np_var);
 
   virtual bool bool_value() const;
-  virtual int32 int32_value() const;
+  virtual int32_t int32_value() const;
   virtual double double_value() const;
 
   NPObject* object_value() const {
