@@ -44,8 +44,6 @@ NPError NPP_New(NPMIMEType mime_type,
   return NPERR_NO_ERROR;
 }
 
-// Please refer to the Gecko Plugin API Reference for the description of
-// NPP_Destroy.
 NPError NPP_Destroy(NPP instance, NPSavedData** save) {
   if (instance == NULL) {
     return NPERR_INVALID_INSTANCE_ERROR;
@@ -109,7 +107,7 @@ NPError NPP_SetWindow(NPP instance, NPWindow* window) {
     module_instance->InstanceDidLoad(instance, window->width, window->height);
     module_instance->set_is_loaded(true);
   }
-  module_instance->WindowDidChangeSize(window->width, window->height);
+  module_instance->WindowDidChangeSize(instance, window->width, window->height);
   return NPERR_NO_ERROR;
 }
 

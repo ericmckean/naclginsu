@@ -2,176 +2,135 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "ginsu/plugin.h"
+#include "ginsu/ginsu.h"
 
-#if __GNUC__ >= 4
-#define EXPORT __attribute__ ((visibility("default")))
-#else
-#define EXPORT
-#endif  // GNUC
+#include <cassert>
+
+#include <string.h>
+
+#include "c_salt/module.h"
+#include "model/component.h"
+#include "model/model.h"
+#include "view/view.h"
+
+NPDevice* NPN_AcquireDevice(NPP instance, NPDeviceID device);
+const int32_t kCommandBufferSize = 1024 * 1024;
+
+// The c_salt module allocator.
+namespace c_salt {
+
+Module* Module::CreateModule() {
+  return new ginsu::Ginsu();
+}
+
+}
 
 namespace ginsu {
-// NPP entry points.
-NPError NPP_New(NPMIMEType pluginType,
-                NPP instance,
-                uint16 mode,
-                int16 argc, char* argn[], char* argv[],
-                NPSavedData* saved) {
-  if (g_browser->version < NPVERS_HAS_PLUGIN_THREAD_ASYNC_CALL) {
-    return NPERR_INCOMPATIBLE_VERSION_ERROR;
+
+Ginsu::Ginsu() : npp_instance_(NULL), device3d_(NULL) {
+  memset(&context3d_, 0, sizeof(context3d_));
+  model_.reset(new model::Model);
+  model_->InitDemo();
+  //model_->AddComponent(model::Component::MakeCube());
+  //model_->AddComponent(model::Component::MakeTruncatedCone(0.3, 1.0));
+  view_.reset(new view::View(model_.get()));
+  last_update_ = clock();
+}
+
+Ginsu::~Ginsu() {
+  pglMakeCurrent(pgl_context_);
+  view_->ReleaseGL();
+  pglMakeCurrent(PGL_NO_CONTEXT);
+  DestroyContext(npp_instance_);
+}
+
+bool Ginsu::InstanceDidLoad(const NPP instance, int width, int height) {
+  npp_instance_ = instance;
+  device3d_ = NPN_AcquireDevice(npp_instance_, NPPepper3DDevice);
+  assert(device3d_);
+  if (!pgl_context_) {
+    CreateContext(npp_instance_);
+    // Schedule first call to Tick.
+    NPN_PluginThreadAsyncCall(npp_instance_, TickCallback, this);
+  }
+  return true;
+}
+
+void Ginsu::WindowDidChangeSize(const NPP instance, int width, int height) {
+  view_->SetWindowSize(width, height);
+}
+
+void Ginsu::RepaintCallback(NPP npp, NPDeviceContext3D* /* context */) {
+  Ginsu* ginsu = static_cast<Ginsu*>(npp->pdata);
+  ginsu->Paint();
+}
+
+void Ginsu::TickCallback(void* data) {
+  static_cast<ginsu::Ginsu*>(data)->Tick();
+}
+
+
+void Ginsu::Tick() {
+  if (UpdateAnimation())
+    Paint();
+  // Schedule another call to Tick.
+  NPN_PluginThreadAsyncCall(npp_instance_, TickCallback, this);
+}
+
+void Ginsu::Paint() {
+  if (!pglMakeCurrent(pgl_context_) && pglGetError() == PGL_CONTEXT_LOST) {
+    DestroyContext(npp_instance_);
+    CreateContext(npp_instance_);
+    pglMakeCurrent(pgl_context_);
   }
 
-  Plugin* plugin = static_cast<Plugin*>(
-      g_browser->createobject(instance, Plugin::GetPluginClass()));
-  instance->pdata = plugin;
-  plugin->New(pluginType, argc, argn, argv);
-
-  return NPERR_NO_ERROR;
+  view_->Draw();
+  pglSwapBuffers();
+  pglMakeCurrent(PGL_NO_CONTEXT);
 }
 
-NPError NPP_Destroy(NPP instance, NPSavedData** save) {
-  Plugin* plugin = static_cast<Plugin*>(instance->pdata);
-  if (plugin) g_browser->releaseobject(plugin);
+void Ginsu::CreateContext(const NPP instance) {
+  assert(pgl_context_ == PGL_NO_CONTEXT);
 
-  return NPERR_NO_ERROR;
+  // Initialize a 3D context.
+  NPDeviceContext3DConfig config;
+  config.commandBufferSize = kCommandBufferSize;
+  device3d_->initializeContext(instance, &config, &context3d_);
+  context3d_.repaintCallback = RepaintCallback;
+
+  // Create a PGL context.
+  pgl_context_ = pglCreateContext(instance, device3d_, &context3d_);
+
+  // Initialize GL resources.
+  pglMakeCurrent(pgl_context_);
+  view_->InitGL();
+  pglMakeCurrent(PGL_NO_CONTEXT);
 }
 
-NPError NPP_SetWindow(NPP instance, NPWindow* window) {
-  Plugin* plugin = static_cast<Plugin*>(instance->pdata);
-  if (plugin) plugin->SetWindow(*window);
+void Ginsu::DestroyContext(const NPP instance) {
+  assert(pgl_context_ != PGL_NO_CONTEXT);
 
-  return NPERR_NO_ERROR;
+  pglDestroyContext(pgl_context_);
+  pgl_context_ = PGL_NO_CONTEXT;
+
+  device3d_->destroyContext(instance, &context3d_);
 }
 
-NPError NPP_NewStream(NPP instance,
-                      NPMIMEType type,
-                      NPStream* stream,
-                      NPBool seekable,
-                      uint16* stype) {
-  *stype = NP_ASFILEONLY;
-  return NPERR_NO_ERROR;
+bool Ginsu::UpdateAnimation() {
+  static int all_count = 0;
+  static int update_count = 0;
+
+  ++all_count;
+  clock_t now = clock();
+  float time_laps = static_cast<float>(now - last_update_) / CLOCKS_PER_SEC;
+  if (time_laps < 0.2)
+    return false;
+
+  ++update_count;
+  model_->UpdateDemo(difftime(now, last_update_));
+  last_update_ = now;
+  return true;
 }
 
-NPError NPP_DestroyStream(NPP instance, NPStream* stream, NPReason reason) {
-  return NPERR_NO_ERROR;
-}
-
-void NPP_StreamAsFile(NPP instance, NPStream* stream, const char* fname) {
-}
-
-int32 NPP_Write(NPP instance,
-                NPStream* stream,
-                int32 offset,
-                int32 len,
-                void* buffer) {
-  return 0;
-}
-
-int32 NPP_WriteReady(NPP instance, NPStream* stream) {
-  return 0;
-}
-
-void NPP_Print(NPP instance, NPPrint* platformPrint) {
-}
-
-int16 NPP_HandleEvent(NPP instance, void* event) {
-  Plugin* plugin = static_cast<Plugin*>(instance->pdata);
-
-  if (plugin)
-    return plugin->HandleEvent(*static_cast<NPPepperEvent*>(event));
-
-  return 0;
-}
-
-void NPP_URLNotify(NPP instance, const char* url, NPReason reason,
-                   void* notify_data) {
-}
-
-NPError NPP_GetValue(NPP instance, NPPVariable variable, void* value) {
-  NPError err = NPERR_NO_ERROR;
-
-  switch (variable) {
-#if defined(OS_LINUX)
-    case NPPVpluginNameString:
-      *(static_cast<const char**>(value)) = "Ginsu";
-      break;
-    case NPPVpluginDescriptionString:
-      *(static_cast<const char**>(value)) =
-          "3D modeling application in the web browser";
-      break;
-    case NPPVpluginNeedsXEmbed:
-      *(static_cast<NPBool*>(value)) = TRUE;
-      break;
-#endif
-    case NPPVpluginScriptableNPObject: {
-      void** v = static_cast<void**>(value);
-      Plugin* plugin = static_cast<Plugin*>(instance->pdata);
-      // Return value is expected to be retained
-      g_browser->retainobject(plugin);
-      *v = plugin;
-      break;
-    }
-    default:
-      err = NPERR_GENERIC_ERROR;
-      break;
-  }
-
-  return err;
-}
-
-NPError NPP_SetValue(NPP instance, NPNVariable variable, void* value) {
-  return NPERR_GENERIC_ERROR;
-}
 }  // namespace ginsu
 
-// NP entry points
-extern "C" {
-EXPORT NPError API_CALL NP_GetEntryPoints(NPPluginFuncs* plugin_funcs) {
-  plugin_funcs->version = NPVERS_HAS_PLUGIN_THREAD_ASYNC_CALL;
-  plugin_funcs->size = sizeof(plugin_funcs);
-  plugin_funcs->newp = ginsu::NPP_New;
-  plugin_funcs->destroy = ginsu::NPP_Destroy;
-  plugin_funcs->setwindow = ginsu::NPP_SetWindow;
-  plugin_funcs->newstream = ginsu::NPP_NewStream;
-  plugin_funcs->destroystream = ginsu::NPP_DestroyStream;
-  plugin_funcs->asfile = ginsu::NPP_StreamAsFile;
-  plugin_funcs->writeready = ginsu::NPP_WriteReady;
-  plugin_funcs->write = ginsu::NPP_Write;
-  plugin_funcs->print = ginsu::NPP_Print;
-  plugin_funcs->event = ginsu::NPP_HandleEvent;
-  plugin_funcs->urlnotify = ginsu::NPP_URLNotify;
-  plugin_funcs->getvalue = ginsu::NPP_GetValue;
-  plugin_funcs->setvalue = ginsu::NPP_SetValue;
-
-  return NPERR_NO_ERROR;
-}
-
-EXPORT NPError API_CALL NP_Initialize(NPNetscapeFuncs* browser_funcs
-#if defined(OS_LINUX)
-                                     , NPPluginFuncs* plugin_funcs
-#endif  // OS_LINUX
-                                     ) {
-  ginsu::g_browser = browser_funcs;
-  pglInitialize();
-
-#if defined(OS_LINUX)
-  NP_GetEntryPoints(plugin_funcs);
-#endif  // OS_LINUX
-  return NPERR_NO_ERROR;
-}
-
-EXPORT void API_CALL NP_Shutdown() {
-  pglTerminate();
-}
-
-#if defined(OS_LINUX)
-EXPORT NPError API_CALL NP_GetValue(NPP instance, NPPVariable variable,
-                                    void* value) {
-  return ginsu::NPP_GetValue(instance, variable, value);
-}
-
-EXPORT char* API_CALL NP_GetMIMEDescription() {
-  return "pepper-application/ginsu:3D modeling application";
-}
-#endif  // OS_LINUX
-}  // extern "C"

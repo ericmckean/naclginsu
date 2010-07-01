@@ -9,11 +9,25 @@ Import('env')
 ginsu_input_libs = [
   'ginsu_view',
   'ginsu_model',
+  'c_salt',
   'osgUtil',
   'osg',
-  'OpenThreads',
-  'pgl',
-  'gles2',
   'CGAL',
   'glu_tessellator',
+  'OpenThreads',
+  'google_nacl_pgl',
+  'google_nacl_gpu',
 ]
+
+ginsu_sources = [
+  'ginsu.cc',
+]
+
+env.Append(
+  LIBS = ginsu_input_libs
+)
+
+env.ComponentProgram(
+  'ginsu.nexe',
+  ginsu_sources
+)
