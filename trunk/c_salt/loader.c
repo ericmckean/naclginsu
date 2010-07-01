@@ -5,14 +5,8 @@
 #include <nacl/npupp.h>
 #include <pgl/pgl.h>
 
-#include "module_store.h"
-
-static c_salt::ModuleStore* module_singleton = NULL;
-
 // These functions are called when module code is first loaded, and when the
 // module code text gets unloaded.  They must use C-style linkage.
-
-extern "C" {
 
 NPError NP_GetEntryPoints(NPPluginFuncs* plugin_funcs) {
   // Defined in npp_gate.cc
@@ -35,13 +29,3 @@ NPError NP_Shutdown() {
   pglTerminate();
   return NPERR_NO_ERROR;
 }
-
-}  // extern "C"
-
-namespace c_salt {
-
-ModuleStore* ModuleStore::SharedModuleStore() {
-  return module_singleton;
-}
-
-}  // namespace c_salt
