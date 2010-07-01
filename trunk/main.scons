@@ -25,6 +25,7 @@ environment_list = []
 base_env = Environment(
   tools = ['component_setup'],
   BUILD_SCONSCRIPTS = [
+    '$MAIN_DIR/third_party/cgal/cgal.scons',
     '$MAIN_DIR/third_party/glu_tessellator/glu_tessellator.scons',
     '$MAIN_DIR/c_salt/c_salt.scons',
     '$MAIN_DIR/ginsu/ginsu.scons',

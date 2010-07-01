@@ -24,6 +24,34 @@ if env.Bit('windows'):
     ],
   )
 
-srcs = Glob('trunk/src/CGAL/*.cpp')
+srcs = [
+    'trunk/src/CGAL/assertions.cpp',
+    'trunk/src/CGAL/Bbox_2_intersections.cpp',
+    'trunk/src/CGAL/Bbox_3_intersections.cpp',
+    'trunk/src/CGAL/Color.cpp',
+    'trunk/src/CGAL/File_header_extended_OFF.cpp',
+    'trunk/src/CGAL/File_header_OFF.cpp',
+    'trunk/src/CGAL/File_scanner_OFF.cpp',
+    'trunk/src/CGAL/File_writer_inventor.cpp',
+    'trunk/src/CGAL/File_writer_OFF.cpp',
+    'trunk/src/CGAL/File_writer_VRML_2.cpp',
+    'trunk/src/CGAL/File_writer_wavefront.cpp',
+    'trunk/src/CGAL/Interval_arithmetic.cpp',
+    'trunk/src/CGAL/io.cpp',
+    'trunk/src/CGAL/JAMA_numeric_solver.cpp',
+    'trunk/src/CGAL/KDS_Log.cpp',
+    'trunk/src/CGAL/kernel.cpp',
+    'trunk/src/CGAL/MP_Float.cpp',
+    'trunk/src/CGAL/NefPolynomial.cpp',
+    'trunk/src/CGAL/numeric_solvers_support.cpp',
+    'trunk/src/CGAL/primes.cpp',
+    'trunk/src/CGAL/Random.cpp',
+    'trunk/src/CGAL/Real_timer.cpp',
+    'trunk/src/CGAL/Residue_type.cpp',
+    'trunk/src/CGAL/test_FPU_rounding_mode.cpp',
+    'trunk/src/CGAL/Timer.cpp',
+    'trunk/src/CGAL/Turkowski_numeric_solver.cpp'
+    ]
+
 env.ComponentLibrary('CGAL', srcs, COMPONENT_STATIC=True)
 env.Append(LIBS=['CGAL'])
