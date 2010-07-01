@@ -13,10 +13,126 @@
 
 namespace c_salt {
 
-ScriptingBridge::ScriptingBridge(NPP npp) : npp_(npp) {
+// A thin wrapper that owns the ScriptingBridge class.  This is necessary
+// because the NPObject layout has to be preserved, and it cannot have things
+// like a vtable inserted into it.
+class BrowserBinding : public NPObject {
+ public:
+  explicit BrowserBinding(NPP npp) : scripting_bridge_(npp, this) {}
+  ~BrowserBinding() {}
+
+  bool HasMethod(NPIdentifier name) {
+    return scripting_bridge_.HasMethod(name);
+  }
+  bool Invoke(NPIdentifier name,
+              const NPVariant* args,
+              uint32_t arg_count,
+              NPVariant* return_value) {
+    return scripting_bridge_.Invoke(name, args, arg_count, return_value);
+  }
+  bool HasProperty(NPIdentifier name) {
+    return scripting_bridge_.HasProperty(name);
+  }
+  bool GetProperty(NPIdentifier name, NPVariant* return_value) {
+    return scripting_bridge_.GetProperty(name, return_value);
+  }
+  bool SetProperty(NPIdentifier name, const NPVariant* return_value) {
+    return scripting_bridge_.SetProperty(name, return_value);
+  }
+
+  ScriptingBridge* scripting_bridge() {
+    return &scripting_bridge_;
+  }
+
+ private:
+  ScriptingBridge scripting_bridge_;
+};
+
+// Helper function for dereferencing the bridging object.
+static inline BrowserBinding* cast_browser_binding(NPObject* np_object) {
+  assert(np_object);
+  return static_cast<BrowserBinding*>(np_object);
+}
+// The browser-facing entry points that represent the bridge's class methods.
+// These are the function wrappers that the browser calls.
+
+NPObject* Allocate(NPP npp, NPClass* npclass) {
+  return new BrowserBinding(npp);
+}
+
+void Deallocate(NPObject* object) {
+  delete cast_browser_binding(object);
+}
+
+bool HasMethod(NPObject* object, NPIdentifier name) {
+  return cast_browser_binding(object)->HasMethod(name);
+}
+
+bool Invoke(NPObject* object, NPIdentifier name,
+            const NPVariant* args, uint32_t arg_count,
+            NPVariant* return_value) {
+  return cast_browser_binding(object)->Invoke(
+      name, args, arg_count, return_value);
+}
+
+bool HasProperty(NPObject* object, NPIdentifier name) {
+  return cast_browser_binding(object)->HasProperty(name);
+}
+
+bool GetProperty(NPObject* object, NPIdentifier name, NPVariant* result) {
+  return cast_browser_binding(object)->GetProperty(name, result);
+}
+
+bool SetProperty(NPObject* object, NPIdentifier name, const NPVariant* value) {
+  return cast_browser_binding(object)->SetProperty(name, value);
+}
+
+static NPClass bridge_class = {
+    NP_CLASS_STRUCT_VERSION,
+    c_salt::Allocate,
+    c_salt::Deallocate,
+    NULL,  // c_salt::Invalidate,
+    c_salt::HasMethod,
+    c_salt::Invoke,
+    NULL,  // c_salt::InvokeDefault,
+    c_salt::HasProperty,
+    c_salt::GetProperty,
+    c_salt::SetProperty,
+    NULL  // c_salt::RemoveProperty
+};
+
+ScriptingBridge* ScriptingBridge::CreateScriptingBridge(NPP npp) {
+  // This is a synchronous call to the browser.  Memory has been allocated
+  // and ctors called by the time it returns.
+  BrowserBinding* browser_binding =
+       static_cast<BrowserBinding*>(NPN_CreateObject(npp, &bridge_class));
+  if (browser_binding)
+    return browser_binding->scripting_bridge();
+  return NULL;
+}
+
+ScriptingBridge::ScriptingBridge(NPP npp, NPObject* browser_binding)
+    : npp_(npp),
+      browser_binding_(browser_binding) {
 }
 
 ScriptingBridge::~ScriptingBridge() {
+}
+
+void ScriptingBridge::ReleaseBrowserBinding() {
+  if (browser_binding_) {
+    bool will_dealloc = browser_binding_->referenceCount == 1;
+    NPObject* tmp_binding = browser_binding_;
+    browser_binding_ = NULL;
+    NPN_ReleaseObject(tmp_binding);
+    // |this| might be deallocated at this point.  Further calls might have
+    // unpredictable results.
+    if (!will_dealloc) {
+      browser_binding_ = tmp_binding;
+    }
+  }
+  // |this| might be deallocated at this point.  Further calls might have
+  // unpredictable results.
 }
 
 bool ScriptingBridge::AddMethodNamed(const char* method_name,
@@ -82,16 +198,6 @@ bool ScriptingBridge::SetProperty(NPIdentifier name, const NPVariant* value) {
   return true;
 }
 
-bool ScriptingBridge::RemoveProperty(NPIdentifier name) {
-  return false;  // Not implemented.
-}
-
-bool ScriptingBridge::InvokeDefault(const NPVariant* args,
-                                    uint32_t arg_count,
-                                    NPVariant* return_value) {
-  return false;  // Not implemented.
-}
-
 bool ScriptingBridge::Invoke(NPIdentifier name,
                              const NPVariant* args,
                              uint32_t arg_count,
@@ -104,69 +210,4 @@ bool ScriptingBridge::Invoke(NPIdentifier name,
   return false;
 }
 
-void ScriptingBridge::Invalidate() {
-  // Not implemented.
-}
-
-// These are the function wrappers that the browser calls.
-
-NPObject* Allocate(NPP npp, NPClass* npclass) {
-  return new ScriptingBridge(npp);
-}
-
-void Deallocate(NPObject* object) {
-  delete static_cast<ScriptingBridge*>(object);
-}
-
-void Invalidate(NPObject* object) {
-  return static_cast<ScriptingBridge*>(object)->Invalidate();
-}
-
-bool HasMethod(NPObject* object, NPIdentifier name) {
-  return static_cast<ScriptingBridge*>(object)->HasMethod(name);
-}
-
-bool Invoke(NPObject* object, NPIdentifier name,
-            const NPVariant* args, uint32_t arg_count,
-            NPVariant* return_value) {
-  return static_cast<ScriptingBridge*>(object)->Invoke(
-      name, args, arg_count, return_value);
-}
-
-bool InvokeDefault(NPObject* object, const NPVariant* args, uint32_t arg_count,
-                   NPVariant* return_value) {
-  return static_cast<ScriptingBridge*>(object)->InvokeDefault(
-      args, arg_count, return_value);
-}
-
-bool HasProperty(NPObject* object, NPIdentifier name) {
-  return static_cast<ScriptingBridge*>(object)->HasProperty(name);
-}
-
-bool GetProperty(NPObject* object, NPIdentifier name, NPVariant* result) {
-  return static_cast<ScriptingBridge*>(object)->GetProperty(name, result);
-}
-
-bool SetProperty(NPObject* object, NPIdentifier name, const NPVariant* value) {
-  return static_cast<ScriptingBridge*>(object)->SetProperty(name, value);
-}
-
-bool RemoveProperty(NPObject* object, NPIdentifier name) {
-  return static_cast<ScriptingBridge*>(object)->RemoveProperty(name);
-}
-
 }  // namespace c_salt
-
-NPClass c_salt::ScriptingBridge::bridge_class = {
-  NP_CLASS_STRUCT_VERSION,
-  c_salt::Allocate,
-  c_salt::Deallocate,
-  c_salt::Invalidate,
-  c_salt::HasMethod,
-  c_salt::Invoke,
-  c_salt::InvokeDefault,
-  c_salt::HasProperty,
-  c_salt::GetProperty,
-  c_salt::SetProperty,
-  c_salt::RemoveProperty
-};

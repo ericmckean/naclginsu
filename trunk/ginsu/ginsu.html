@@ -1,9 +1,30 @@
 <html>
 <head>
-<title>Ginsu</title>
+  <title>Ginsu</title>
+
+  <script type="text/javascript">
+    function moduleDidLoad() {
+      alert('Ginsu loaded!');
+    }
+  </script>
+
 </head>
 
 <body>
-<object type="pepper-application/ginsu" width="512" height="512" />
+  <embed id="ginsu"
+         type="application/x-nacl-srpc"
+         width="512"
+         height="512"
+         dimensions="3"
+         onload="moduleDidLoad()" />
+   <script type="text/javascript">
+    var nexes = 'x86-32: ginsu_x86_32.nexe\n'
+                + 'x86-64: ginsu_x86_64.nexe\n'
+                + 'ARM: ginsu_arm.nexe ';
+    // Note: this code is here to work around a bug in Chromium build
+    // #47357.  See also
+    // http://code.google.com/p/nativeclient/issues/detail?id=500
+    document.getElementById('ginsu').nexes = nexes;
+  </script>
 </body>
 </html>

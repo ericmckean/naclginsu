@@ -2,13 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef GINSU_PLUGIN_H_
-#define GINSU_PLUGIN_H_
+#ifndef GINSU_H_
+#define GINSU_H_
 
 #include <time.h>
+#include <nacl/nacl_npapi.h>
+#include <nacl/npruntime.h>
+#include <nacl/npapi_extensions.h>
+#include <pgl/pgl.h>
 #include "boost/scoped_ptr.hpp"
-#include "nphostapi.h"
-#include "pgl/pgl.h"
+#include "c_salt/module.h"
 
 namespace ginsu {
 
@@ -19,34 +22,28 @@ namespace view {
 class View;
 }  // namespace view
 
-class Plugin : public NPObject {
+// The main class for the Ginsu application.
+class Ginsu : public c_salt::Module {
  public:
-  explicit Plugin(NPP npp);
-  ~Plugin();
+  Ginsu();
+  virtual ~Ginsu();
 
-  static NPClass* GetPluginClass();
-
-  NPP npp() const { return npp_; }
-  void New(NPMIMEType pluginType, int16 argc, char* argn[], char* argv[]);
-  void SetWindow(const NPWindow& window);
-  int32 HandleEvent(const NPPepperEvent& event);
+  virtual bool InstanceDidLoad(const NPP instance, int width, int height);
+  virtual void WindowDidChangeSize(const NPP instance, int width, int height);
 
  private:
   static void RepaintCallback(NPP npp, NPDeviceContext3D* context);
   static void TickCallback(void* data);
   void Paint();
   void Tick();
-  void CreateContext();
-  void DestroyContext();
 
   // Returns true if anything was updated.
   bool UpdateAnimation();
 
-  // This class object needs to be safely casted to NPObject* and cross
-  // c-c++ module boundaries. To accomplish that this class should not have
-  // any virtual member function.
-  NPP npp_;
-
+  // TODO(dspringer): Move this into a c_salt View3D class.
+  void CreateContext(const NPP instance);
+  void DestroyContext(const NPP instance);
+  NPP npp_instance_;  // Weak reference.
   NPDevice* device3d_;
   NPDeviceContext3D context3d_;
   PGLContext pgl_context_;
@@ -57,7 +54,6 @@ class Plugin : public NPObject {
   clock_t last_update_;
 };
 
-extern NPNetscapeFuncs* g_browser;
-
 }  // namespace ginsu
-#endif  // GINSU_PLUGIN_H_
+
+#endif  // GINSU_H_

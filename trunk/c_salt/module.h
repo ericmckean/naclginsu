@@ -15,9 +15,15 @@ namespace c_salt {
 
 class ScriptingBridge;
 
-// The main class for the Native Client module.  Subclasses must implement the
-// CreateModule() factory method.  An instance of this object is owned by the
-// ScriptingBridge.
+// The base class for the Native Client module.  Subclasses must implement the
+// CreateModule() factory method.  A Module instance can publish a
+// ScriptingBridge instance to the browser.  A Module will create an instance
+// of a ScriptingBridge when asked via the NPP_GetScriptableInstance()
+// NPAPI.  When the Module instance is deallocated, this ScriptingBridge
+// instance is also deallocated.
+
+// TODO(dspringer): This becomes a subclass of pp::Instance when Pepper v2
+// becomes available.
 
 class Module {
  public:
@@ -25,7 +31,7 @@ class Module {
   static Module* CreateModule();
 
   Module() : scripting_bridge_(NULL), is_loaded_(false) {}
-  virtual ~Module();
+  virtual ~Module() = 0;
 
   // Called during initialization to publish the module's method names that
   // can be called from JavaScript.
@@ -42,14 +48,17 @@ class Module {
 
   // Called when there is a valid browser window for rendering, or whenever the
   // in-browser view changes size.
-  virtual void WindowDidChangeSize(int width, int height);
+  virtual void WindowDidChangeSize(const NPP instance, int width, int height);
 
   // Receive an event from the browser.  Return |false| if the module does not
   // handle the event.
   virtual bool ReceiveEvent(const NPPepperEvent& event);
 
   // Called when the browser wants an object that conforms to the scripting
-  // protocol.
+  // protocol.  Creates a new ScriptingBridge instance if needed, otherwise,
+  // increments the ref count of the existing instance.  When a new
+  // ScriptingBridge instance is created, both InitializeMethods() and
+  // InitializeProperties() are called with the new instance.
   virtual NPObject* CreateScriptingBridge(NPP instance);
 
   // Accessor for the internal scripting bridge object.

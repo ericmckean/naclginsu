@@ -21,5 +21,5 @@ c_salt_sources = [
   'type.cc',
 ]
 
-env.ComponentLibrary('c_salt_sources', c_salt_sources, COMPONENT_STATIC = True)
+env.ComponentLibrary('c_salt', c_salt_sources, COMPONENT_STATIC = True)
 env.Append(LIBS=['c_salt'])

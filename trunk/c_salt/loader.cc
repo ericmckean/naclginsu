@@ -8,6 +8,9 @@
 // These functions are called when module code is first loaded, and when the
 // module code text gets unloaded.  They must use C-style linkage.
 
+// TODO(dspringer): This file will disappear when we migrate to Pepper v2 API.
+// It gets replaced by pp::Module.
+
 extern "C" {
 
 NPError NP_GetEntryPoints(NPPluginFuncs* plugin_funcs) {
