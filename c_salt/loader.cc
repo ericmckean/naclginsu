@@ -8,6 +8,8 @@
 // These functions are called when module code is first loaded, and when the
 // module code text gets unloaded.  They must use C-style linkage.
 
+extern "C" {
+
 NPError NP_GetEntryPoints(NPPluginFuncs* plugin_funcs) {
   // Defined in npp_gate.cc
   extern NPError InitializePepperGateFunctions(NPPluginFuncs* plugin_funcs);
@@ -29,3 +31,5 @@ NPError NP_Shutdown() {
   pglTerminate();
   return NPERR_NO_ERROR;
 }
+
+}  // extern "C"
