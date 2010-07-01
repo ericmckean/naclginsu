@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can
 // be found in the LICENSE file.
 
+// TODO(dspringer): This file will disappear when we migrate to Pepper V2.
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -113,7 +115,7 @@ NPError NPP_SetWindow(NPP instance, NPWindow* window) {
 
 extern "C" {
 
-NPError InitializePluginFunctions(NPPluginFuncs* plugin_funcs) {
+NPError InitializePepperGateFunctions(NPPluginFuncs* plugin_funcs) {
   memset(plugin_funcs, 0, sizeof(*plugin_funcs));
   plugin_funcs->version = NPVERS_HAS_PLUGIN_THREAD_ASYNC_CALL;
   plugin_funcs->size = sizeof(*plugin_funcs);

@@ -19,8 +19,8 @@ class DoubleType : public Type {
   virtual bool bool_value() const {
     return double_value() != 0.0;
   }
-  virtual int32 int32_value() const {
-    return static_cast<int32>(floor(double_value()) + 0.5);
+  virtual int32_t int32_value() const {
+    return static_cast<int32_t>(floor(double_value()) + 0.5);
   }
 
   virtual double double_value() const {

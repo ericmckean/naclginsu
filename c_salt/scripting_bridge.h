@@ -20,6 +20,10 @@ class PropertyMutatorCallbackExecutor;
 // This class handles all the calls across the bridge to the browser.  Use
 // AddMethodNamed() and AddPropertyNamed() to publish methods and properties
 // that can be accessed from the browser code.
+
+// TODO(dspringer): This class cluster gets replaced by pp::ScriptableObject
+// when Pepper v2 becomes available.
+
 class ScriptingBridge : public NPObject {
  public:
   explicit ScriptingBridge(NPP npp);

@@ -58,7 +58,7 @@ class Type {
   // requested type.  Some conversion are not possible; if the the internal
   // type is an object, an attempt is made to evaluate the object.
   virtual bool bool_value() const;
-  virtual int32 int32_value() const;
+  virtual int32_t int32_value() const;
   virtual double double_value() const;
   // TODO(dspringer): This needs to return a const scoped_ptr<std::string>&;
   // implement this when we can pull in boost o some other lib that has a

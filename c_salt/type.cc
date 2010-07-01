@@ -77,7 +77,7 @@ bool Type::bool_value() const {
   return false;
 }
 
-int32 Type::int32_value() const {
+int32_t Type::int32_value() const {
   return 0;
 }
 

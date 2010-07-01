@@ -48,7 +48,7 @@ class Module {
   // handle the event.
   virtual bool ReceiveEvent(const NPPepperEvent& event);
 
-  // Called when the browser wants an object that comforms to the scripting
+  // Called when the browser wants an object that conforms to the scripting
   // protocol.
   virtual NPObject* CreateScriptingBridge(NPP instance);
 

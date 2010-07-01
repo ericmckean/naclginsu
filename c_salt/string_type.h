@@ -24,7 +24,7 @@ class StringType : public Type {
   bool CreateNPVariantCopy(NPVariant& np_var) const;
 
   virtual bool bool_value() const;
-  virtual int32 int32_value() const;
+  virtual int32_t int32_value() const;
   virtual double double_value() const;
 
   // Accessor for the internal string.

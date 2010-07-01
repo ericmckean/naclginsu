@@ -42,7 +42,7 @@ bool Module::ReceiveEvent(const NPPepperEvent& event) {
 NPObject* Module::CreateScriptingBridge(NPP instance) {
   if (!scripting_bridge_) {
     // This is a synchronous call, and actually returns a ScriptingBridge
-    // via the bridge_class function table.ß
+    // via the bridge_class function table.
     scripting_bridge_ = static_cast<c_salt::ScriptingBridge*>(
         NPN_CreateObject(instance, &c_salt::ScriptingBridge::bridge_class));
     InitializeMethods(scripting_bridge_);
