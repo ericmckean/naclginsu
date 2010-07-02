@@ -28,6 +28,6 @@ env.Append(
 )
 
 env.ComponentProgram(
-  'ginsu.nexe',
+  'ginsu32.nexe',
   ginsu_sources
 )
