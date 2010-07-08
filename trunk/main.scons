@@ -14,12 +14,17 @@ if os.getenv('NACL_SDK_BASE') is None:
   sys.stderr.write('NACL_SDK_BASE must be defined as the root directory of NaCl'
                    'toolchain.\n')
   sys.exit(1)
-if not os.path.exists(os.path.join(os.getenv('NACL_SDK_BASE'), 'nacl', 'usr',
-                                             'include', 'boost')):
-  sys.stderr.write('Your NaCl toolchain does not have the necessary packages\n'
-                   'Run scripts/setup_naclports_packages.py\n')
-  sys.exit(1)
 
+# Check to make sure the necessary naclports packages are installed.
+naclports_include = os.path.join(os.getenv('NACL_SDK_BASE'), 'nacl', 'usr', 'include')
+packages = ['boost', 'osg', 'gmock', 'gtest']
+for p in packages:
+  if not os.path.exists(os.path.join(naclports_include, p)):
+    sys.stderr.write('Your NaCl toolchain does not have the necessary packages\n'
+                     'or the packages are not current.\n'
+                     'Run scripts/setup_naclports_packages.py\n')
+    sys.exit(1)
+    
 environment_list = []
 
 base_env = Environment(
@@ -68,5 +73,13 @@ nacl_opt_env = nacl_env.Clone(
         tools = ['target_optimized']
 )
 environment_list.append(nacl_opt_env)
+
+nacl_test_env = nacl_env.Clone(
+    BUILD_GROUPS = ['all'],
+    BUILD_TYPE_DESCRIPTION = 'Tests',
+)
+nacl_test_env.Append(
+    LIBS = ['gtest', 'gmock', 'nosys'])
+environment_list.append(nacl_test_env)
 
 BuildComponents(environment_list)
