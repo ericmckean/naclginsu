@@ -20,7 +20,7 @@ def setup_packages():
   # get the packages from svn
   subprocess.call(["svn",
                    "checkout",
-                   "http://naclports.googlecode.com/svn/trunk@49",
+                   "http://naclports.googlecode.com/svn/trunk@50",
                    ".naclports"])
   root = os.getcwd()
   path = os.path.join(root, ".naclports", "src", "packages", "scripts")
