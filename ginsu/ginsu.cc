@@ -5,7 +5,7 @@
 #include "ginsu/ginsu.h"
 
 #include <string.h>
-#include <time.h>
+#include <sys/time.h>
 
 #include <cassert>
 
@@ -17,6 +17,9 @@
 NPDevice* NPN_AcquireDevice(NPP instance, NPDeviceID device);
 const int32_t kCommandBufferSize = 1024 * 1024;
 
+// The minimum time in between frames.  Measured in milliseconds.
+static const double kFrameElapsedTime = 1.0/15.0 * 1000.0;
+
 // The c_salt module allocator.
 namespace c_salt {
 
@@ -24,6 +27,16 @@ Module* Module::CreateModule() {
   return new ginsu::Ginsu();
 }
 
+}
+
+// Helper function to return the current time in milliseconds.  If there is an
+// error getting the current time, this returns -1.
+static double TimeNow() {
+  struct timeval time_val;
+  if (gettimeofday(&time_val, NULL) == 0) {
+    return time_val.tv_sec * 1000.0 + time_val.tv_usec / 1000.00;
+  }
+  return -1.0;
 }
 
 namespace ginsu {
@@ -35,7 +48,7 @@ Ginsu::Ginsu() : npp_instance_(NULL), device3d_(NULL) {
   //model_->AddComponent(model::Component::MakeCube());
   //model_->AddComponent(model::Component::MakeTruncatedCone(0.3, 1.0));
   view_.reset(new view::View(model_.get()));
-  last_update_ = time(NULL);
+  last_update_ = TimeNow();
 }
 
 Ginsu::~Ginsu() {
@@ -122,11 +135,11 @@ bool Ginsu::UpdateAnimation() {
   static int update_count = 0;
 
   ++all_count;
-  time_t now = time(NULL);
-  if (now == -1)
+  double now = TimeNow();
+  if (now == -1.0)
     return false;
-  time_t time_laps = now - last_update_;
-  if (time_laps < 0.2)
+  double time_laps = now - last_update_;
+  if (time_laps < kFrameElapsedTime)
     return false;
 
   ++update_count;
