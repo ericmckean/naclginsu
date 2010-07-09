@@ -4,9 +4,10 @@
 
 #include "ginsu/ginsu.h"
 
-#include <cassert>
-
 #include <string.h>
+#include <time.h>
+
+#include <cassert>
 
 #include "c_salt/module.h"
 #include "model/component.h"
@@ -34,7 +35,7 @@ Ginsu::Ginsu() : npp_instance_(NULL), device3d_(NULL) {
   //model_->AddComponent(model::Component::MakeCube());
   //model_->AddComponent(model::Component::MakeTruncatedCone(0.3, 1.0));
   view_.reset(new view::View(model_.get()));
-  last_update_ = clock();
+  last_update_ = time(NULL);
 }
 
 Ginsu::~Ginsu() {
@@ -121,13 +122,15 @@ bool Ginsu::UpdateAnimation() {
   static int update_count = 0;
 
   ++all_count;
-  clock_t now = clock();
-  float time_laps = static_cast<float>(now - last_update_) / CLOCKS_PER_SEC;
+  time_t now = time(NULL);
+  if (now == -1)
+    return false;
+  time_t time_laps = now - last_update_;
   if (time_laps < 0.2)
     return false;
 
   ++update_count;
-  model_->UpdateDemo(difftime(now, last_update_));
+  model_->UpdateDemo(time_laps);
   last_update_ = now;
   return true;
 }
