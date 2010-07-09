@@ -51,7 +51,7 @@ class Ginsu : public c_salt::Module {
   boost::scoped_ptr<model::Model> model_;
   boost::scoped_ptr<view::View> view_;
 
-  clock_t last_update_;
+  time_t last_update_;
 };
 
 }  // namespace ginsu

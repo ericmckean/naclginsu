@@ -18,11 +18,10 @@
          dimensions="3"
          onload="moduleDidLoad()" />
    <script type="text/javascript">
-    var nexes = 'x86-32: ginsu_x86_32.nexe\n'
-                + 'x86-64: ginsu_x86_64.nexe\n'
+    var nexes = 'x86-32: ginsu32.nexe\n'
+                + 'x86-64: ginsu64.nexe\n'
                 + 'ARM: ginsu_arm.nexe ';
-    // Note: this code is here to work around a bug in Chromium build
-    // #47357.  See also
+    // Note: this code is here to work around a bug in Chrome See also
     // http://code.google.com/p/nativeclient/issues/detail?id=500
     document.getElementById('ginsu').nexes = nexes;
   </script>

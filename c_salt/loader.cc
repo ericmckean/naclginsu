@@ -29,7 +29,7 @@ NPError NP_Initialize(NPNetscapeFuncs* browser_functions,
   return np_err;
 }
 NPError NP_Shutdown() {
-  // Perform any specialized shout-down procedures here, then delete the
+  // Perform any specialized shut-down procedures here, then delete the
   // singleton.
   pglTerminate();
   return NPERR_NO_ERROR;
