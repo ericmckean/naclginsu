@@ -18,6 +18,9 @@ After following the steps below, you should have an Eclipse project that will bu
 <ul>
   <li>A recent version of Eclipse.  At time of writing (July 12, 2010), the latest version of Eclipse is Helios (3.6).  All of these instructions were developed on Galileo (version 3.5).  To get a copy of Eclipse, visit [http://www.eclipse.org www.eclipse.org].</li>
   <li>The Native Client SDK ([http://code.google.com/p/nativeclient-sdk/ Get the SDK here]). Install the SDK on your local disk, e.g. `/usr/local/me/native_client_sdk`.</li>
+  <li>The shell environment variable `NACL_SDK_BASE` set to the absolute path of the toolchain within the NaClSDK.  For example:
+    <blockquote><code>export NACL_SDK_BASE=/usr/local/me/native_client_sdk/toolchain/linux_x86</code></blockquote>
+  </li>
   <li>Local copy of the Ginsu repository.</li>
   <li>NaClPorts packages installed by running `scripts/setup_naclports_packages.py` in Ginsu.
      <blockquote>*Note:* You might see messages such as `Get file gtest-1.5.0/src/gtest-death-test.cc from Perforce with lock? [y]`.  Answer *n* to each of these.</blockquote>
