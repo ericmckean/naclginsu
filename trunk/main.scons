@@ -24,7 +24,7 @@ for p in packages:
                      'or the packages are not current.\n'
                      'Run scripts/setup_naclports_packages.py\n')
     sys.exit(1)
-    
+
 environment_list = []
 
 base_env = Environment(
@@ -42,6 +42,7 @@ base_env = Environment(
     'BOOST_ALL_NO_LIB',
     'CGAL_NO_AUTOLINK_CGAL'
   ],
+  NACL_SDK_BASE = os.getenv('NACL_SDK_BASE')
 )
 
 #-----------------------------------------------------------------------------
@@ -74,11 +75,12 @@ nacl_opt_env = nacl_env.Clone(
 environment_list.append(nacl_opt_env)
 
 nacl_test_env = nacl_env.Clone(
-    BUILD_GROUPS = ['all'],
+    BUILD_GROUPS = ['default'],
+    BUILD_SCONSCRIPTS = ['c_salt/test.scons'],
     BUILD_TYPE_DESCRIPTION = 'Tests',
+    COMPONENT_TEST_CMDLINE = '$NACL_SDK_BASE/bin/sel_ldr $PROGRAM_NAME',
+    LIBS = ['gmock', 'gtest', 'nosys', 'pthread']
 )
-nacl_test_env.Append(
-    LIBS = ['gtest', 'gmock', 'nosys'])
 environment_list.append(nacl_test_env)
 
 BuildComponents(environment_list)
