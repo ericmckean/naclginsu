@@ -1,6 +1,6 @@
 #summary How to set up an Eclipse project that will build Ginsu.
 
-<wiki:toc max_depth="2" />
+<wiki:toc max_depth="3" />
 
 = How To Set Up Eclipse =
 
@@ -14,23 +14,43 @@ After following the steps below, you should have an Eclipse project that will bu
 
 == Set Up Eclipse ==
 
-First, make sure your version of Eclipse is fairly up-to-date.  At time of writing (July 12, 2010), the latest version of Eclipse is Helios (3.6).  All of these instructions were developed on Galileo (version 3.5).  To get a copy of Eclipse, visit [http://www.eclipse.org www.eclipse.org].
+===Prerequisites===
+<ul>
+  <li>A recent version of Eclipse.  At time of writing (July 12, 2010), the latest version of Eclipse is Helios (3.6).  All of these instructions were developed on Galileo (version 3.5).  To get a copy of Eclipse, visit [http://www.eclipse.org www.eclipse.org].</li>
+  <li>The Native Client SDK (http://code.google.com/p/nativeclient-sdk/ Get the SDK here]. Install the SDK on your local disk, e.g. `/usr/local/me/native_client_sdk`.</li>
+  <li>Local copy of the Ginsu repository.</li>
+  <li>NaClPorts packages installed by running `scripts/setup_naclports_packages.py` in Ginsu.
+     <blockquote>*Note:* You might see messages such as `Get file gtest-1.5.0/src/gtest-death-test.cc from Perforce with lock? [y]`.  Answer *n* to each of these.</blockquote>
+  </li>
+</ul>
 
+===Create a new project===
+See also the Eclipse documentation here: [http://help.eclipse.org/galileo/index.jsp].  Look for 'Creating new projects from existing source roots'.
 <ol>
-  <li>*Start a new project*.  Start Eclipse, and select File -> New -> C++ Project
+  <li>*Start a new project*.  You will make an empty Makefile project located at the trunk of your local Ginsu working copy.  Start Eclipse, and select File -> New -> C++ Project
     <ul>
+      <li>*Uncheck* 'Use default location', and enter the location of your Ginsu project source root in the 'Location:' text field.  Be sure to include `trunk` in the path, e.g. `/usr/local/me/ginsu/trunk`.  Eclipse will automatically import the Ginsu tree for you.</li>
       <li>Under Project Type, select Empty Project</li>
       <li>Click Next</li>
       <li>On the 'Select Configurations' panel, click 'Advanced...' to configure the C++ Builder</li>
     </ul>
   </li>
-  <li>*Configure the C++ Builder*.  In the Properties panel that is now open, Make sure 'C/C++ Build' is selected.
+  <li>*Configure the C++ Builder*.  Once you have the In the Properties panel that is now open, Make sure 'C/C++ Build' is selected.
     <ul>
+      <li>Make sure the 'Default' configuration is active.</li>
       <li>In the 'Builder Settings' tab, *uncheck* 'Use default build command'.</li>
-      <li>In the Build command text field, enter `${PWD}/hammer.sh`</li>
+      <li>In the Build command text field, enter `${ProjDirPath}/hammer.sh`</li>
+      <li>Click 'Apply'.</li>
       <li>Click the 'Behaviour' tab.</li>
-      <li>In the 'Build (incremental build)' text field, enter `--mode=dbg`</li>
+      <li>In the 'Build (incremental build)' text field, enter `--mode=dbg` (_Note:_ `--mode=opt` will compile optimized code.  You can add this as a configuration later.)</li>
       <li>In the 'Clean' text field, enter `-c`</li>
+      <li>Click 'Apply'</li>
+    </ul>
+  </li>
+  <li>*Add NACL_SDK_BASE*
+    <ul>
+      <li>Under 'C/C++ Build' ->'Environment', add NACL_SDK_BASE whose value is the full path to the toolchain within your Native Client SDK installation, e.g. `/usr/local/me/native_client_sdk/toolchain/linux_x86`${NACL_SDK_BASE}</li>
+      <li>Click 'OK' - you're done!</li>
     </ul>
   </li>
 </ol>
