@@ -17,7 +17,7 @@ After following the steps below, you should have an Eclipse project that will bu
 ===Prerequisites===
 <ul>
   <li>A recent version of Eclipse.  At time of writing (July 12, 2010), the latest version of Eclipse is Helios (3.6).  All of these instructions were developed on Galileo (version 3.5).  To get a copy of Eclipse, visit [http://www.eclipse.org www.eclipse.org].</li>
-  <li>The Native Client SDK (http://code.google.com/p/nativeclient-sdk/ Get the SDK here]. Install the SDK on your local disk, e.g. `/usr/local/me/native_client_sdk`.</li>
+  <li>The Native Client SDK ([http://code.google.com/p/nativeclient-sdk/ Get the SDK here]). Install the SDK on your local disk, e.g. `/usr/local/me/native_client_sdk`.</li>
   <li>Local copy of the Ginsu repository.</li>
   <li>NaClPorts packages installed by running `scripts/setup_naclports_packages.py` in Ginsu.
      <blockquote>*Note:* You might see messages such as `Get file gtest-1.5.0/src/gtest-death-test.cc from Perforce with lock? [y]`.  Answer *n* to each of these.</blockquote>
@@ -49,7 +49,7 @@ See also the Eclipse documentation here: [http://help.eclipse.org/galileo/index.
   </li>
   <li>*Add NACL_SDK_BASE*
     <ul>
-      <li>Under 'C/C++ Build' ->'Environment', add NACL_SDK_BASE whose value is the full path to the toolchain within your Native Client SDK installation, e.g. `/usr/local/me/native_client_sdk/toolchain/linux_x86`${NACL_SDK_BASE}</li>
+      <li>Under 'C/C++ Build' ->'Environment', add NACL_SDK_BASE whose value is the full path to the toolchain within your Native Client SDK installation, e.g. `/usr/local/me/native_client_sdk/toolchain/linux_x86`</li>
       <li>Click 'OK' - you're done!</li>
     </ul>
   </li>
@@ -58,8 +58,8 @@ See also the Eclipse documentation here: [http://help.eclipse.org/galileo/index.
 
 == How to Run Ginsu ==
 
-To run Ginsu, you will need to follow these steps (_*Note:*_ these instructions apply to Linux only.  See
-[http://nativeclient-sdk.googlecode.com The Native Client SDK] for info on other platforms):
+<blockquote>*Note:* these instructions apply to Linux only.  See
+[http://nativeclient-sdk.googlecode.com The Native Client SDK] for info on other platforms)</blockquote>
 
 <ol>
   <li>Run a web server that can serve the contents of `scons-out/dbg/staging/`.  A simple python-based server is installed into `scons-out/dbg/staging/httpd.py`, you can run this with:
