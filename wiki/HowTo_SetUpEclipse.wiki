@@ -35,14 +35,13 @@ See also the Eclipse documentation here: [http://help.eclipse.org/galileo/index.
       <li>On the 'Select Configurations' panel, click 'Advanced...' to configure the C++ Builder</li>
     </ul>
   </li>
-  <li>*Configure the C++ Builder*.  Once you have the In the Properties panel that is now open, Make sure 'C/C++ Build' is selected.
+  <li>*Configure the C++ Builder*.
     <ul>
       <li>Make sure the 'Default' configuration is active.</li>
-      <li>In the 'Builder Settings' tab, *uncheck* 'Use default build command'.</li>
-      <li>In the Build command text field, enter `${ProjDirPath}/hammer.sh`</li>
+      <li>Under 'C/C++ Build', select the 'Builder Settings' tab.  *Uncheck* 'Use default build command', then enter `${ProjDirPath}/hammer.sh` as the build command.</li>
       <li>Click 'Apply'.</li>
       <li>Click the 'Behaviour' tab.</li>
-      <li>In the 'Build (incremental build)' text field, enter `--mode=dbg` (_Note:_ `--mode=opt` will compile optimized code.  You can add this as a configuration later.)</li>
+      <li>In the 'Build (incremental build)' text field, enter `--mode=dbg` (*Note:* `--mode=opt` will compile optimized code.  You can add this as a configuration later.)</li>
       <li>In the 'Clean' text field, enter `-c`</li>
       <li>Click 'Apply'</li>
     </ul>
