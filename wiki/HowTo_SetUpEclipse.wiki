@@ -61,14 +61,15 @@ See also the Eclipse documentation here: [http://help.eclipse.org/galileo/index.
 [http://nativeclient-sdk.googlecode.com The Native Client SDK] for info on other platforms)</blockquote>
 
 <ol>
-  <li>Run a web server that can serve the contents of `scons-out/dbg/staging/`.  A simple python-based server is installed into `scons-out/dbg/staging/httpd.py`, you can run this with:
+  <li>Run a web server that can serve the contents of `scons-out/`.  A simple python-based server is installed into `scons-out/httpd.py`, you can run this with:
     <blockquote><code>python httpd.py 5103&</code></blockquote>
   </li>
   <li>Run a *32-bit* NaCl-enabled version of the Chrome Browser. On Linux, you can use this command line:
     <blockquote><code>/opt/google/chrome/chrome --enable-nacl&</code></blockquote>
   </li>
   <li>In the browser, go to `ginsu.html`.  If you used the python-based web server from step 1, type this into the Google Chrome address bar:
-    <blockquote><code>http://localhost:5103/ginsu.html</code></blockquote>
+    <blockquote><code>http://localhost:5103/dbg/staging/ginsu.html</code></blockquote>
+    <blockquote>*Note:* For optimized builds, replace `dbg` with `opt`, e.g. `http://localhost:5103/opt/staging/ginsu.html`</blockquote>
   </li>
 </ol>
 
