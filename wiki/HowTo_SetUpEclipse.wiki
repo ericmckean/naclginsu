@@ -14,7 +14,7 @@ After following the steps below, you should have an Eclipse project that will bu
 
 == Set Up Eclipse ==
 
-First, make sure your version of Eclipse is fairly up-to-date.  At time of writing (July 12, 2010), the latest version of Eclipse is Helios (2.6).  All of these instructions were developed on Galileo (version 2.5).  To get a copy of Eclipse, visit [http://www.eclipse.org www.eclipse.org].
+First, make sure your version of Eclipse is fairly up-to-date.  At time of writing (July 12, 2010), the latest version of Eclipse is Helios (3.6).  All of these instructions were developed on Galileo (version 3.5).  To get a copy of Eclipse, visit [http://www.eclipse.org www.eclipse.org].
 
 <ol>
   <li>*Start a new project*.  Start Eclipse, and select File -> New -> C++ Project
@@ -54,4 +54,3 @@ To run Ginsu, you will need to follow these steps (_*Note:*_ these instructions 
 </ol>
 
 _TODO:_ Add info on how to attach nacl-gdb to a browser process.
-
