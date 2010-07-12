@@ -27,7 +27,7 @@ def setup_packages():
   os.chdir(path)
   packages = ["boost_1_43_0", "OpenSceneGraph-2.9.7", "gtest-1.5.0",
               "gmock-1.5.0"]
-  # Go into each packag directory and run the script of each individual
+  # Go into each package directory and run the script of each individual
   # package.
   for p in packages:
     os.chdir(p)

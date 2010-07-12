@@ -16,7 +16,8 @@ if os.getenv('NACL_SDK_BASE') is None:
   sys.exit(1)
 
 # Check to make sure the necessary naclports packages are installed.
-naclports_include = os.path.join(os.getenv('NACL_SDK_BASE'), 'nacl', 'usr', 'include')
+naclports_include = os.path.join(os.getenv('NACL_SDK_BASE'),
+                                 'nacl', 'usr', 'include')
 packages = ['boost', 'osg', 'gmock', 'gtest']
 for p in packages:
   if not os.path.exists(os.path.join(naclports_include, p)):
@@ -36,6 +37,7 @@ base_env = Environment(
     '$MAIN_DIR/ginsu/ginsu.scons',
     '$MAIN_DIR/model/model.scons',
     '$MAIN_DIR/view/view.scons',
+    '$MAIN_DIR/scripts/scripts.scons',
   ],
   CPPPATH = ['$MAIN_DIR'],
   CPPDEFINES = [
