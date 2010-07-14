@@ -2,24 +2,29 @@
           "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
   <!--
-  Copyright (c) 2010 The Native Client Authors. All rights reserved.
+  Copyright (c) 2010 The Ginsu Authors. All rights reserved.
   Use of this source code is governed by a BSD-style license that can be
   found in the LICENSE file.
   -->
   <head>
     <title>Ginsu</title>
+    <script src="closure/closure/goog/base.js"></script>
     <script type="text/javascript">
-      // Provide the ginsu namespace
-      ginsu = {};
+      goog.require('goog.Disposable');
+      goog.require('goog.dom');
+      goog.require('goog.events');
     </script>
     <script type="text/javascript" src="ginsu.js"></script>
+    <script type="text/javascript">
+      goog.require('ginsu.Application');
+    </script>
   </head>
   
   <body>
     <div id="ginsu_instance"></div>
     <script type="text/javascript">
-      ginsu.application = new ginsu.Application();
-      ginsu.application.run('ginsu_instance');
+      var application = new ginsu.Application();
+      application.run('ginsu_instance');
     </script>
   </body>
 </html>

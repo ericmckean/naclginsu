@@ -87,3 +87,10 @@ nacl_test_env = nacl_env.Clone(
 environment_list.append(nacl_test_env)
 
 BuildComponents(environment_list)
+
+# For now, we need to copy Closure to the served dir.
+# TODO(dspringer,sanga): Once we fix the httpd.py so that it maps in outside
+# dirs, this step should be removed.
+nacl_dbg_env.Command('$STAGING_DIR/closure', 'third_party/closure',
+                     Copy("$TARGET", "$SOURCE"))
+
