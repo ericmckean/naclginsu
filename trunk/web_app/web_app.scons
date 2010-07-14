@@ -11,4 +11,4 @@ ginsu_app_files = [
   'ginsu.js',
 ]
 
-env.Install('$TARGET_ROOT/staging', ginsu_app_files)
+env.Install('$STAGING_DIR', ginsu_app_files)
