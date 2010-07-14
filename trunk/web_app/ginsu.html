@@ -1,0 +1,25 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <!--
+  Copyright (c) 2010 The Native Client Authors. All rights reserved.
+  Use of this source code is governed by a BSD-style license that can be
+  found in the LICENSE file.
+  -->
+  <head>
+    <title>Ginsu</title>
+    <script type="text/javascript">
+      // Provide the ginsu namespace
+      ginsu = {};
+    </script>
+    <script type="text/javascript" src="ginsu.js"></script>
+  </head>
+  
+  <body>
+    <div id="ginsu_instance"></div>
+    <script type="text/javascript">
+      ginsu.application = new ginsu.Application();
+      ginsu.application.run('ginsu_instance');
+    </script>
+  </body>
+</html>

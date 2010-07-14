@@ -36,8 +36,9 @@ base_env = Environment(
     '$MAIN_DIR/c_salt/c_salt.scons',
     '$MAIN_DIR/ginsu/ginsu.scons',
     '$MAIN_DIR/model/model.scons',
-    '$MAIN_DIR/view/view.scons',
     '$MAIN_DIR/scripts/scripts.scons',
+    '$MAIN_DIR/view/view.scons',
+    '$MAIN_DIR/web_app/web_app.scons',
   ],
   CPPPATH = ['$MAIN_DIR'],
   CPPDEFINES = [

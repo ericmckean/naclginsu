@@ -23,16 +23,11 @@ ginsu_sources = [
   'ginsu.cc',
 ]
 
-ginsu_app_files = [
-  'ginsu.html',
-]
-
 env.Append(
   LIBS = ginsu_input_libs
 )
 
 env.ComponentProgram(
-  'ginsu32.nexe',
+  'ginsu_x86_32.nexe',
   ginsu_sources,
 )
-env.Install('$TARGET_ROOT/staging', ginsu_app_files)
