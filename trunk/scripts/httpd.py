@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright 2010, The Native Client SDK Authors.  All Rights Reserved.
+# Copyright 2010, The Ginsu Authors.  All Rights Reserved.
 # Use of this source code is governed by a BSD-style license that can
 # be found in the LICENSE file.
 #
@@ -8,8 +8,7 @@
 """A tiny web server.
 
 This is intended to be used for testing, and
-only run from within the
-examples directory.
+only run from within the scons-out directory.
 """
 
 import BaseHTTPServer
@@ -27,12 +26,11 @@ logging.getLogger().setLevel(logging.INFO)
 SERVER_PORT = 5103
 SERVER_HOST = ''
 
-# We only run from the examples directory (the one that contains scons-out), so
-# that not too much is exposed via this HTTP server.  Everything in the
-# directory is served, so there should never be anything potentially sensitive
-# in the serving directory, especially if the machine might be a
-# multi-user machine and not all users are trusted.  We only serve via
-# the loopback interface.
+# We only run from the scons-out directory, so that not too much is exposed
+# via this HTTP server.  Everything in the directory is served, so there
+# should never be anything potentially sensitive in the serving directory,
+# especially if the machine might be a multi-user machine and not all users
+# are trusted.  We only serve via the loopback interface.
 
 SAFE_DIR_COMPONENTS = ['scons-out']
 SAFE_DIR_SUFFIX = apply(os.path.join, SAFE_DIR_COMPONENTS)

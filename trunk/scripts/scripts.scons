@@ -6,8 +6,8 @@
 
 Import('env')
 
-scripts = [
+install_scripts = [
   'httpd.py',
 ]
 
-env.Install('$DESTINATION_ROOT', scripts)
+env.Install('$DESTINATION_ROOT', install_scripts)
