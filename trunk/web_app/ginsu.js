@@ -7,17 +7,24 @@
  * Trackball object and connects it to the element named |ginsu_instance|.
  */
 
-// goog.require('tumbler')
-// goog.require('tumbler.Dragger')
-// goog.require('tumbler.Trackball')
+goog.provide('ginsu.Application');
+
+goog.require('goog.Disposable');
+
+// TODO(dspringer): Add these when ready.
+// goog.require('tumbler.Dragger');
+// goog.require('tumbler.Trackball');
 
 /**
  * Constructor for the Application class.  Use the run() method to populate
  * the object with controllers and wire up the events.
  * @constructor
+ * @extends {goog.Disposable}
  */
 ginsu.Application = function() {
+  goog.Disposable.call(this);
 }
+goog.inherits(ginsu.Application, goog.Disposable);
 
 /**
  * The native module for the application.  This refers to the module loaded via
@@ -42,13 +49,17 @@ ginsu.Application.prototype.trackball_ = null;
 ginsu.Application.prototype.dragger_ = null;
 
 /**
- * Called by the <embed> tag event handler as part of the application set-up
- * process.  This function has to be in the global name-space so that the
- * markup in the <embed> tag can find it.
+ * Place-holder to make the onload event handling process all work.
  */
-function moduleDidLoad_() {
-  var module = document.getElementById(ginsu.Application.TUMBLER_MODULE_NAME);
-  ginsu.application.moduleDidLoad(module);
+var loadingGinsuApp_ = {};
+
+/**
+ * Override of disposeInternal() to dispose of retained objects.
+ * @override
+ */
+ginsu.Application.prototype.disposeInternal = function() {
+  this.terminate();
+  ginsu.Application.superClass_.disposeInternal.call(this);
 }
 
 /**
@@ -57,6 +68,7 @@ function moduleDidLoad_() {
  */
 ginsu.Application.prototype.moduleDidLoad = function(nativeModule) {
   this.module_ = nativeModule;
+  alert('Ginsu loaded!');
   // TODO(dspringer): Wire all this up when ready.
   /*
   this.trackball_ = new tumbler.Trackball();
@@ -86,7 +98,7 @@ ginsu.Application.prototype.assert = function(cond, message) {
  *     DEFAULT_DIV_NAME.  The DOM element must exist.
  */
 ginsu.Application.prototype.run = function(opt_contentDivName) {
-  contentDivName = opt_contentDivName || ginsu.Application.DEFAULT_DIV_NAME;
+  var contentDivName = opt_contentDivName || ginsu.Application.DEFAULT_DIV_NAME;
   var contentDiv = document.getElementById(contentDivName);
   this.assert(contentDiv, "Missing DOM element '" + contentDivName + "'");
   // Load the published .nexe.  This includes the 'nexes' attribute which
@@ -96,17 +108,40 @@ ginsu.Application.prototype.run = function(opt_contentDivName) {
   var nexes = 'x86-32: ginsu_x86_32.nexe\n'
               + 'x86-64: ginsu_x86_64.nexe\n'
               + 'ARM: ginsu_arm.nexe ';
+  // This assumes that the <div> containers for Ginsu modules each have a
+  // unique name on the page.
+  var uniqueModuleName = contentDivName + ginsu.Application.GINSU_MODULE_NAME;
+  // This is a bit of a hack: when the |onload| event fires, |this| is set to
+  // the DOM window object, *not* the <embed> element.  So, we keep a global
+  // pointer to |this| because there is no way to make a closure here. See
+  // http://code.google.com/p/nativeclient/issues/detail?id=693
+  loadingGinsuApp_[uniqueModuleName] = this;
+  var onLoadJS = "loadingGinsuApp_['"
+	             + uniqueModuleName
+	             + "'].moduleDidLoad(document.getElementById('"
+	             + uniqueModuleName
+	             + "'));"
   contentDiv.innerHTML = '<embed id="'
-	                       + ginsu.Application.GINSU_MODULE_NAME + '" '
+	                       + uniqueModuleName + '" '
 	                    // + 'nexes="' + nexes + '" '
 	                       + 'type="application/x-nacl-srpc" '
 	                       + 'width="512" height="512" '
 	                       + 'dimensions="3" '
-	                       + 'onload="moduleDidLoad_()" />'
-  // Note: this code is here to work around a bug in Chromium build
-  // #47357.  See also
+	                       + 'onload="' + onLoadJS + '" />'
+  // Note: this code is here to work around a bug in the Chrome Browser.
   // http://code.google.com/p/nativeclient/issues/detail?id=500
-  document.getElementById(ginsu.Application.GINSU_MODULE_NAME).nexes = nexes;
+  document.getElementById(uniqueModuleName).nexes = nexes;
+}
+
+/**
+ * Shut down the application instance.  This unhooks all the event listeners
+ * and deletes the objects created in moduleDidLoad().
+ */
+ginsu.Application.prototype.terminate = function() {
+  goog.events.removeAll();
+  this.trackball_ = null;
+  this.dragger_ = null;
+  this.dragger_ = null;
 }
 
 /**
