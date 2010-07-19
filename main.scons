@@ -52,7 +52,6 @@ base_env = Environment(
 # Build environment for NaCl module
 nacl_env = base_env.Clone(
     tools = ['naclsdk'],
-    BUILD_GROUPS = ['default'],
     BUILD_TYPE_DESCRIPTION = 'NaCl module',
     BUILD_TYPE = 'nacl',
     LIBS = ['google_nacl_imc',
@@ -71,14 +70,12 @@ nacl_dbg_env = nacl_env.Clone(
 environment_list.append(nacl_dbg_env)
 
 nacl_opt_env = nacl_env.Clone(
-        BUILD_GROUPS = ['default'],
         BUILD_TYPE = 'opt',
         tools = ['target_optimized']
 )
 environment_list.append(nacl_opt_env)
 
 nacl_test_env = nacl_env.Clone(
-    BUILD_GROUPS = ['default'],
     BUILD_SCONSCRIPTS = ['c_salt/test.scons'],
     BUILD_TYPE_DESCRIPTION = 'Tests',
     COMPONENT_TEST_CMDLINE = '$NACL_SDK_BASE/bin/sel_ldr $PROGRAM_NAME',
@@ -93,4 +90,3 @@ BuildComponents(environment_list)
 # dirs, this step should be removed.
 nacl_dbg_env.Command('$STAGING_DIR/closure', 'third_party/closure',
                      Copy("$TARGET", "$SOURCE"))
-
