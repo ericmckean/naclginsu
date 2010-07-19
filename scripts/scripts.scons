@@ -10,4 +10,4 @@ import shutil
 Import('env')
 
 dest = os.path.join(env['DESTINATION_ROOT'], 'httpd.py')
-shutil.copyfile(install_script, dest)
+shutil.copyfile('httpd.py', dest)
