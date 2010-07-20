@@ -21,7 +21,7 @@ osg::Program* BuildFaceShader() {
       "uniform mat3 osg_NormalMatrix;\n"
       "attribute vec4 osg_Vertex;\n"
       "attribute vec3 osg_Normal;\n"
-      "varying vec4 color;\n"
+      "varying lowp vec4 color;\n"
       "void main(void) {\n"
       "  vec3 normal_eye = normalize(osg_NormalMatrix * osg_Normal);\n"
       "  float normal_comp = max(normal_eye.z, 0.0);\n"
@@ -30,8 +30,7 @@ osg::Program* BuildFaceShader() {
       "  gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
       "}\n";
   char frag_shader_src[] =
-      "precision lowp float;\n"
-      "varying vec4 color;\n"
+      "varying lowp vec4 color;\n"
       "void main(void) {\n"
       "  gl_FragColor = color;\n"
       "}\n";
@@ -50,7 +49,6 @@ osg::Program* BuildEdgeShader() {
       "  gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
       "}\n";
   char frag_shader_src[] =
-      "//precision highp float;\n"
       "void main(void) {\n"
       "  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n"
       "}\n";
