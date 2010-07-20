@@ -4,10 +4,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import os
-import shutil
-
 Import('env')
 
-dest = os.path.join(env['DESTINATION_ROOT'], 'httpd.py')
-shutil.copyfile('httpd.py', dest)
+install_scripts = [
+  'httpd.py',
+]
+
+env.Install('$DESTINATION_ROOT', install_scripts)
