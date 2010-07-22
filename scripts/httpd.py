@@ -26,22 +26,37 @@ logging.getLogger().setLevel(logging.INFO)
 SERVER_PORT = 5103
 SERVER_HOST = ''
 
-# We only run from the scons-out directory, so that not too much is exposed
+# Map special path roots to dirs that are not under the root of this server.
+# These are filled in at run-time (see below) once SanityCheck() has succeeded.
+SPECIAL_PATH_MAP = dict()
+
+
+# We only run from the staging directory, so that not too much is exposed
 # via this HTTP server.  Everything in the directory is served, so there
 # should never be anything potentially sensitive in the serving directory,
 # especially if the machine might be a multi-user machine and not all users
 # are trusted.  We only serve via the loopback interface.
 
-SAFE_DIR_COMPONENTS = ['scons-out']
+SAFE_DIR_COMPONENTS = ['staging']
 SAFE_DIR_SUFFIX = apply(os.path.join, SAFE_DIR_COMPONENTS)
 
-def SanityCheckDirectory():
+
+def SetUpSpecialPathMap():
+  ginsu_root = os.getenv('GINSU_ROOT')
+  SPECIAL_PATH_MAP['closure'] = os.path.join(ginsu_root, 'third_party')
+  SPECIAL_PATH_MAP['jsunit'] = os.path.join(ginsu_root, 'third_party')
+
+
+def SanityCheck():
   if os.getcwd().endswith(SAFE_DIR_SUFFIX):
     return
   logging.error('httpd.py should only be run from the %s', SAFE_DIR_SUFFIX)
   logging.error('directory for testing purposes.')
   logging.error('We are currently in %s', os.getcwd())
   sys.exit(1)
+  if os.getenv('GINSU_ROOT') is None:
+    logging.error('GINSU_ROOT is not defined')
+    sys.exit(1)
 
 
 # An HTTP server that will quit when |is_running| is set to False.
@@ -67,10 +82,11 @@ def KeyValuePair(str, sep='='):
 
 
 # A small handler that looks for '?quit=1' query in the path and shuts itself
-# down if it finds that parameter.
+# down if it finds that parameter.  Also does some clever directory re-mapping
+# for special, well-known directories such as 'closure' and 'jsunit'.
 class QuittableHTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
   def do_GET(self):
-    (_, _, _, query, _) = urlparse.urlsplit(self.path)
+    (_, _, url_path, query, _) = urlparse.urlsplit(self.path)
     url_params = dict([KeyValuePair(key_value)
                       for key_value in query.split('&')])
     if 'quit' in url_params and '1' in url_params['quit']:
@@ -81,7 +97,34 @@ class QuittableHTTPHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
       self.server.shutdown()
       return
 
-    SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+    """ If the URL starts with one of the magical path names, then serve
+        from the mapped dir.
+    """
+    path_components = url_path.split(os.sep)
+    if (os.path.isabs(url_path)):
+      del path_components[0]
+
+    try:
+      map_path = SPECIAL_PATH_MAP[path_components[0]]
+      mapped_file_path = os.path.join(map_path, os.sep.join(path_components))
+      mapped_file = open(mapped_file_path)
+      self.send_response(200, 'OK')
+      self.send_header('Content-type', 'text/html')
+      self.end_headers()
+      self.log_message('Remap special file %s to %s' %
+          (url_path, mapped_file_path))
+      self.wfile.write(mapped_file.read())
+      mapped_file.close()
+      return
+
+    except KeyError:
+      SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+
+    except IOError:
+      self.send_error(404, 'File Not Found: %s' % self.path)
+
+    else:
+      print 'Unhandled error'
 
 
 def Run(server_address,
@@ -96,7 +139,8 @@ def Run(server_address,
 
 
 if __name__ == '__main__':
-  SanityCheckDirectory()
+  SanityCheck()
+  SetUpSpecialPathMap()
   if len(sys.argv) > 1:
     Run((SERVER_HOST, int(sys.argv[1])))
   else:
