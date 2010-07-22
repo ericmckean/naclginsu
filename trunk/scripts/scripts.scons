@@ -10,4 +10,4 @@ install_scripts = [
   'httpd.py',
 ]
 
-env.Install('$DESTINATION_ROOT', install_scripts)
+env.Install('$STAGING_DIR', install_scripts)
