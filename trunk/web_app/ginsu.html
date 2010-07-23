@@ -1,30 +1,87 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
           "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
+<!--
+Copyright (c) 2010 The Ginsu Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+  <title>Ginsu</title>
+  <link rel="stylesheet" type="text/css" href="css/toolbar.css" />
+  <link rel="stylesheet" type="text/css" href="css/ginsu.css" />
+  <link rel="stylesheet" type="text/css" href="css/style.css" />
+
+  <script src="closure/closure/goog/base.js"></script>
+  <!-- Resolves the goog.base interdependencies. -->
+  <script type="text/javascript">
+    goog.require('goog.Disposable');
+    goog.require('goog.dom');
+    goog.require('goog.events');
+    goog.require('goog.fx.Dragger');
+    goog.require('goog.structs.Map');
+    goog.require('goog.ui.Component');
+    goog.require('goog.ui.Container');
+    goog.require('goog.ui.Control');
+    goog.require('goog.ui.KeyboardShortcutHandler');
+    goog.require('goog.ui.SelectionModel');
+    goog.require('goog.ui.Toolbar');
+    goog.require('goog.ui.ToolbarButton');
+  </script>
+  <!-- Loads the Ginsu application code. This is order dependent. -->
+  <script type="text/javascript" src="events/dragger.js"></script>
+  <script type="text/javascript" src="events/event.js"></script>
+  <script type="text/javascript" src="events/eventtype.js"></script>
+  <script type="text/javascript" src="controllers/keyboard.js"></script>
+  <script type="text/javascript" src="controllers/toolbar.js"></script>
+  <script type="text/javascript" src="controllers/toolmanager.js"></script>
+  <script type="text/javascript" src="tools/tool.js"></script>
+  <script type="text/javascript" src="tools/linetool.js"></script>
+  <script type="text/javascript" src="tools/orbittool.js"></script>
+  <script type="text/javascript" src="controllers/viewcontroller.js"> </script>
+  <script type="text/javascript" src="ginsu.js"></script>
+  <!--Resolve interdependencies in Ginsu. -->
+  <script type="text/javascript">
+    goog.require('ginsu.Application');
+    goog.require('ginsu.controllers.KeyboardHandler');
+    goog.require('ginsu.controllers.Toolbar');
+    goog.require('ginsu.controllers.ToolManager');
+    goog.require('ginsu.controllers.ViewController');
+    goog.require('ginsu.events.Dragger');
+    goog.require('ginsu.events.Event');
+    goog.require('ginsu.events.EventType');
+    goog.require('ginsu.tools.Tool');
+    goog.require('ginsu.tools.OrbitTool');
+    goog.require('ginsu.tools.LineTool');
+  </script>
+</head>
+
+<body>
   <!--
-  Copyright (c) 2010 The Ginsu Authors. All rights reserved.
-  Use of this source code is governed by a BSD-style license that can be
-  found in the LICENSE file.
+  Place the Ginsu object inside an auto-sizing container so that it
+  changes size with the window.
   -->
-  <head>
-    <title>Ginsu</title>
-    <script src="closure/closure/goog/base.js"></script>
-    <script type="text/javascript">
-      goog.require('goog.Disposable');
-      goog.require('goog.dom');
-      goog.require('goog.events');
-    </script>
-    <script type="text/javascript" src="ginsu.js"></script>
-    <script type="text/javascript">
-      goog.require('ginsu.Application');
-    </script>
-  </head>
+  <div id="autosize_background">
+    <div id="headercontainer">
+      <div id="headerbackground"></div>
+      <div id="headercontent">
+        <div id="ginsu_toolbar" class="goog-toolbar"></div>
+      </div>
+    </div>
   
-  <body>
-    <div id="ginsu_instance"></div>
-    <script type="text/javascript">
-      var application = new ginsu.Application();
-      application.run('ginsu_instance');
-    </script>
-  </body>
+    <div id="ginsu_view" class="ginsu_view"></div>
+  
+    <div id='footercontainer'>
+      <div id='footerbackground'></div>
+      <div id='footercontent'>
+        <div id="status">Status: </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var application = new ginsu.Application();
+    application.run('ginsu_view');
+  </script>
+</body>
 </html>

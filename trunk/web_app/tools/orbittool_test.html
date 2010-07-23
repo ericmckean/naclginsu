@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<!--
+Copyright (c) 2010 The Ginsu Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+  <title>Ginsu Orbit Tool Tests</title>
+  <link rel="stylesheet" type="text/css" href="jsunit/css/jsUnitStyle.css">
+  <link rel="stylesheet" type="text/css" href="css/ginsu.css"/>
+  <script type="text/javascript" src="jsunit/app/jsUnitCore.js"></script>
+  <script src="closure/closure/goog/base.js"></script>
+  <script type="text/javascript">
+    goog.require('goog.dom');
+    goog.require('goog.math');
+    goog.require('goog.events.EventTarget');
+    goog.require('goog.fx.Dragger');
+    goog.require('goog.fx.DragEvent');
+    goog.require('goog.testing.MockControl');
+    goog.require('goog.testing.events');
+    goog.require('goog.testing.jsunit');
+  </script>
+  <script type="text/javascript" src="events/dragger.js"></script>
+  <script type="text/javascript" src="events/event.js"></script>
+  <script type="text/javascript" src="events/eventtype.js"></script>
+  <script type="text/javascript" src="tools/tool.js"></script>
+  <script type="text/javascript" src="tools/orbittool.js"></script>
+  <script type="text/javascript" src="controllers/viewcontroller.js"> </script>
+  <script type="text/javascript">
+  /**
+   * @fileoverview  These unit tests are for the Ginsu orbit tool.
+   */
+
+  /**
+   * Tolerance to use when comparing real numbers in this test.  Numbers
+   * within TEST_TOLERANCE of each other are assumed to be equivalent.
+   * @type {number}
+   */
+  var TEST_TOLERANCE = 1.0e-7;
+
+  /**
+   * Test the empty OrbitTool constructor.
+   */
+  function testContructor() {
+    var orbit_tool = new ginsu.tools.OrbitTool();
+    assertNotNull(orbit_tool);
+    assertEquals(0, orbit_tool.sqrRadius_);
+    assertEquals(0, orbit_tool.rollStart_.x);
+    assertEquals(0, orbit_tool.rollStart_.y);
+    assertEquals(1, orbit_tool.rollStart_.z);
+    assertEquals(0, orbit_tool.center_.x);
+    assertEquals(0, orbit_tool.center_.y);
+  }
+
+  /**
+   * Test the method that computes the dimensions of the orbit_tool to fit
+   * inside a 2D client frame.
+   */
+  function testInitInFrame() {
+    // Create a Trackball that has a frame size of 200 x 100.
+    var orbit_tool = new ginsu.tools.OrbitTool();
+    orbit_tool.initInFrame_(new goog.math.Size(200, 100));
+
+    // The square of the radius is cached in the object.  The radius is 1/2 of
+    // the shorter frame dimension.  ((100/2)^2) = 2500.
+    assertEquals(2500, orbit_tool.sqrRadius_);
+    // The center should be at the mid point along each side.
+    assertEquals(100, orbit_tool.center_.x);
+    assertEquals(50, orbit_tool.center_.y);
+    // Make sure the orbit_tool dimensions are set by the shorter of the two
+    // frame dimensions.
+    orbit_tool.initInFrame_(new goog.math.Size(200, 400));
+    assertEquals(10000, orbit_tool.sqrRadius_);
+    assertEquals(100, orbit_tool.center_.x);
+    assertEquals(200, orbit_tool.center_.y);
+  }
+
+  /**
+   * Test the method that converts a 2D client-space point to a 2D point in
+   * the coordinate space whose origin is in the middle of the client view.
+   */
+  function testConvertClientPoint() {
+    // Create a Trackball that has a frame size of 200 x 100.
+    var orbit_tool = new ginsu.tools.OrbitTool();
+    orbit_tool.initInFrame_(new goog.math.Size(200, 100));
+
+    var point = orbit_tool.convertClientPoint_(new goog.math.Coordinate(0, 0));
+    assertEquals(-100, point.x);
+    assertEquals(-50, point.y);
+    point = orbit_tool.convertClientPoint_(new goog.math.Coordinate(100, 50));
+    assertEquals(0, point.x);
+    assertEquals(0, point.y);
+  }
+
+  /**
+   * Test method that maps a 2D point to the 3D ball surface.
+   */
+  function testProjectOnTrackball() {
+    // Create a Trackball that has a frame size of 200 x 100.
+    var orbit_tool = new ginsu.tools.OrbitTool();
+    orbit_tool.initInFrame_(new goog.math.Size(200, 100));
+
+    // A point right in the middle of the ball should be on the z-axis.  Note
+    // that points here are in a 2D space whose origin is in the center of the
+    // client view (not in "normal" client space with origin at upper-left of
+    // the client view).
+    var ballPoint = orbit_tool.projectOnTrackball_(
+        new goog.math.Coordinate(0, 0));
+    // The z value should be equal to the ball's radius.
+    assertVec3RoughlyEquals(new goog.math.Vec3(0, 0, 50), ballPoint);
+
+    // Points on the "edge" of the ball should have z-value 0.
+    ballPoint = orbit_tool.projectOnTrackball_(
+        new goog.math.Coordinate(100, 0));
+    assertVec3RoughlyEquals(new goog.math.Vec3(100, 0, 0), ballPoint);
+
+    // Test a couple of points at well-known locations on the ball.
+    ballPoint = orbit_tool.projectOnTrackball_(
+        new goog.math.Coordinate(25, 0));
+    assertVec3RoughlyEquals(new goog.math.Vec3(25, 0, 43.30127018),
+        ballPoint);
+    ballPoint = orbit_tool.projectOnTrackball_(
+        new goog.math.Coordinate(0, 25));
+    assertVec3RoughlyEquals(new goog.math.Vec3(0, 25, 43.30127018),
+        ballPoint);
+    ballPoint = orbit_tool.projectOnTrackball_(
+        new goog.math.Coordinate(25, 25));
+    assertVec3RoughlyEquals(new goog.math.Vec3(25, 25, 35.35533905),
+        ballPoint);
+  }
+
+  /**
+   * Test the start-up of the orbit_tool.  Use a client frame size of 200 x
+   * 100.  This is more of a functional test than a unit test, since it
+   * exercises a bunch of methods in the class.
+   */
+  function testStartAtPointInFrame() {
+    var orbit_tool = new ginsu.tools.OrbitTool();
+
+    // Test a couple of well-known points to make sure the roll starting
+    // vector is correct.  First point is right in the center of a 200 x 100
+    // frame.
+    orbit_tool.startAtPointInFrame(new goog.math.Coordinate(100, 50),
+        new goog.math.Size(200, 100));
+    assertVec3RoughlyEquals(new goog.math.Vec3(0, 0, 50),
+        orbit_tool.rollStart_);
+
+    // Next point is on the "edge" of the orbit_tool.
+    orbit_tool.startAtPointInFrame(new goog.math.Coordinate(200, 50),
+        new goog.math.Size(200, 100));
+    assertVec3RoughlyEquals(new goog.math.Vec3(100, 0, 0),
+        orbit_tool.rollStart_);
+
+    // Next point is at a 45-degree point on the orbit_tool.
+    orbit_tool.startAtPointInFrame(new goog.math.Coordinate(125, 75),
+        new goog.math.Size(200, 100));
+    assertVec3RoughlyEquals(new goog.math.Vec3(25, 25, 35.35533905),
+        orbit_tool.rollStart_);
+  }
+
+  /**
+   * Test the rolling of the orbit_tool.  Use a client frame size of 200 x 100.
+   * This is more of a functional test than a unit test, since it exercises a
+   * bunch of methods in the class.  It also depends on the
+   * startAtPointInFrame() method, which has its own functional test.
+   */
+  function testRollToPoint() {
+    var orbit_tool = new ginsu.tools.OrbitTool();
+
+    // Test a couple of well-known points to make sure the roll starting
+    // vector is correct.  First point is right in the center of a 200 x 100
+    // frame and moves along the x-axis.  This should produce a
+    // rotation about the y axis.
+    orbit_tool.startAtPointInFrame(new goog.math.Coordinate(100, 50),
+        new goog.math.Size(200, 100));
+    var rollQuaternion = orbit_tool.rollToPoint(
+        new goog.math.Coordinate(150, 50));
+    // A quaternion that represents a 90-degree rotation about the y-axis
+    // looks like this: [0, sin(PI/4), 0, cos(PI/4)].
+    assertQuaternionRoughlyEquals([0, 0.70710678, 0, 0.70710678],
+        rollQuaternion);
+
+    // Next point is on the "edge" of the orbit_tool. and rolls 90-degrees to
+    // another edge point, this should produce a rotation about the Z axis.
+    orbit_tool.startAtPointInFrame(new goog.math.Coordinate(200, 50),
+        new goog.math.Size(200, 100));
+    rollQuaternion = orbit_tool.rollToPoint(
+        new goog.math.Coordinate(100, 100));
+    assertQuaternionRoughlyEquals([0, 0, 0.70710678, 0.70710678],
+        rollQuaternion);
+
+    // Next point is right in the center of the orbit_tool, and moves up the
+    // y-axis, this should produce a rotation about the x-axis.
+    orbit_tool.startAtPointInFrame(new goog.math.Coordinate(100, 50),
+        new goog.math.Size(200, 100));
+    rollQuaternion = orbit_tool.rollToPoint(
+        new goog.math.Coordinate(100, 100));
+    assertQuaternionRoughlyEquals([-0.70710678, 0, 0, 0.70710678],
+        rollQuaternion);
+  }
+
+  /**
+   * Test the quaternion multiplier with a couple of well-known orientations.
+   */
+  function testMultQuaternions() {
+    var qIdentity = [0, 0, 0, 1];  // The identity quaternion.
+    // Rotate the dentity quaternion by 90-degrees about the z-axis.
+    // A quaternion that represents a 90-degree rotation about the z-axis
+    // looks like this: [0, 0, sin(PI/4), cos(PI/4)].
+    var qResult = ginsu.multQuaternions(qIdentity,
+        [0, 0, 0.70710678, 0.70710678]);
+    assertQuaternionRoughlyEquals([0, 0, 0.70710678, 0.70710678], qResult);
+
+    // Rotate the identity quaternion by 90-degrees about the x-axis.
+    qResult = ginsu.multQuaternions(qIdentity,
+        [0.70710678, 0, 0, 0.70710678]);
+    assertQuaternionRoughlyEquals([0.70710678, 0, 0, 0.70710678], qResult);
+
+    // Rotate the identity quaternion by 90-degrees about the y-axis.
+    qResult = ginsu.multQuaternions(qIdentity,
+        [0, 0.70710678, 0, 0.70710678]);
+    assertQuaternionRoughlyEquals([0, 0.70710678, 0, 0.70710678], qResult);
+  }
+
+  /**
+   * Function to test that two 3D vectors are roughly equal by doing a
+   * component-wise comparison.
+   * @param {goog.math.Vec3} v0 A 3D vector.
+   * @param {Array.<number>} v1 A 3D vector.
+   * @param {number} opt_tolerance Numbers within this tolerance are
+   *     presumed to be equivalent.  Defaults to TEST_TOLERANCE.
+   */
+  function assertVec3RoughlyEquals(v0, v1, opt_tolerance) {
+    var tolerance = opt_tolerance || TEST_TOLERANCE;
+    assertRoughlyEquals(v0.x, v1.x, tolerance);
+    assertRoughlyEquals(v0.y, v1.y, tolerance);
+    assertRoughlyEquals(v0.z, v1.z, tolerance);
+  }
+
+  /**
+   * Function to test that two quaternions are roughly equal by doing a
+   * component-wise comaprison.
+   * @param {Array.<number>} q0 A 4-element Array representing a quaternion.
+   * @param {Array.<number>} q1 A 4-element Array representing a quaternion.
+   * @param {number} opt_tolerance Numbers within this tolerance are
+   *     presumed to be equivalent.  Defaults to TEST_TOLERANCE.
+   */
+  function assertQuaternionRoughlyEquals(q0, q1, opt_tolerance) {
+    var tolerance = opt_tolerance || TEST_TOLERANCE;
+    assertRoughlyEquals(q0[0], q1[0], tolerance);
+    assertRoughlyEquals(q0[1], q1[1], tolerance);
+    assertRoughlyEquals(q0[2], q1[2], tolerance);
+    assertRoughlyEquals(q0[3], q1[3], tolerance);
+  }
+
+  </script>
+</head>
+</html>

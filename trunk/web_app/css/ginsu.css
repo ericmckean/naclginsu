@@ -1,0 +1,49 @@
+html,body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #A9A9A9;
+}
+
+#autosize_background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.ginsu_autosize_view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.ginsu_view {
+  position: absolute;
+  top: 32px;
+  left: 0;
+  bottom: 0;
+  height: auto;
+  width: 100%;
+}
+
+/* Styles for goog.ui.Container */
+.goog-container {
+  position: relative;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background-color: #eee;
+  outline: none !important;
+  zoom: 1; /* The container element must have layout on IE. */
+}
+
+.goog-container-horizontal {
+  border-bottom: 0px;
+  background: #fafafa;
+}
+

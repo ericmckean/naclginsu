@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<!--
+Copyright (c) 2010 The Ginsu Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+  <title>Ginsu ToolManager Tests</title>
+  <link rel="stylesheet" type="text/css" href="jsunit/css/jsUnitStyle.css">
+  <link rel="stylesheet" type="text/css" href="css/ginsu.css" />
+  <script src="closure/closure/goog/base.js"></script>
+  <script src="jsunit/app/jsUnitCore.js"></script>
+  <script type="text/javascript">
+    goog.require('goog.array');
+    goog.require('goog.events.EventTarget');
+    goog.require('goog.functions');
+    goog.require('goog.structs.Map');
+    goog.require('goog.testing.MockControl');
+    goog.require('goog.testing.events');
+    goog.require('goog.testing.jsunit');
+  </script>
+  <script type="text/javascript" src="events/event.js"></script>
+  <script type="text/javascript" src="events/eventtype.js"></script>
+  <script type="text/javascript" src="controllers/toolmanager.js"></script>
+  <script type="text/javascript" src="tools/tool.js"></script>
+  <script type="text/javascript">
+  /**
+   * @fileoverview  These unit tests are for the Ginsu ToolManager object.
+   */
+
+  /**
+   * The global mock controller.  Instanced in setUp().
+   */
+  var mockControl_;
+
+  /**
+   * Tool ids for the mock tools.
+   * @type {string}
+   */
+  var MOCK_TOOL_ID = 'gs_mock_tool';
+  var MOCK_TOOL_ID2 = 'gs_mock_tool2';
+
+  /**
+   * Set function for each test, called by the testing framework at the
+   * start of each test.  Creates the 'gs_container' div and mocks the
+   * GSPlugin API.
+   */
+  function setUp() {
+    mockControl_ = new goog.testing.MockControl();
+  }
+
+  function tearDown() {
+    mockControl_.$tearDown();
+  }
+
+  /**
+   * Test the empty GSToolManager constructor.
+   */
+  function testContructor() {
+    var toolManager = new ginsu.controllers.ToolManager();
+    assertEquals(0, toolManager.toolDictionary_.getCount());
+    assertEquals(0, toolManager.toolStack_.length);
+  }
+
+  /**
+   * Test for addTool().  Adding a tool should have no effect on the active
+   * tool.
+   */
+  function testAddTool() {
+     // Create a mock GSTool which returns a tool id of MOCK_TOOL_ID.
+    var mockTool = mockControl_.createLooseMock(ginsu.tools.Tool);
+    mockTool.activate().$times(0);
+    mockTool.deactivate().$times(0);
+    mockTool.toolId().$returns(MOCK_TOOL_ID).$atLeastOnce();
+
+    mockControl_.$replayAll();
+    var toolManager = new ginsu.controllers.ToolManager();
+    // Add the tool and activate it.
+    toolManager.addTool(mockTool);
+    // The active tool should be unchanged.
+    assertNull(toolManager.activeTool());
+    mockControl_.$verifyAll();
+  }
+
+  /**
+   * Test for removeTool().  Removing a tool can have an effect on the active
+   * tool if the removed tool is the same as the active tool.
+   */
+  function testRemoveTool() {
+     // Create a mock GSTool which returns a tool id of MOCK_TOOL_ID.
+    var mockTool = mockControl_.createLooseMock(ginsu.tools.Tool);
+
+    mockTool.activate().$times(1);
+    mockTool.deactivate().$times(0);
+    mockTool.toolId().$returns(MOCK_TOOL_ID).$atLeastOnce();
+
+    mockControl_.$replayAll();
+    var toolManager = new ginsu.controllers.ToolManager();
+    // Removing a non-existent tool does nothing.
+    var dictionaryCount = toolManager.toolDictionary_.getCount();
+    var stackLength = toolManager.toolStack_.length;
+    toolManager.removeTool(mockTool);
+    assertEquals(dictionaryCount, toolManager.toolDictionary_.getCount());
+    assertEquals(stackLength, toolManager.toolStack_.length);
+
+    // Add the tool and make sure the dictionary length changes, but the
+    // active tool does not.
+    var activeTool = toolManager.activeTool();
+    toolManager.addTool(mockTool);
+    assertEquals(activeTool, toolManager.activeTool());
+    assertNotEquals(dictionaryCount, toolManager.toolDictionary_.getCount());
+    assertEquals(stackLength, toolManager.toolStack_.length);
+
+    // Make the new tool the active tool, then remove it.  The active tool
+    // should silently change.
+    toolManager.activateToolWithId(mockTool.toolId());
+    assertEquals(mockTool, toolManager.activeTool());
+    assertNotEquals(stackLength, toolManager.toolStack_.length);
+    toolManager.removeTool(mockTool);
+
+    // The active tool not be the just-removed tool.
+    assertNotEquals(mockTool, toolManager.activeTool());
+    assertEquals(dictionaryCount, toolManager.toolDictionary_.getCount());
+
+    mockControl_.$verifyAll();
+  }
+
+  /**
+   * Test the removal of the active tool.  This should cause the active tool
+   * to silently change (that is, no activate/deactivate methods are called
+   * on any of the tools).
+   */
+  function testRemoveActiveTool() {
+     // Create a mock GSTool which returns a tool id of MOCK_TOOL_ID.
+    var mockTool = mockControl_.createLooseMock(ginsu.tools.Tool);
+     // Create a mock GSTool which returns a tool id of MOCK_TOOL_ID2.
+    var mockTool2 = mockControl_.createLooseMock(ginsu.tools.Tool);
+    mockTool.activate().$times(1);
+    mockTool.deactivate().$times(0);
+    mockTool.toolId().$returns(MOCK_TOOL_ID).$atLeastOnce();
+    mockTool2.activate().$times(0);
+    mockTool2.deactivate().$times(0);
+    mockTool2.toolId().$returns(MOCK_TOOL_ID2).$atLeastOnce();
+
+    mockControl_.$replayAll();
+    var toolManager = new ginsu.controllers.ToolManager();
+    // Add a second mock tool and make it active, then add/remove a tool and
+    // make sure the active tool doesn't change.
+    toolManager.addTool(mockTool2);
+    toolManager.addTool(mockTool);
+    toolManager.activateToolWithId(mockTool.toolId());
+    assertEquals(mockTool, toolManager.activeTool());
+    toolManager.removeTool(mockTool);
+    assertNotEquals(mockTool, toolManager.activeTool());
+    mockControl_.$verifyAll();
+  }
+
+  /**
+   * Test for activeTool(); first, make sure no tool is active by default,
+   * then add one and activate it and make sure that tool is returned.
+   */
+  function testActiveTool() {
+    // Create a mock GSTool which returns a tool id of MOCK_TOOL_ID.
+    var mockTool = mockControl_.createLooseMock(ginsu.tools.Tool);
+    mockTool.activate().$times(1);
+    mockTool.deactivate().$times(0);
+    mockTool.toolId().$returns(MOCK_TOOL_ID).$atLeastOnce();
+
+    mockControl_.$replayAll();
+    var toolManager = new ginsu.controllers.ToolManager();
+    assertNull(toolManager.activeTool());
+    // Add the tool and activate it.
+    toolManager.addTool(mockTool);
+    toolManager.activateToolWithId(mockTool.toolId());
+    assertEquals(mockTool, toolManager.activeTool());
+    mockControl_.$verifyAll();
+  }
+
+  /**
+   * Test for activateToolWithId().  Use a GSTool mock to make sure that the
+   * right activation methods are called.
+   */
+  function testActivateToolWithId() {
+    // Create a mock GSTool which returns a tool id of MOCK_TOOL_ID.
+    var mockTool = mockControl_.createLooseMock(ginsu.tools.Tool);
+    mockTool.activate().$times(1);
+    mockTool.deactivate().$times(0);
+    mockTool.toolId().$returns(MOCK_TOOL_ID).$atLeastOnce();
+
+    mockControl_.$replayAll();
+    var toolManager = new ginsu.controllers.ToolManager();
+    // Activating with a null tool id should throw an error.
+    assertThrows('Activate with null tool id.',
+        goog.bind(toolManager.activateToolWithId, toolManager, null));
+
+    // Activating a non-existing tool should throw an error.
+    assertThrows('Activate non-existent tool.',
+        goog.bind(toolManager.activateToolWithId, toolManager,
+            mockTool.toolId()));
+
+    // Add the tool and activate it.
+    toolManager.addTool(mockTool);
+    assertNotThrows('Activate tool.',
+        goog.bind(toolManager.activateToolWithId, toolManager,
+            mockTool.toolId()));
+    mockControl_.$verifyAll();
+  }
+
+  /**
+   * Test for deactivateToolWithId().  Use a GSTool mock to make sure that the
+   * right deactivation methods are called.
+   */
+  function testDeactivateToolWithId() {
+    // Create a mock GSTool which returns a tool id of MOCK_TOOL_ID.
+    var mockTool = mockControl_.createLooseMock(ginsu.tools.Tool);
+    mockTool.activate().$times(1);
+    mockTool.deactivate().$times(1);
+    mockTool.toolId().$returns(MOCK_TOOL_ID).$atLeastOnce();
+
+    mockControl_.$replayAll();
+    var toolManager = new ginsu.controllers.ToolManager();
+    // Add the tool and activate it.
+    toolManager.addTool(mockTool);
+    toolManager.activateToolWithId(mockTool.toolId());
+    // Now, deactivate it.
+    toolManager.deactivateToolWithId(mockTool.toolId());
+    mockControl_.$verifyAll();
+  }
+
+  /**
+   * Make sure that a tool gets activated when an action event is received.
+   */
+  function testActionEvent() {
+    // Create a mock GSTool which returns a tool id of MOCK_TOOL_ID.
+    var mockTool = mockControl_.createLooseMock(ginsu.tools.Tool);
+    mockTool.activate().$times(1);
+    mockTool.deactivate().$times(1);
+    mockTool.toolId().$returns(MOCK_TOOL_ID).$atLeastOnce();
+
+    mockControl_.$replayAll();
+    var toolManager = new ginsu.controllers.ToolManager();
+    toolManager.addTool(mockTool);
+    toolManager.handleActionEvent({
+        eventId: goog.functions.constant(MOCK_TOOL_ID)
+      });
+    assertEquals(mockTool, toolManager.activeTool());
+
+    // Now, remove the tool and try to activate it.  This should throw an
+    // error.
+    toolManager.deactivateToolWithId(mockTool.toolId());
+    toolManager.removeTool(mockTool);
+    assertEquals(0, toolManager.toolDictionary_.getCount());
+    assertEquals(0, toolManager.toolStack_.length);
+    assertNull(toolManager.activeTool());
+    assertThrows('Activate non-existent tool.',
+        goog.bind(toolManager.handleActionEvent, toolManager,
+            {eventId: goog.functions.constant(MOCK_TOOL_ID)}));
+    mockControl_.$verifyAll();
+  }
+
+  </script>
+</head>
+</html>

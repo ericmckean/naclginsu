@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<!--
+Copyright (c) 2010 The Ginsu Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+  <title>Ginsu Application Tests</title>
+  <link rel="stylesheet" type="text/css" href="jsunit/css/jsUnitStyle.css">
+  <link rel="stylesheet" type="text/css" href="css/toolbar.css" />
+  <link rel="stylesheet" type="text/css" href="css/ginsu.css" />
+  <link rel="stylesheet" type="text/css" href="css/style.css" />
+  <script src="closure/closure/goog/base.js"></script>
+  <script src="jsunit/app/jsUnitCore.js"></script>
+  <script type="text/javascript">
+    goog.require('goog.array');
+    goog.require('goog.dom');
+    goog.require('goog.math');
+    goog.require('goog.events.EventTarget');
+    goog.require('goog.functions');
+    goog.require('goog.fx.Dragger');
+    goog.require('goog.fx.DragEvent');
+    goog.require('goog.structs.Map');
+    goog.require('goog.testing.MockControl');
+    goog.require('goog.testing.events');
+    goog.require('goog.ui.KeyboardShortcutHandler');
+    goog.require('goog.ui.Toolbar');
+  </script>
+  <script type="text/javascript" src="events/dragger.js"></script>
+  <script type="text/javascript" src="events/event.js"></script>
+  <script type="text/javascript" src="events/eventtype.js"></script>
+  <script type="text/javascript" src="controllers/keyboard.js"></script>
+  <script type="text/javascript" src="controllers/toolbar.js"></script>
+  <script type="text/javascript" src="controllers/toolmanager.js"></script>
+  <script type="text/javascript" src="tools/tool.js"></script>
+  <script type="text/javascript" src="tools/linetool.js"></script>
+  <script type="text/javascript" src="tools/orbittool.js"></script>
+  <script type="text/javascript" src="controllers/viewcontroller.js"> </script>
+  <script type="text/javascript" src="ginsu.js"></script>
+  <script type="text/javascript">
+  /**
+   * @fileoverview  These unit tests are for the Ginsu Application object.
+   */
+
+  /**
+   * Set function for each test, called by the testing framework at the
+   * start of each test.  Creates the 'ginsu_view' and 'ginsu_toolbar' divs and
+   * mocks the Ginsu API.
+   */
+  function setUp() {
+    createTestingDivs();
+    createGinsuMocks();
+  }
+
+  function tearDown() {
+    deleteTestingDivs();
+  }
+
+  /**
+   * Test the method that builds and registers the tools.  This is more of a
+   * functional test than a unit test.
+   */
+  function testCreateToolMap() {
+    /**
+     * Function to validate a tool.
+     * @param {!Object} toolEntry An element of the tool map.
+     * @private
+     */
+    function validateToolMapEntry_(toolEntry) {
+      assertNotNull(toolEntry.tool);
+      var toolId = toolEntry.tool.toolId();
+      assertNotNull(toolId);
+      // Make sure the toolId is not the default.
+      assertNotEquals(ginsu.tools.Tool.DEFAULT_TOOL_ID, toolId);
+      assertNotNull(toolEntry.content);
+      // If the tool has any images, make sure the image src exists by firing
+      // off an XMLHTTP request for the src attribute of the img tag in the
+      // tool's DOM content object.
+      var toolImages = [];
+      if (toolEntry.content.tagName.toLowerCase() == 'img') {
+        toolImages.push(toolEntry.content);
+      }
+      toolImages.concat(toolEntry.content.getElementsByTagName('img'));
+      goog.array.forEach(toolImages, function(toolImg) {
+          assertNotNull(toolImg.src);
+          var xmlHttpReq = new XMLHttpRequest();
+          // Do a synchronous request so that the test waits on the file's
+          // status.
+          xmlHttpReq.open('HEAD', toolImg.src, false);
+          try {
+            xmlHttpReq.send('');
+          } catch (e) {
+            fail("Image file '" + toolImg.src + "' does not exist.");
+          }
+        }, this);
+    };
+
+    var app = new ginsu.Application();
+    var toolMap = app.createToolMap_();
+    assertNotNull(toolMap);
+    assertEquals(3, toolMap.length);  // There are three tools.
+    goog.array.forEach(toolMap, validateToolMapEntry_, app);
+  }
+
+  /**
+   * Test the run method.  All this really does is make sure that all the
+   * GUI and controller objects exist, and that they are wired together in
+   * the expected way.
+   */
+  function testRun() {
+    var app = new ginsu.Application();
+    app.moduleDidLoad(goog.dom.$('ginsu_view'));
+    // Make sure the controllers and GUI objects got created.
+    assertNotNull(app.toolManager_);
+    assertNotNull(app.toolBar_);
+    assertNotNull(app.keyboardHandler_);
+    assertNotNull(app.viewController_);
+
+    // Make sure the active tool is the ORBIT tool.
+    var activeTool = app.toolManager_.activeTool();
+    assertNotNull(activeTool);
+    assertEquals(ginsu.events.EventType.ORBIT, activeTool.toolId());
+
+    // Check the mouse-drag event wiring.
+    assertTrue('ViewController: DRAG_START',
+        goog.events.hasListener(app.viewController_,
+            ginsu.events.EventType.DRAG_START));
+    assertTrue('ViewController: DRAG',
+        goog.events.hasListener(app.viewController_,
+            ginsu.events.EventType.DRAG));
+    assertTrue('ViewController: DRAG_END',
+        goog.events.hasListener(app.viewController_,
+            ginsu.events.EventType.DRAG_END));
+    // Check the ACTION event wiring.
+    assertTrue('GSToolbar: ACTION',
+        goog.events.hasListener(app.toolBar_, ginsu.events.EventType.ACTION));
+    assertTrue('GSKeyboardHandler: ACTION',
+        goog.events.hasListener(app.keyboardHandler_,
+            ginsu.events.EventType.ACTION));
+    assertTrue('ViewController: ACTION',
+        goog.events.hasListener(app.viewController_,
+            ginsu.events.EventType.ACTION));
+    assertTrue('GSToolManager: ACTION',
+        goog.events.hasListener(app.toolManager_,
+            ginsu.events.EventType.ACTION));
+  }
+
+  /**
+   * Test the run method when the element with id 'ginsu_view' is missing from
+   * the DOM.  This should throw an error.
+   */
+  function testRunMissingGinsuView() {
+    goog.dom.removeNode(goog.dom.$(ginsu.Application.DomIds_.VIEW));
+    var app = new ginsu.Application();
+    assertThrows("Missing element '" +
+        ginsu.Application.DomIds_.VIEW + "' error not thrown",
+        goog.bind(app.run, app));
+  }
+
+  /**
+   * Test the run method when the ginsu_toolbar element is missing from the DOM.
+   * This should throw an error.
+   */
+  function testRunMissingToolbar() {
+    goog.dom.removeNode(goog.dom.$(ginsu.Application.DomIds_.TOOLBAR));
+    var app = new ginsu.Application();
+    assertThrows("Missing element '" +
+        ginsu.Application.DomIds_.TOOLBAR + "' error not thrown",
+        goog.bind(app.moduleDidLoad, app, goog.dom.$('ginsu_view')));
+  }
+
+  /**
+   * Make sure the application cleans up properly.
+   */
+  function testTerminate() {
+    var app = new ginsu.Application();
+    assertNotNull(app);
+    app.moduleDidLoad(goog.dom.$('ginsu_view'));
+    // Make sure the controllers and GUI objects got created.
+    assertNotNull(app.toolManager_);
+    assertNotNull(app.toolBar_);
+    assertNotNull(app.keyboardHandler_);
+    assertNotNull(app.viewController_);
+    app.terminate();
+    assertNull(app.toolManager_);
+    assertNull(app.toolBar_);
+    assertNull(app.keyboardHandler_);
+    assertNull(app.viewController_);
+    // Make sure there are no event listeners any more.
+    assertEquals(0, goog.events.getTotalListenerCount());
+  }
+
+  /**
+   * Build the div elements used by the application.
+   */
+  function createTestingDivs() {
+    var backgroundDiv = goog.dom.createDom('div', {
+        'id': 'background',
+        'style': 'position:absolute; top:0; left:0; height:200; width:200;'
+      });
+    goog.dom.appendChild(document.body, backgroundDiv);
+    goog.dom.appendChild(backgroundDiv, goog.dom.createDom('div', {
+        'id': 'ginsu_toolbar', 'class': 'goog-toolbar'
+      }));
+    goog.dom.appendChild(backgroundDiv, goog.dom.createDom('div', {
+        'id': 'ginsu_view', 'class': 'ginsu_view'
+      }));
+  }
+
+  /**
+   * Remove all the div elements created during setup, so that later test
+   * runs don't have duplicate elements.
+   */
+  function deleteTestingDivs() {
+    var backgroundDiv = goog.dom.$('background');
+    goog.dom.removeChildren(backgroundDiv);
+    goog.dom.removeNode(backgroundDiv);
+  }
+
+  /**
+   * Attach mock functions to the |gs_view| element that mimic the
+   * Ginsu API.  There are only three entry points, and they
+   * don't get tested here (they are tested in the client code) so it's
+   * best to just stub them out.
+   */
+  function createGinsuMocks() {
+    var gsMockDiv = goog.dom.getElement('ginsu_view');
+    gsMockDiv.valueForKey = goog.functions.constant([0, 0, 0, 1]);
+    gsMockDiv.setValueForKey = function(mockOrientation) {};
+    gsMockDiv.logMessage = function(message) {
+      top.console.log(message);
+    };
+  }
+
+  </script>
+</head>
+</html>
