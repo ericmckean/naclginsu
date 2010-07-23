@@ -1,0 +1,13 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2010 The Ginsu Project Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+""" Build file for tests of Ginsu web app code.
+    TODO(dspringer,sanga): make thils file do something once we can run
+    automated JSUnit tests.
+"""
+
+Import('env')
+

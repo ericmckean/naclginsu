@@ -1,0 +1,131 @@
+body {
+  font-family: "Lucida Grande";
+  font-size: 10pt;
+  margin: 0px;
+  border: 0px;
+  padding: 0px;
+  
+  width: 100%;
+  overflow: hidden;
+}
+#content {
+  /* position */
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+
+  /* size */
+  height: 100%;
+  width: 100%;
+
+  /* border */
+  margin: 0px;
+  border: 0px;
+  padding: 0px;
+}
+
+#headercontainer {
+  /* position */
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+
+  /* size */
+  height: 40px;
+  width: 100%;
+
+  /* border */
+  margin: 0px;
+  border: 0px;
+  padding: 0px;
+}
+
+#headerbackground {
+  /* position */
+  position: relative;
+  
+  /* size */
+  height: 50px;
+  
+  /* border */
+  -webkit-border-radius: 10px;  
+  margin: 10px;
+
+  background: black;
+  opacity: .25;
+}
+
+#headercontent {
+  /* position */
+  position: relative;
+  z-index: 1;
+
+  /* size */
+  
+  /* border */
+  margin: -48px 20px 0px 20px;
+
+  color: white;
+  opacity: .9;
+}
+
+#footercontainer {
+  /* position */
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 2;
+
+  /* size */
+  height: 30px;
+  width: 100%;
+
+  /* border */
+  margin-top: -30px;
+  border: 0px;
+  padding: 0px;
+}
+
+#footerbackground {
+  /* position */
+  position: relative;
+  
+  /* size */
+  height: 20px;
+  
+  /* border */
+  -webkit-border-radius: 5px;  
+  margin: 5px 5px 5px 5px;
+  border: 0;
+  padding: 0;
+
+  background: black;
+  opacity: .25;
+}
+
+#footercontent {
+  /* position */
+  position: relative;
+  z-index: 1;
+
+  /* size */
+  
+  /* border */
+  margin: -23px 10px 0px 10px;
+  border: 0;
+  padding: 0;
+
+  color: white;
+  opacity: .9;
+}
+
+#ginsu_view {
+  width: 100%;
+  height: 100%;
+  
+  border: 0;
+  margin: 0;
+  padding: 0;
+}

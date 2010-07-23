@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!--
+Copyright (c) 2010 The Ginsu Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Ginsu Test Suite</title>
+  <link rel="stylesheet" type="text/css" href="jsunit/css/jsUnitStyle.css">
+  <script src="jsunit/app/jsUnitCore.js"></script>
+  <script type="text/javascript">
+    /**
+     * @fileoverview  Create a jsUnit test suite for all the Ginsu tests.
+     */
+
+    function suite() {
+      var newSuite = new JsUnitTestSuite();
+      newSuite.addTestPage("/event_test.html");
+      newSuite.addTestPage("/ginsu_test.html");
+      newSuite.addTestPage("/orbittool_test.html");
+      newSuite.addTestPage("/tool_test.html");
+      newSuite.addTestPage("/toolbar_test.html");
+      newSuite.addTestPage("/toolmanager_test.html");
+      newSuite.addTestPage("/viewcontroller_test.html");
+      return newSuite;
+    }
+  </script>
+</head>
+
+<body>
+<h1>Ginsu Test Suite</h1>
+
+<p>This page contains a suite of tests for testing Ginsu.</p>
+</body>
+</html>

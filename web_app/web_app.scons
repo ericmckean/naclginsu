@@ -4,11 +4,84 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import os
+
 Import('env')
 
-ginsu_app_files = [
-  'ginsu.html',
-  'ginsu.js',
+CONTROLLERS_DIR = 'controllers'
+CSS_DIR = 'css'
+EVENTS_DIR = 'events'
+ICONS_DIR = 'icons'
+TOOLS_DIR = 'tools'
+
+ginsu_css = [
+    'common.css',
+    'ginsu.css',
+    'style.css',
+    'toolbar.css',
+]
+ginsu_css = [os.path.join(CSS_DIR, file) for file in ginsu_css]
+
+ginsu_controllers = [
+    'keyboard.js',
+    'toolbar.js',
+    'toolmanager.js',
+    'viewcontroller.js',
+]
+ginsu_controllers = [os.path.join(CONTROLLERS_DIR, file)
+                     for file in ginsu_controllers]
+
+ginsu_icons = [
+    'app.png',
+    'line.png',
+    'orbit.png',
+    'pan.png',
+    'pushpull.png',
+    'select.png',
+    'zoom.png',
+]
+ginsu_icons = [os.path.join(ICONS_DIR, file) for file in ginsu_icons]
+
+ginsu_events = [
+    'dragger.js',
+    'event.js',
+    'eventtype.js',
+]
+ginsu_events = [os.path.join(EVENTS_DIR, file) for file in ginsu_events]
+
+ginsu_tools = [
+    'linetool.js',
+    'orbittool.js',
+    'tool.js',
+]
+ginsu_tools = [os.path.join(TOOLS_DIR, file) for file in ginsu_tools]
+
+ginsu_app = [
+    'ginsu.html',
+    'ginsu.js',
 ]
 
-env.Install('$STAGING_DIR', ginsu_app_files)
+# TODO(dspringer,sanga): remove this and the corresponding Install() once we
+# can run automated JSUint tests.
+test_files = [
+    'ginsu_test.html',
+    'ginsu_test_suite.html',
+    'controllers/toolbar_test.html',
+    'controllers/toolmanager_test.html',
+    'controllers/viewcontroller_test.html',
+    'events/event_test.html',
+    'tools/orbittool_test.html',
+    'tools/tool_test.html',
+]
+
+env.Install('$STAGING_DIR', ginsu_app)
+env.Install(os.path.join(env['STAGING_DIR'], CONTROLLERS_DIR),
+            ginsu_controllers)
+env.Install(os.path.join(env['STAGING_DIR'], CSS_DIR), ginsu_css)
+env.Install(os.path.join(env['STAGING_DIR'], EVENTS_DIR), ginsu_events)
+env.Install(os.path.join(env['STAGING_DIR'], ICONS_DIR), ginsu_icons)
+env.Install(os.path.join(env['STAGING_DIR'], TOOLS_DIR), ginsu_tools)
+
+# TODO(dspringer, sanga): remove this when automated JSUnit tests work.
+env.Install('$STAGING_DIR', test_files)
+

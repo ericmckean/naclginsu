@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<!--
+Copyright (c) 2010 The Ginsu Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+  <title>Ginsu Tool Tests</title>
+  <link rel="stylesheet" type="text/css" href="jsunit/css/jsUnitStyle.css">
+  <link rel="stylesheet" type="text/css" href="css/ginsu.css" />
+  <script type="text/javascript" src="jsunit/app/jsUnitCore.js"></script>
+  <script src="closure/closure/goog/base.js"></script>
+  <script type="text/javascript">
+    goog.require('goog.events.Event');
+    goog.require('goog.events.EventTarget');
+    goog.require('goog.testing.events');
+    goog.require('goog.testing.jsunit');
+  </script>
+  <script type="text/javascript" src="events/event.js"></script>
+  <script type="text/javascript" src="events/eventtype.js"></script>
+  <script type="text/javascript" src="tools/tool.js"></script>
+  <script type="text/javascript">
+  /**
+   * @fileoverview  These unit tests are for the Ginsu Tool object.
+   */
+
+  /**
+   * Id used when creating test tools.
+   * @type {string}
+   */
+  var TOOL_ID = 'my_tool_id';
+
+  /**
+   * Test the default Tool constructor.
+   */
+  function testContructor() {
+    var tool = new ginsu.tools.Tool();
+    assertEquals(ginsu.tools.Tool.DEFAULT_TOOL_ID, tool.toolId());
+  }
+
+  /**
+   * Test the extended constructor that set the event id.
+   */
+  function testToolIdContructor() {
+    var tool = new ginsu.tools.Tool(TOOL_ID);
+    assertEquals(TOOL_ID, tool.toolId());
+  }
+
+  /**
+   * Test for the tool id accessor/mutator.
+   */
+  function testToolId() {
+    var tool = new ginsu.tools.Tool();
+    assertEquals(ginsu.tools.Tool.DEFAULT_TOOL_ID, tool.toolId());
+    tool.setToolId(TOOL_ID);
+    assertEquals(TOOL_ID, tool.toolId());
+  }
+
+  </script>
+</head>
+</html>

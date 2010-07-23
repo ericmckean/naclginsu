@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<!--
+Copyright (c) 2010 The Ginsu Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+-->
+<head>
+  <title>Ginsu Toolbar Tests</title>
+  <link rel="stylesheet" type="text/css" href="jsunit/css/jsUnitStyle.css">
+  <link rel="stylesheet" type="text/css" href="css/ginsu.css" />
+  <link rel="stylesheet" type="text/css" href="css/toolbar.css" />
+  <script type="text/javascript" src="jsunit/app/jsUnitCore.js"></script>
+  <script src="closure/closure/goog/base.js"></script>
+  <script type="text/javascript">
+    goog.require('goog.dom');
+    goog.require('goog.events.EventTarget');
+    goog.require('goog.testing.MockControl');
+    goog.require('goog.testing.events');
+    goog.require('goog.testing.jsunit');
+    goog.require('goog.ui.SelectionModel');
+    goog.require('goog.ui.Toolbar');
+    goog.require('goog.ui.ToolbarToggleButton');
+  </script>
+  <script type="text/javascript" src="events/event.js"></script>
+  <script type="text/javascript" src="events/eventtype.js"></script>
+  <script type="text/javascript" src="controllers/toolbar.js"></script>
+  <script type="text/javascript">
+    goog.require('ginsu.controllers.Toolbar');
+  </script>
+
+  <script type="text/javascript">
+  /**
+   * @fileoverview  These unit tests are for the Ginsu Toolbar object,
+   */
+
+  /**
+   * Set function for each test, called by the testing framework at the
+   * start of each test.  Creates the 'gs_container' div and mocks the
+   * GSPlugin API.
+   */
+  function setUp() {
+    createTestingDivs();
+  }
+
+  function tearDown() {
+    deleteTestingDivs();
+  }
+
+  /**
+   * Test adding a button to the toolbar.
+   */
+  function testAddToggleButton() {
+    var toolbar = new ginsu.controllers.Toolbar();
+    toolbar.createDom();
+    // Calling with no parameters should throw an error.
+    assertThrows('Missing parameters', goog.bind(toolbar.addToggleButton,
+        toolbar));
+
+    // Calling with null objects should throw an error.
+    assertThrows('NULL parameters', goog.bind(toolbar.addToggleButton,
+        toolbar, null, null));
+
+    // Add a legitimate button.
+    var button = toolbar.addToggleButton(goog.dom.createTextNode('Button'),
+        'my_tool_id');
+    assertEquals(1, toolbar.selectionModel_.getItemCount());
+    assertTrue('Listen for ACTION events.', goog.events.hasListener(
+        button, goog.ui.Component.EventType.ACTION, false));
+  }
+
+  /**
+   * Test the document exit method, make sure all the listeners get unhooked.
+   */
+  function testExitDocument() {
+    var toolbar = new ginsu.controllers.Toolbar();
+    toolbar.createDom();
+    var button = toolbar.addToggleButton(goog.dom.createTextNode('Button'),
+        'my_tool_id');
+    assertTrue('Add ACTION button.', goog.events.hasListener(button,
+        goog.ui.Component.EventType.ACTION, false));
+    toolbar.exitDocument();
+    assertFalse('Add ACTION button.', goog.events.hasListener(button,
+        goog.ui.Component.EventType.ACTION, false));
+  }
+
+  /**
+   * Build the div elements used by the application.
+   */
+  function createTestingDivs() {
+    var backgroundDiv = goog.dom.createDom('div', {
+        'id': 'background',
+        'style': 'position:absolute; top:0; left:0; height:200; width:200;'
+      });
+    goog.dom.appendChild(document.body, backgroundDiv);
+    goog.dom.appendChild(backgroundDiv, goog.dom.createDom('div', {
+        'id': 'ginsu_toolbar', 'class': 'goog-toolbar'
+      }));
+    goog.dom.appendChild(backgroundDiv, goog.dom.createDom('div', {
+        'id': 'ginsu_view', 'class': 'ginsu_view'
+      }));
+  }
+
+  /**
+   * Remove all the div elements created during setup, so that later test
+   * runs don't have duplicate elements.
+   */
+  function deleteTestingDivs() {
+    var backgroundDiv = goog.dom.$('background');
+    goog.dom.removeChildren(backgroundDiv);
+    goog.dom.removeNode(backgroundDiv);
+  }
+
+  </script>
+</head>
+</html>
