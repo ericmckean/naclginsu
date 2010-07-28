@@ -22,6 +22,9 @@ After following the steps below, you should have an Eclipse project that will bu
     <blockquote><code>export NACL_SDK_BASE=/usr/local/me/native_client_sdk/toolchain/linux_x86</code></blockquote>
   </li>
   <li>Local copy of the Ginsu repository.</li>
+  <li>The shell environment variable `GINSU_ROOT` set to the absolute path of your Ginsu repository (this is needed for jsUnit tests).  For example:
+    <blockquote><code>export GINSU_ROOT=/usr/local/me/ginsu/trunk</code></blockquote>
+  </li>
   <li>NaClPorts packages installed by running `scripts/setup_naclports_packages.py` in Ginsu.
      <blockquote>*Note:* You might see messages such as `Get file gtest-1.5.0/src/gtest-death-test.cc from Perforce with lock? [y]`.  Answer *n* to each of these.</blockquote>
   </li>
@@ -49,9 +52,10 @@ See also the Eclipse documentation here: [http://help.eclipse.org/galileo/index.
       <li>Click 'Apply'</li>
     </ul>
   </li>
-  <li>*Add NACL_SDK_BASE*
+  <li>*Add NACL_SDK_BASE and GINSU_ROOT*
     <ul>
       <li>Under 'C/C++ Build' ->'Environment', add NACL_SDK_BASE whose value is the full path to the toolchain within your Native Client SDK installation, e.g. `/usr/local/me/native_client_sdk/toolchain/linux_x86`</li>
+      <li>Add GINSU_ROOT whose value is the full path to your Ginsu repo trunk (this is needed for jsUnit testing), e.g. `/usr/local/me/ginsu/trunk`</li>
       <li>Click 'OK' - you're done!</li>
     </ul>
   </li>
