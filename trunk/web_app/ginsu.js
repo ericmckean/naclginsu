@@ -10,6 +10,7 @@
 goog.provide('ginsu.Application');
 
 goog.require('goog.Disposable');
+goog.require('goog.style')
 
 goog.require('ginsu.controllers.KeyboardHandler');
 goog.require('ginsu.controllers.Toolbar');
@@ -298,11 +299,13 @@ ginsu.Application.prototype.run = function(opt_viewDivName) {
                + "'].moduleDidLoad(document.getElementById('"
                + uniqueModuleName
                + "'));"
-  viewDiv.innerHTML = '<embed id="'
-                       + uniqueModuleName + '" '
+  var viewSize = goog.style.getSize(viewDiv);
+  viewDiv.innerHTML = '<embed id="' + uniqueModuleName + '" '
+                       + 'class="ginsu_autosize_view" '
                     // + 'nexes="' + nexes + '" '
                        + 'type="application/x-nacl-srpc" '
-                       + 'width="512" height="512" '
+                       + 'width="' + viewSize.width + '" '
+                       + 'height="' + viewSize.height + '" '
                        + 'dimensions="3" '
                        + 'onload="' + onLoadJS + '" />'
   // Note: this code is here to work around a bug in the Chrome Browser.

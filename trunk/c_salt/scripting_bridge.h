@@ -6,7 +6,9 @@
 #define C_SALT_SCRIPTING_BRIDGE_H_
 
 #include <map>
+#include <string>
 
+#include <boost/shared_ptr.hpp>
 #include <nacl/nacl_npapi.h>
 #include <nacl/npruntime.h>
 
@@ -31,20 +33,29 @@ class PropertyMutatorCallbackExecutor;
 
 class ScriptingBridge {
  public:
+  // Shared pointer types used in the method and property maps.
+  typedef boost::shared_ptr<MethodCallbackExecutor>
+      SharedMethodCallbackExecutor;
+  typedef boost::shared_ptr<PropertyAccessorCallbackExecutor>
+      SharedPropertyAccessorCallbackExecutor;
+  typedef boost::shared_ptr<PropertyMutatorCallbackExecutor>
+      SharedPropertyMutatorCallbackExecutor;
+
   // Creates an instance of the scripting bridge object in the browser, with
   // a corresponding ScriptingBridge object instance.
   static ScriptingBridge* CreateScriptingBridge(NPP npp);
 
   // Causes |method_name| to be published as a method that can be called by
   // JavaScript.  Associated this method with |method|.
-  bool AddMethodNamed(const char* method_name, MethodCallbackExecutor* method);
+  bool AddMethodNamed(const char* method_name,
+                      SharedMethodCallbackExecutor method);
 
   // Associate property accessor and mutator with |property_name|.  This
   // publishes |property_name| to the JavaScript.  |property_accessor| must not
   // be NULL; if |property_mutator| is NULL the property is considered read-only.
   bool AddPropertyNamed(const char* property_name,
-                        PropertyAccessorCallbackExecutor* property_accessor,
-                        PropertyMutatorCallbackExecutor* property_mutator);
+      SharedPropertyAccessorCallbackExecutor property_accessor,
+      SharedPropertyMutatorCallbackExecutor property_mutator);
 
   // Make a copy of the browser binding object by asking the browser to retain
   // it.  Use this for the return value of functions that expect the retain
@@ -59,6 +70,10 @@ class ScriptingBridge {
   // to get deleted, if the ref count of the browser binding object falls to 0.
   void ReleaseBrowserBinding();
 
+  // Log a message to the browser's console window.  You can usually see this
+  // message when using a JavaScript debugger, such as Chrome Developer Tools.
+  bool LogToConsole(const std::string& msg) const;
+
   // Accessors.
   const NPP npp() const {
     return npp_;
@@ -67,15 +82,20 @@ class ScriptingBridge {
     return browser_binding_;
   }
 
+  // This does not return a const NPObject* because none of the NPAPI that uses
+  // this value accepts a const NPObject*.  This will go away with Pepper V2
+  // so I don't think it's worth thinking about too hard.
+  NPObject* window_object() const;
+
   // A hidden class that wraps the NPObject, preserving its memory layout
   // for the browser.
   friend class BrowserBinding;
 
  private:
-  typedef std::map<NPIdentifier, MethodCallbackExecutor*> MethodDictionary;
-  typedef std::map<NPIdentifier, PropertyAccessorCallbackExecutor*>
+  typedef std::map<NPIdentifier, SharedMethodCallbackExecutor> MethodDictionary;
+  typedef std::map<NPIdentifier, SharedPropertyAccessorCallbackExecutor>
       PropertyAccessorDictionary;
-  typedef std::map<NPIdentifier, PropertyMutatorCallbackExecutor*>
+  typedef std::map<NPIdentifier, SharedPropertyMutatorCallbackExecutor>
       PropertyMutatorDictionary;
 
   ScriptingBridge(NPP npp, NPObject* browser_binding);
@@ -93,6 +113,9 @@ class ScriptingBridge {
 
   NPP npp_;
   NPObject* browser_binding_;
+  // |window_object_| is mutable so that the const accessor can create it
+  // lazily.
+  mutable NPObject* window_object_;
 
   MethodDictionary method_dictionary_;
   PropertyAccessorDictionary property_accessor_dictionary_;

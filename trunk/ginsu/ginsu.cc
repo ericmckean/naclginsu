@@ -19,6 +19,8 @@ const int32_t kCommandBufferSize = 1024 * 1024;
 
 // The minimum time in between frames.  Measured in milliseconds.
 static const double kFrameElapsedTime = 1.0/15.0 * 1000.0;
+static const uint32_t kQuaternionElementCount = 4;
+
 
 // The c_salt module allocator.
 namespace c_salt {
@@ -41,7 +43,9 @@ static double TimeNow() {
 
 namespace ginsu {
 
-Ginsu::Ginsu() : npp_instance_(NULL), device3d_(NULL) {
+Ginsu::Ginsu()
+    : npp_instance_(NULL),
+      device3d_(NULL) {
   memset(&context3d_, 0, sizeof(context3d_));
   model_.reset(new model::Model);
   model_->InitDemo();

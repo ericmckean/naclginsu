@@ -5,6 +5,7 @@
 #include "c_salt/scripting_bridge.h"
 
 #include <assert.h>
+#include <string.h>
 #include <string>
 
 #include "c_salt/callback.h"
@@ -113,10 +114,16 @@ ScriptingBridge* ScriptingBridge::CreateScriptingBridge(NPP npp) {
 
 ScriptingBridge::ScriptingBridge(NPP npp, NPObject* browser_binding)
     : npp_(npp),
-      browser_binding_(browser_binding) {
+      browser_binding_(browser_binding),
+      window_object_(NULL) {
 }
 
 ScriptingBridge::~ScriptingBridge() {
+  ReleaseBrowserBinding();
+  if (window_object_) {
+    NPN_ReleaseObject(window_object_);
+    window_object_ = NULL;
+  }
 }
 
 void ScriptingBridge::ReleaseBrowserBinding() {
@@ -136,31 +143,65 @@ void ScriptingBridge::ReleaseBrowserBinding() {
 }
 
 bool ScriptingBridge::AddMethodNamed(const char* method_name,
-                                     MethodCallbackExecutor* method) {
+                                     SharedMethodCallbackExecutor method) {
   if (method_name == NULL || method == NULL)
     return false;
   NPIdentifier method_id = NPN_GetStringIdentifier(method_name);
   method_dictionary_.insert(
-      std::pair<NPIdentifier, MethodCallbackExecutor*>(method_id, method));
+      std::pair<NPIdentifier, SharedMethodCallbackExecutor>(method_id, method));
   return true;
 }
 
 bool ScriptingBridge::AddPropertyNamed(
     const char* property_name,
-    PropertyAccessorCallbackExecutor* property_accessor,
-    PropertyMutatorCallbackExecutor* property_mutator) {
+    SharedPropertyAccessorCallbackExecutor property_accessor,
+    SharedPropertyMutatorCallbackExecutor property_mutator) {
   if (property_name == NULL || property_accessor == NULL)
     return false;
   NPIdentifier property_id = NPN_GetStringIdentifier(property_name);
   property_accessor_dictionary_.insert(
       std::pair<NPIdentifier,
-                PropertyAccessorCallbackExecutor*>(property_id, property_accessor));
+      SharedPropertyAccessorCallbackExecutor>(property_id, property_accessor));
   if (property_mutator) {
     property_mutator_dictionary_.insert(
         std::pair<NPIdentifier,
-                  PropertyMutatorCallbackExecutor*>(property_id, property_mutator));
+        SharedPropertyMutatorCallbackExecutor>(property_id, property_mutator));
   }
   return true;
+}
+
+bool ScriptingBridge::LogToConsole(const std::string& msg) const {
+  bool success = false;
+  NPObject* window = window_object();
+  if (window) {
+    static const char* kConsoleAccessor = "top.console";
+    NPString console_stript = { 0 };
+    console_stript.UTF8Length = strlen(kConsoleAccessor);
+    console_stript.UTF8Characters = kConsoleAccessor;
+    NPVariant console;
+    if (NPN_Evaluate(npp(), window, &console_stript, &console)) {
+      if (NPVARIANT_IS_OBJECT(console)) {
+        // Convert the message to NPString;
+        NPVariant text;
+        STRINGN_TO_NPVARIANT(msg.c_str(), msg.size(), text);
+        NPVariant result;
+        if (NPN_Invoke(npp(), NPVARIANT_TO_OBJECT(console),
+                       NPN_GetStringIdentifier("log"), &text, 1, &result)) {
+          NPN_ReleaseVariantValue(&result);
+          success = true;
+        }
+      }
+      NPN_ReleaseVariantValue(&console);
+    }
+  }
+  return success;
+}
+
+NPObject* ScriptingBridge::window_object() const {
+  if (!window_object_) {
+    NPN_GetValue(npp(), NPNVWindowNPObject,  &window_object_);
+  }
+  return window_object_;
 }
 
 bool ScriptingBridge::HasMethod(NPIdentifier name) {

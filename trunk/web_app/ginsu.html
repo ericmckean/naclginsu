@@ -10,7 +10,6 @@ found in the LICENSE file.
   <title>Ginsu</title>
   <link rel="stylesheet" type="text/css" href="css/toolbar.css" />
   <link rel="stylesheet" type="text/css" href="css/ginsu.css" />
-  <link rel="stylesheet" type="text/css" href="css/style.css" />
 
   <script src="closure/closure/goog/base.js"></script>
   <!-- Resolves the goog.base interdependencies. -->
@@ -20,6 +19,7 @@ found in the LICENSE file.
     goog.require('goog.events');
     goog.require('goog.fx.Dragger');
     goog.require('goog.structs.Map');
+    goog.require('goog.style');
     goog.require('goog.ui.Component');
     goog.require('goog.ui.Container');
     goog.require('goog.ui.Control');
@@ -62,12 +62,7 @@ found in the LICENSE file.
   changes size with the window.
   -->
   <div id="autosize_background">
-    <div id="headercontainer">
-      <div id="headerbackground"></div>
-      <div id="headercontent">
-        <div id="ginsu_toolbar" class="goog-toolbar"></div>
-      </div>
-    </div>
+    <div id="ginsu_toolbar" class="goog-toolbar"></div>
   
     <div id="ginsu_view" class="ginsu_view"></div>
   

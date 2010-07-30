@@ -17,7 +17,6 @@ TOOLS_DIR = 'tools'
 ginsu_css = [
     'common.css',
     'ginsu.css',
-    'style.css',
     'toolbar.css',
 ]
 ginsu_css = [os.path.join(CSS_DIR, file) for file in ginsu_css]

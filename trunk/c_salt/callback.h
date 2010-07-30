@@ -26,6 +26,8 @@ class ScriptingBridge;
 // Pure virtual class used in STL containers.
 class MethodCallbackExecutor {
  public:
+  virtual ~MethodCallbackExecutor() {}
+
   virtual bool Execute(ScriptingBridge* bridge,
                        const NPVariant* args,
                        uint32_t arg_count,
@@ -42,6 +44,8 @@ class MethodCallback : public MethodCallbackExecutor {
 
   MethodCallback(T* instance, Method method)
       : instance_(instance), method_(method) {}
+  virtual ~MethodCallback() {}
+
   virtual bool Execute(ScriptingBridge* bridge,
                        const NPVariant* args,
                        uint32_t arg_count,
