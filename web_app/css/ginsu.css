@@ -24,11 +24,13 @@ html,body {
 
 .ginsu_view {
   position: absolute;
+   /* The |top| dimension has to match the #goog-toolbar height. */
   top: 32px;
   left: 0;
   bottom: 0;
   height: auto;
   width: 100%;
+  margin-bottom: 30px;
 }
 
 /* Styles for goog.ui.Container */
@@ -47,3 +49,63 @@ html,body {
   background: #fafafa;
 }
 
+body {
+  font-family: "Lucida Grande";
+  font-size: 10pt;
+  margin: 0px;
+  border: 0px;
+  padding: 0px;
+  
+  width: 100%;
+  overflow: hidden;
+}
+
+#footercontainer {
+  /* position */
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 2;
+
+  /* size */
+  height: 30px;
+  width: 100%;
+
+  /* border */
+  margin-top: -30px;
+  border: 0px;
+  padding: 0px;
+}
+
+#footerbackground {
+  /* position */
+  position: relative;
+  
+  /* size */
+  height: 20px;
+  
+  /* border */
+  -webkit-border-radius: 5px;  
+  margin: 5px 5px 5px 5px;
+  border: 0;
+  padding: 0;
+
+  background: black;
+  opacity: .25;
+}
+
+#footercontent {
+  /* position */
+  position: relative;
+  z-index: 1;
+
+  /* size */
+  
+  /* border */
+  margin: -23px 10px 0px 10px;
+  border: 0;
+  padding: 0;
+
+  color: white;
+  opacity: .9;
+}

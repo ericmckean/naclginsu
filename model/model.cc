@@ -1,4 +1,4 @@
-// Copyright (c) 2010 The Chromium Authors. All rights reserved.
+// Copyright (c) 2010 The Ginsu Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -62,7 +62,7 @@ namespace ginsu {
 namespace model {
 
 Model::Model() 
-: subdiv_steps_(0),
+: subdiv_steps_(2),
   steps_increment_(1) {
 }
 
@@ -109,13 +109,6 @@ void Model::UpdateDemo(double time_laps) {
       components_[1].reset(Component::MakeCopy(*(components_[0].get())));
     }
     components_[1]->Subdivide(subdiv_steps_);
-
-    // Increment/decrement the subdivision level. Reverse at 5 and 0.
-    subdiv_steps_ += steps_increment_;
-    if (subdiv_steps_ == 5)
-      steps_increment_ = -1;
-    else if(subdiv_steps_ == 0)
-      steps_increment_ = 1;
   }
 }
 
