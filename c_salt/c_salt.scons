@@ -8,17 +8,9 @@ Import('env')
 
 # Build the model library.
 c_salt_sources = [
-  'bool_type.cc',
-  'double_type.cc',
-  'int32_type.cc',
   'loader.cc',
-  'module.cc',
   'npn_bridge.cc',
-  'npp_gate.cc',
-  'object_type.cc',
-  'scripting_bridge.cc',
-  'string_type.cc',
-  'type.cc',
+  'npp_gate.cc'
 ]
 
 env.ComponentLibrary('c_salt', c_salt_sources, COMPONENT_STATIC = True)
