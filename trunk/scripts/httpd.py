@@ -43,6 +43,10 @@ SAFE_DIR_SUFFIX = apply(os.path.join, SAFE_DIR_COMPONENTS)
 
 def SetUpSpecialPathMap():
   ginsu_root = os.getenv('GINSU_ROOT')
+  if ginsu_root is None:
+    sys.stderr.write('GINSU_ROOT must be defined as the root directory of'
+                     'Ginsu.\n')
+    sys.exit(1)
   SPECIAL_PATH_MAP['closure'] = os.path.join(ginsu_root, 'third_party')
   SPECIAL_PATH_MAP['jsunit'] = os.path.join(ginsu_root, 'third_party')
 
