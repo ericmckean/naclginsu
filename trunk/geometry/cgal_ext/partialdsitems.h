@@ -7,6 +7,9 @@
 
 #include <CGAL/basic.h>
 #include "geometry/cgal_ext/partialdsentity.h"
+#include "geometry/cgal_ext/partialdsedge.h"
+#include "geometry/cgal_ext/partialdspedge.h"
+#include "geometry/cgal_ext/partialdspvertex.h"
 #include "geometry/cgal_ext/partialdsvertex.h"
 
 namespace ginsu {
@@ -25,6 +28,22 @@ class PartialDSItems {
   struct VertexWrapper {
     typedef typename Traits::Point_3 Point;
     typedef PartialDSVertex<TypeRefs, Point> Vertex;
+  };
+
+  template <class TypeRefs, class Traits>
+  struct PVertexWrapper {
+    typedef PartialDSPVertex<TypeRefs> PVertex;
+  };
+
+  template <class TypeRefs, class Traits>
+  struct EdgeWrapper {
+    // TODO(gwink) add reference to curve geometry.
+    typedef PartialDSEdge<TypeRefs> Edge;
+  };
+
+  template <class TypeRefs, class Traits>
+  struct PEdgeWrapper {
+    typedef PartialDSPEdge<TypeRefs> PEdge;
   };
 };
 

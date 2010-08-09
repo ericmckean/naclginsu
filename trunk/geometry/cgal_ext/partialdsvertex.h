@@ -20,13 +20,12 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
  public:
   typedef TypeRefs                              PartialDS;
   typedef PointType                             Point;
-  typedef PartialDSVertex<TypeRefs, Point>      Base;
+  typedef PartialDSVertex<TypeRefs, Point>      Self;
 
   typedef typename PartialDS::VertexHandle      VertexHandle;
   typedef typename PartialDS::VertexConstHandle VertexConstHandle;
 
   PartialDSVertex() { }
-  PartialDSVertex(const Point& p) : p_(p) { }
 
   // TODO(gwink): Declare this accessors once PFace and PVertex have been
   // defined.
