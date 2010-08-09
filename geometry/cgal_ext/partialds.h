@@ -71,11 +71,20 @@ class PartialDSTypes {
   typedef TraitsType                            Traits;
   typedef ItemsType                             Items;
 
-  // Entity is the base class for all items in the partial DS.
+  // Entity is the base class for all items in the partial DS. There should
+  // never be a need to allocate Entity instances directly. Neither is there any
+  // use for a list of entities. We're declaring type EntityList for the sole
+  // purpose of declaring EntityIterator and EntityHandle, which are used
+  // throughout the partial DS classes.
   typedef typename Items::template EntityWrapper<Self,Traits> EntityWrapper;
-  typedef typename EntityWrapper::Entity                      Entity;
-  typedef Entity*                                             EntityHandle;
-  typedef const Entity*                                       EntityConstHandle;
+  typedef typename EntityWrapper::Entity                      EntityBase;
+  typedef PartialDSListItem<EntityBase>                       Entity;
+  typedef CGAL_ALLOCATOR(Entity)                              EntityAllocator;
+  typedef CGAL::In_place_list<Entity, false, EntityAllocator> EntityList;
+  typedef typename EntityList::iterator                       EntityIterator;
+  typedef typename EntityList::const_iterator               EntityConstIterator;
+  typedef EntityIterator                                      EntityHandle;
+  typedef EntityConstIterator                                 EntityConstHandle;
 
   // We keep all vertices in a list to easily iterate over them. A vertex
   // handle is also an iterator into that list.
@@ -104,7 +113,7 @@ class PartialDSTypes {
   typedef PVertexIterator                       PVertexHandle;
   typedef PVertexConstIterator                  PVertexConstHandle;
   
-  // Edges
+  // Edges and p-edges
   typedef typename Items::template
       EdgeWrapper<Self, Traits>                 EdgeWrapper;
   typedef typename EdgeWrapper::Edge            EdgeBase;
@@ -117,7 +126,6 @@ class PartialDSTypes {
   typedef EdgeIterator                          EdgeHandle;
   typedef EdgeConstIterator                     EdgeConstHandle;
   
-  // P-edges
   typedef typename Items::template
       PEdgeWrapper<Self, Traits>                PEdgeWrapper;
   typedef typename PEdgeWrapper::PEdge          PEdgeBase;
@@ -129,6 +137,44 @@ class PartialDSTypes {
   typedef typename PEdgeList::const_iterator    PEdgeConstIterator;
   typedef PEdgeIterator                         PEdgeHandle;
   typedef PEdgeConstIterator                    PEdgeConstHandle;
+
+  // Loop
+  typedef typename Items::template
+      LoopWrapper<Self, Traits>                 LoopWrapper;
+  typedef typename LoopWrapper::Loop            LoopBase;
+  typedef PartialDSListItem<LoopBase>           Loop;
+  typedef CGAL_ALLOCATOR(Loop)                  LoopAllocator;
+  typedef CGAL::In_place_list<Loop, false,
+                              LoopAllocator>    LoopList;
+  typedef typename LoopList::iterator           LoopIterator;
+  typedef typename LoopList::const_iterator     LoopConstIterator;
+  typedef LoopIterator                          LoopHandle;
+  typedef LoopConstIterator                     LoopConstHandle;
+
+  // Face and PFace
+  typedef typename Items::template
+      FaceWrapper<Self, Traits>                 FaceWrapper;
+  typedef typename FaceWrapper::Face            FaceBase;
+  typedef PartialDSListItem<FaceBase>           Face;
+  typedef CGAL_ALLOCATOR(Face)                  FaceAllocator;
+  typedef CGAL::In_place_list<Face, false,
+                              FaceAllocator>    FaceList;
+  typedef typename FaceList::iterator           FaceIterator;
+  typedef typename FaceList::const_iterator     FaceConstIterator;
+  typedef FaceIterator                          FaceHandle;
+  typedef FaceConstIterator                     FaceConstHandle;
+  
+  typedef typename Items::template
+      PFaceWrapper<Self, Traits>                PFaceWrapper;
+  typedef typename PFaceWrapper::PFace          PFaceBase;
+  typedef PartialDSListItem<PFaceBase>          PFace;
+  typedef CGAL_ALLOCATOR(PFace)                 PFaceAllocator;
+  typedef CGAL::In_place_list<PFace, false,
+                              PFaceAllocator>   PFaceList;
+  typedef typename PFaceList::iterator          PFaceIterator;
+  typedef typename PFaceList::const_iterator    PFaceConstIterator;
+  typedef PFaceIterator                         PFaceHandle;
+  typedef PFaceConstIterator                    PFaceConstHandle;
 };
 
 // PartialDS: The the partial-entity data structure.
@@ -145,12 +191,18 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::PVertexList                PVertexList;
   typedef typename Types::EdgeList                   EdgeList;
   typedef typename Types::PEdgeList                  PEdgeList;
+  typedef typename Types::LoopList                   LoopList;
+  typedef typename Types::FaceList                   FaceList;
+  typedef typename Types::PFaceList                  PFaceList;
 
  protected:
   VertexList vertices_;
   PVertexList pvertices_;
   EdgeList edges_;
   PEdgeList pedges_;
+  LoopList loops_;
+  FaceList faces_;
+  PFaceList pfaces_;
 };
 
 }  // namespace geometry
