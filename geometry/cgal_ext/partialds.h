@@ -79,17 +79,56 @@ class PartialDSTypes {
 
   // We keep all vertices in a list to easily iterate over them. A vertex
   // handle is also an iterator into that list.
-  typedef typename Items::template VertexWrapper<Self,
-                                                 Traits> VertexWrapper;
-  typedef typename VertexWrapper::Vertex                 VertexBase;
-  typedef PartialDSListItem<VertexBase>                  Vertex;
-  typedef CGAL_ALLOCATOR(Vertex)                         VertexAllocator;
+  typedef typename Items::template
+      VertexWrapper<Self, Traits>              VertexWrapper;
+  typedef typename VertexWrapper::Vertex       VertexBase;
+  typedef PartialDSListItem<VertexBase>        Vertex;
+  typedef CGAL_ALLOCATOR(Vertex)               VertexAllocator;
   typedef CGAL::In_place_list<Vertex, false,
-                              VertexAllocator>           VertexList;
-  typedef typename VertexList::iterator                  VertexIterator;
-  typedef typename VertexList::const_iterator            VertexConstIterator;
-  typedef VertexIterator                                 VertexHandle;
-  typedef VertexConstIterator                            VertexConstHandle;
+                              VertexAllocator> VertexList;
+  typedef typename VertexList::iterator        VertexIterator;
+  typedef typename VertexList::const_iterator  VertexConstIterator;
+  typedef VertexIterator                       VertexHandle;
+  typedef VertexConstIterator                  VertexConstHandle;
+
+  // Ditto with p-vertices.
+  typedef typename Items::template
+      PVertexWrapper<Self, Traits>              PVertexWrapper;
+  typedef typename PVertexWrapper::PVertex      PVertexBase;
+  typedef PartialDSListItem<PVertexBase>        PVertex;
+  typedef CGAL_ALLOCATOR(PVertex)               PVertexAllocator;
+  typedef CGAL::In_place_list<PVertex, false,
+                              PVertexAllocator> PVertexList;
+  typedef typename PVertexList::iterator        PVertexIterator;
+  typedef typename PVertexList::const_iterator  PVertexConstIterator;
+  typedef PVertexIterator                       PVertexHandle;
+  typedef PVertexConstIterator                  PVertexConstHandle;
+  
+  // Edges
+  typedef typename Items::template
+      EdgeWrapper<Self, Traits>                 EdgeWrapper;
+  typedef typename EdgeWrapper::Edge            EdgeBase;
+  typedef PartialDSListItem<EdgeBase>           Edge;
+  typedef CGAL_ALLOCATOR(Edge)                  EdgeAllocator;
+  typedef CGAL::In_place_list<Edge, false,
+                              EdgeAllocator>    EdgeList;
+  typedef typename EdgeList::iterator           EdgeIterator;
+  typedef typename EdgeList::const_iterator     EdgeConstIterator;
+  typedef EdgeIterator                          EdgeHandle;
+  typedef EdgeConstIterator                     EdgeConstHandle;
+  
+  // P-edges
+  typedef typename Items::template
+      PEdgeWrapper<Self, Traits>                PEdgeWrapper;
+  typedef typename PEdgeWrapper::PEdge          PEdgeBase;
+  typedef PartialDSListItem<PEdgeBase>          PEdge;
+  typedef CGAL_ALLOCATOR(PEdge)                 PEdgeAllocator;
+  typedef CGAL::In_place_list<PEdge, false,
+                              PEdgeAllocator>   PEdgeList;
+  typedef typename PEdgeList::iterator          PEdgeIterator;
+  typedef typename PEdgeList::const_iterator    PEdgeConstIterator;
+  typedef PEdgeIterator                         PEdgeHandle;
+  typedef PEdgeConstIterator                    PEdgeConstHandle;
 };
 
 // PartialDS: The the partial-entity data structure.
@@ -103,10 +142,15 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef PartialDSTypes<TraitsType, PartialDSItems> Types;
 
   typedef typename Types::VertexList                 VertexList;
+  typedef typename Types::PVertexList                PVertexList;
+  typedef typename Types::EdgeList                   EdgeList;
+  typedef typename Types::PEdgeList                  PEdgeList;
 
  protected:
-  // All the vertices in the partial DS.
   VertexList vertices_;
+  PVertexList pvertices_;
+  EdgeList edges_;
+  PEdgeList pedges_;
 };
 
 }  // namespace geometry
