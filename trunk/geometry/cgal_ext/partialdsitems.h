@@ -8,7 +8,10 @@
 #include <CGAL/basic.h>
 #include "geometry/cgal_ext/partialdsentity.h"
 #include "geometry/cgal_ext/partialdsedge.h"
+#include "geometry/cgal_ext/partialdsface.h"
+#include "geometry/cgal_ext/partialdsloop.h"
 #include "geometry/cgal_ext/partialdspedge.h"
+#include "geometry/cgal_ext/partialdspface.h"
 #include "geometry/cgal_ext/partialdspvertex.h"
 #include "geometry/cgal_ext/partialdsvertex.h"
 
@@ -44,6 +47,22 @@ class PartialDSItems {
   template <class TypeRefs, class Traits>
   struct PEdgeWrapper {
     typedef PartialDSPEdge<TypeRefs> PEdge;
+  };
+
+  template <class TypeRefs, class Traits>
+  struct LoopWrapper {
+    typedef PartialDSLoop<TypeRefs> Loop;
+  };
+
+  template <class TypeRefs, class Traits>
+  struct FaceWrapper {
+    // TODO(gwink) add reference to surface geometry.
+    typedef PartialDSFace<TypeRefs> Face;
+  };
+
+  template <class TypeRefs, class Traits>
+  struct PFaceWrapper {
+    typedef PartialDSPFace<TypeRefs> PFace;
   };
 };
 
