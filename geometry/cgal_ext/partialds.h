@@ -175,6 +175,32 @@ class PartialDSTypes {
   typedef typename PFaceList::const_iterator    PFaceConstIterator;
   typedef PFaceIterator                         PFaceHandle;
   typedef PFaceConstIterator                    PFaceConstHandle;
+
+  // Shell
+  typedef typename Items::template
+      ShellWrapper<Self, Traits>                ShellWrapper;
+  typedef typename ShellWrapper::Shell          ShellBase;
+  typedef PartialDSListItem<ShellBase>          Shell;
+  typedef CGAL_ALLOCATOR(Shell)                 ShellAllocator;
+  typedef CGAL::In_place_list<Shell, false,
+                              ShellAllocator>   ShellList;
+  typedef typename ShellList::iterator          ShellIterator;
+  typedef typename ShellList::const_iterator    ShellConstIterator;
+  typedef ShellIterator                         ShellHandle;
+  typedef ShellConstIterator                    ShellConstHandle;
+
+  // Region
+  typedef typename Items::template
+      RegionWrapper<Self, Traits>               RegionWrapper;
+  typedef typename RegionWrapper::Region        RegionBase;
+  typedef PartialDSListItem<RegionBase>         Region;
+  typedef CGAL_ALLOCATOR(Region)                RegionAllocator;
+  typedef CGAL::In_place_list<Region, false,
+                              RegionAllocator>  RegionList;
+  typedef typename RegionList::iterator         RegionIterator;
+  typedef typename RegionList::const_iterator   RegionConstIterator;
+  typedef RegionIterator                        RegionHandle;
+  typedef RegionConstIterator                   RegionConstHandle;
 };
 
 // PartialDS: The the partial-entity data structure.
@@ -194,6 +220,8 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::LoopList                   LoopList;
   typedef typename Types::FaceList                   FaceList;
   typedef typename Types::PFaceList                  PFaceList;
+  typedef typename Types::ShellList                  ShellList;
+  typedef typename Types::RegionList                 RegionList;
 
  protected:
   VertexList vertices_;
@@ -203,6 +231,15 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   LoopList loops_;
   FaceList faces_;
   PFaceList pfaces_;
+  ShellList shells_;
+  RegionList regions_;
+  // TODO(gwink): Or not TODO, that is the question. The PE paper also defines
+  // a list of models, each consissting of a list of region. I think we're
+  // better of having each PE instance represent a single model, and manage
+  // the list of models outside the PE class. If we should reverse this decision
+  // later, then the RegionList above will contain the regions for all models.
+  // And we'll have to add a next pointer to the PartialDSRegion class to keep
+  // track of the list of regions within a single model.
 };
 
 }  // namespace geometry
