@@ -13,6 +13,7 @@
 #include <nacl/npruntime.h>
 
 #include "c_salt/basic_macros.h"
+#include "c_salt/callback.h"
 
 namespace c_salt {
 
@@ -47,8 +48,68 @@ class ScriptingBridge {
 
   // Causes |method_name| to be published as a method that can be called by
   // JavaScript.  Associated this method with |method|.
-  bool AddMethodNamed(const char* method_name,
-                      SharedMethodCallbackExecutor method);
+  //
+  // Usage:
+  //   AddMethodNamed("myFunc",  /* This is the JavaScript name for the method
+  //                                you want to expose. */
+  //                  &handler,  /* This is a pointer to an instance of the
+  //                                handler object. */
+  //                  &Handler::MyFunc  /* This is the class method that will
+  //                                       get called when "myFunc" is invoked
+  //                                       from JavaScript. */
+  //                 );
+  //
+  // Example:
+  //   class MyClass {
+  //     void InitializeMethods(ScriptingBridge*);
+  //     bool MyFunc(int32_t, double, std::string);
+  //   };
+  //
+  //   MyClass::InitializeMethods(ScriptingBridge* bridge) {
+  //      bridge->AddMethodNamed("myFunc", this, MyClass::MyFunc);
+  //   }
+  //
+  // Note that you may also accept a ScriptingBridge* as an argument, and
+  // c_salt will dutifully pass you the ScriptingBridge with which the method
+  // was registered.  Any ScriptingBridge* argument is not part of the
+  // interface which is exposed to JavaScript.
+  //
+  // For example:
+  //   class MyClass {
+  //     void InitializeMethods(ScriptingBridge*);
+  //     bool MyFunc(int32_t, double, std::string, ScriptingBridge*);
+  //   };
+  //
+  //   MyClass::InitializeMethods(ScriptingBridge* bridge) {
+  //      bridge->AddMethodNamed("myFunc", this, MyClass::MyFunc);
+  //   }
+  // In this example, the interface looks identical to the previous example
+  // from the perspective of any JavaScript which tries to invoke it.  But in
+  // this 2nd example, "bridge" will be passed to MyFunc as the last argument.
+  // (We could put the ScriptingBridge* argument anywhere in our argument
+  // list, if desired).
+  //
+  // Caveats:
+  //   - Currently, only up to 6 arguments are supported.
+  //   - void return types are currently not supported.
+  //   - Only double, int32_t, bool, and std::string are supported currently.
+  //   - Type safety is the goal in this prototype.  If JavaScript passes a
+  //     float and the native code accepts a string, the method will not be
+  //     invoked, and a false return will be given to NPAPI.  Future versions
+  //     may allow for reasonable automatic type conversions, if that is
+  //     desired.
+  template <class T, class Signature>
+  bool AddMethodNamed(const std::string& method_name, T* handler, Signature method)
+  {
+    if (method_name.empty() || method == NULL)
+      return false;
+    NPIdentifier method_id = NPN_GetStringIdentifier(method_name.c_str());
+    SharedMethodCallbackExecutor method_ptr(MakeMethodCallbackExecutor(handler,
+                                                                       method));
+    method_dictionary_.insert(MethodDictionary::value_type(method_id,
+                                                           method_ptr));
+    return true;
+  }
 
   // Associate property accessor and mutator with |property_name|.  This
   // publishes |property_name| to the JavaScript.  |property_accessor| must not
