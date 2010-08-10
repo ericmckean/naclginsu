@@ -13,6 +13,8 @@
 #include "geometry/cgal_ext/partialdspedge.h"
 #include "geometry/cgal_ext/partialdspface.h"
 #include "geometry/cgal_ext/partialdspvertex.h"
+#include "geometry/cgal_ext/partialdsregion.h"
+#include "geometry/cgal_ext/partialdsshell.h"
 #include "geometry/cgal_ext/partialdsvertex.h"
 
 namespace ginsu {
@@ -63,6 +65,16 @@ class PartialDSItems {
   template <class TypeRefs, class Traits>
   struct PFaceWrapper {
     typedef PartialDSPFace<TypeRefs> PFace;
+  };
+
+  template <class TypeRefs, class Traits>
+  struct ShellWrapper {
+    typedef PartialDSShell<TypeRefs> Shell;
+  };
+
+  template <class TypeRefs, class Traits>
+  struct RegionWrapper {
+    typedef PartialDSRegion<TypeRefs> Region;
   };
 };
 
