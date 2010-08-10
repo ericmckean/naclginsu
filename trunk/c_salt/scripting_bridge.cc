@@ -142,16 +142,6 @@ void ScriptingBridge::ReleaseBrowserBinding() {
   // unpredictable results.
 }
 
-bool ScriptingBridge::AddMethodNamed(const char* method_name,
-                                     SharedMethodCallbackExecutor method) {
-  if (method_name == NULL || method == NULL)
-    return false;
-  NPIdentifier method_id = NPN_GetStringIdentifier(method_name);
-  method_dictionary_.insert(
-      std::pair<NPIdentifier, SharedMethodCallbackExecutor>(method_id, method));
-  return true;
-}
-
 bool ScriptingBridge::AddPropertyNamed(
     const char* property_name,
     SharedPropertyAccessorCallbackExecutor property_accessor,
