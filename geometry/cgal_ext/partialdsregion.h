@@ -18,17 +18,23 @@ template <class TypeRefs>
 class PartialDSRegion : public PartialDSEntity<TypeRefs> {
  public:
   typedef PartialDSRegion<TypeRefs>            Self;
+  typedef PartialDSEntity<TypeRefs>            Base;
   typedef TypeRefs                             PartialDS;
 
+  typedef typename Base::RegionFlavor          RegionFlavor;
   typedef typename PartialDS::ShellHandle      ShellHandle;
   typedef typename PartialDS::ShellConstHandle ShellConstHandle;
 
   PartialDSRegion() { }
 
+  RegionFlavor flavor() const { return flavor_; }
+  void set_falvor(RegionFlavor flavor) { flavor_ = flavor; }
+
   ShellConstHandle shell() const { return shell_; }
   void set_shell(ShellHandle shell) { shell_ = shell; }
 
  private:
+  RegionFlavor flavor_;
   ShellHandle shell_;  // The peripheral shell for this region.
 };
 

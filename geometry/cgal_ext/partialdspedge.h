@@ -4,6 +4,7 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_PEDGE_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_PEDGE_H_
 
+#include <assert.h>
 #include <CGAL/basic.h>
 #include "geometry/cgal_ext/partialdsentity.h"
 
@@ -19,31 +20,39 @@ template <class TypeRefs>
 class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
  public:
   typedef PartialDSPEdge<TypeRefs>             Self;
+  typedef PartialDSEntity<TypeRefs>            Base;
   typedef TypeRefs                             PartialDS;
 
-  typedef typename PartialDS::PEdgeHandle      PEdgeHandle;
-  typedef typename PartialDS::PEdgeConstHandle PEdgeConstHandle;
+  typedef typename Base::PEdgeOrientation        PEdgeOrientation;
+  typedef typename PartialDS::VariantHandle      VariantHandle;
+  typedef typename PartialDS::PVertexHandle      PVertexHandle;
+  typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
+  typedef typename PartialDS::EdgeHandle         EdgeHandle;
+  typedef typename PartialDS::EdgeConstHandle    EdgeConstHandle;
+  typedef typename PartialDS::PEdgeHandle        PEdgeHandle;
+  typedef typename PartialDS::PEdgeConstHandle   PEdgeConstHandle;
+  typedef typename PartialDS::LoopHandle         LoopHandle;
+  typedef typename PartialDS::LoopConstHandle    LoopConstHandle;
 
-  typedef typename PartialDS::EdgeHandle      EdgeHandle;
-  typedef typename PartialDS::PVertexHandle   PVertexHandle;
+  PartialDSPEdge() : child_(NULL) { }
 
-  enum Orientation {
-    reversed,  // p-edge direction is reversed from child edge.
-    forward,  // p-edge follows same direction as child edge.
-  };
+  PEdgeOrientation orientation() const { return orientation_; }
+  void set_orientation(PEdgeOrientation orientation) {
+    orientation_ = orientation;
+  }
 
-  PartialDSPEdge() { }
+  LoopConstHandle parent_loop() const { return parent_loop_; }
+  void set_parent_loop(LoopHandle loop) { parent_loop_ = loop; }
 
-  // TODO(gwink): Implement when LoopHandle type is available.
-  // EntityConstHandle parent() const;
-  // void set_parent(EntityHandle parent);
-
-  // TODO(gwink): Child accessors; I'm not yet sure whether the type of the
-  // child can be deduced from the context or it needs to be encoded here.
-  // Defering implementation of child accessors until this is clearer.
-
-  Orientation orientation() const { return orientation_; }
-  void set_orientation(Orientation orientation) { orientation_ = orientation; }
+  EdgeConstHandle GetEdgeChild() const {
+    assert(orientation() != Base::kPEdgeUnoriented);
+    return AsEdge(child_);
+  }
+  PVertexConstHandle GetPVertexChild() const {
+    assert(orientation() == Base::kPEdgeUnoriented);
+    return AsPVertex(child_);
+  }
+  void set_child(VariantHandle child) { child_ = child; }
 
   PEdgeConstHandle loop_previous() const { return loop_previous_; }
   void set_loop_previous(PEdgeHandle* pedge) { loop_previous_ = pedge; }
@@ -56,14 +65,9 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
   void set_radial_next(PEdgeHandle* pedge) { radial_next_ = pedge; }
 
  private:
-  // TODO(gwink): Implement the parent pointer once the corresponding types
-  // have been defined.
-  // LoopHandle parent_;
-  union child {
-    EdgeHandle edge_;
-    PVertexHandle pvertex_;
-  };
-  Orientation orientation_;
+  PEdgeOrientation orientation_;
+  LoopHandle parent_loop_;
+  VariantHandle child_;  // Either an edge or a pvertex.
   PEdgeHandle loop_previous_;  // Previous p-edge in loop cycle.
   PEdgeHandle loop_next_;  // Next p-edge in loop cycle.
   PEdgeHandle radial_previous_;  // Previous p-edge in radial cycle.

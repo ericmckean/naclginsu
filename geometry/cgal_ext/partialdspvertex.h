@@ -4,6 +4,7 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_PVERTEX_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_PVERTEX_H_
 
+#include <assert.h>
 #include <CGAL/basic.h>
 #include "geometry/cgal_ext/partialdsentity.h"
 
@@ -18,29 +19,41 @@ template <class TypeRefs>
 class PartialDSPVertex : public PartialDSEntity<TypeRefs> {
  public:
   typedef PartialDSPVertex<TypeRefs>             Self;
+  typedef PartialDSEntity<TypeRefs>              Base;
   typedef TypeRefs                               PartialDS;
 
+  typedef typename PartialDS::VariantHandle      VariantHandle;
   typedef typename PartialDS::VertexHandle       VertexHandle;
+  typedef typename PartialDS::VertexConstHandle  VertexConstHandle;
   typedef typename PartialDS::PVertexHandle      PVertexHandle;
   typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
+  typedef typename PartialDS::EdgeHandle         EdgeHandle;
+  typedef typename PartialDS::EdgeConstHandle    EdgeConstHandle;
+  typedef typename PartialDS::PEdgeHandle        PEdgeHandle;
+  typedef typename PartialDS::PEdgeConstHandle   PEdgeConstHandle;
 
-  PartialDSPVertex() { }
+  PartialDSPVertex() : parent_(NULL) { }
 
-  // TODO(gwink): Declare this accessors once the corresponding types have been
-  // defined.
-  // EntityHandle parent();
-  // EntityConstHandle parent() const;
-  // void set_parent(EntityHandle parent);
+  EdgeConstHandle GetEdgeParent() const {
+    assert(vertex_ != NULL && vertex_->flavor() == Base::kNormalVertex);
+    return PartialDS::AsEdge(parent_);
+  }
+  PEdgeConstHandle GetPEdgeParent() const {
+    assert(vertex_ != NULL && vertex_->flavor() == Base::IsolatedVertex);
+    return PartialDS::AsPEdge(parent_);
+  }
+  void set_parent(VariantHandle parent) { parent_ = parent; }
 
+  VertexConstHandle vertex() const { return vertex_; }
+  void set_vertex(VertexHandle vertex) { vertex_ = vertex; }
+  
+  PVertexConstHandle next_pvertex() const { return next_pvertex_; }
+  void set_next_pvertex(PVertexHandle pvertex) { next_pvertex_ = pvertex; }
+  
  private:
-  // TODO(gwink): Implement the parent pointer once the corresponding types
-  // have been defined.
-  // union parent {
-  //  PEdgeHandle pedge_;
-  //  EdgeHandle edge_;
-  // };
+  VariantHandle parent_;  // Either an edge or a p-edge for isolated vertices.
   VertexHandle vertex_;  // The actual topological vertex.
-  PVertexHandle next_;  // Next p-vertex associated with vertex_.
+  PVertexHandle next_pvertex_;  // Next p-vertex associated with vertex_.
 };
 
 }  // namespace geometry

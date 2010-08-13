@@ -18,6 +18,34 @@ namespace geometry {
 template <class TypeRefs>
 class PartialDSEntity {
  public:
+  enum VertexFlavor {
+    kNormalVertex,  // A normal vertex associated with a face.
+    kIsolatedVertex,  // An isolated vertex without face.
+  };
+
+  enum EdgeFlavor {
+    kNormalEdge,  // A normal edge associated with a loop.
+    kWireEdge,  // A wire edge without face.
+  };
+
+  enum PEdgeOrientation {
+    kPEdgeReversed,  // p-edge direction is reversed from child edge.
+    kPEdgeForward,  // p-edge follows same direction as child edge.
+    kPEdgeUnoriented,  // special p-edge associated with an isolated vertex.
+  };
+
+  enum PFaceOrientation {
+    kPFaceForward,  // p-face has same orientation as child face normal.
+    kPFaceReversed,  // p-face has opposite orientation from child face normal.
+    kPFaceWireEdge,  // p-face is associated with a wire edge.
+    kPFaceIsolatedVertex,  // p-face is associated with an isolated.
+  };
+  
+  enum RegionFlavor {
+    kFilledRegion,
+    kEmptyRegion,
+  };
+
   typedef TypeRefs                  PartialDS;
   typedef PartialDSEntity<TypeRefs> Base;
 

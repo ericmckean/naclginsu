@@ -4,6 +4,7 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_PFACE_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_PFACE_H_
 
+#include <assert.h>
 #include <CGAL/basic.h>
 #include "geometry/cgal_ext/partialdsentity.h"
 
@@ -19,9 +20,11 @@ template <class TypeRefs>
 class PartialDSPFace : public PartialDSEntity<TypeRefs> {
  public:
   typedef PartialDSPFace<TypeRefs>              Self;
+  typedef PartialDSEntity<TypeRefs>             Base;
   typedef TypeRefs                              PartialDS;
 
-  typedef typename PartialDS::EntityHandle      EntityHandle;
+  typedef typename Base::PFaceOrientation       PFaceOrientation;
+  typedef typename PartialDS::VariantHandle     VariantHandle;
   typedef typename PartialDS::EdgeHandle        EdgeHandle;
   typedef typename PartialDS::EdgeConstHandle   EdgeConstHandle;
   typedef typename PartialDS::FaceHandle        FaceHandle;
@@ -30,32 +33,38 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::LoopConstHandle   LoopConstHandle;
   typedef typename PartialDS::PFaceHandle       PFaceHandle;
   typedef typename PartialDS::PFaceConstHandle  PFaceConstHandle;
-  // TODO(gwink): define this once Sheel type has been declared.
-  // typedef typename PartialDS::Shell             ShellHandle
+  typedef typename PartialDS::ShellHandle       ShellHandle;
+  typedef typename PartialDS::ShellConstHandle  ShellConstHandle;
   typedef typename PartialDS::VertexHandle      VertexHandle;
   typedef typename PartialDS::VertexConstHandle VertexConstHandle;
 
-  enum Orientation {
-    forward,  // p-face has same orientation as child face normal.
-    reverse,  // p-face has opposite orientation from child face normal.
-    undefined  // p-face's child is not a face.
-  };
+  PartialDSPFace() : child_(NULL) { }
 
-  PartialDSPFace() { }
+  PFaceOrientation orientation() const { return orientation_; }
+  void set_orientation(PFaceOrientation orientation) {
+    orientation_ = orientation;
+  }
 
-  // TODO(gwink): Declare this accessors once the corresponding types have been
-  // defined.
-  // ShellConstHandle parent_shell() const;
-  // void set_parent-shell(ShellHandle shell);
+  ShellConstHandle parent_shell() const { return parent_shell_; }
+  void set_parent_shell(ShellHandle shell) { parent_shell_ = shell; }
 
-  // TODO(gwink): need to map from EntityHandle to derived-class handles, such
-  // as VertexHandle.
-  //FaceConstHandle child_face() const { return child_.face; }
-  //void set_child_face(FaceHandle face) { child_.face = face; }
-  //EdgeConstHandle child_edge() const { return child_.edge; }
-  //void set_child_edge(EdgeHandle edge) { child_.edge = edge; }
-  //VertexConstHandle child_vertex() const { return child_.vertex; }
-  //void set_child_vertex(VertexHandle vertex) { child_.vertex = vertex; }
+  FaceConstHandle GetChildFace() const {
+    assert(orientation() == Base::kPFaceForward ||
+           orientation() == Base::kPFaceReverse);
+    return AsFace(child_);
+  }
+
+  EdgeConstHandle GetChildEdge() const {
+    assert(orientation() == Base::kPFaceWireEdge);
+    return AsEdge(child_);
+  }
+
+  VertexConstHandle GetChildVertex() const {
+    assert(orientation() == Base::kPFaceIsolatedVertex);
+    return AsVertex(child_);
+  }
+
+  void set_child_vertex(VariantHandle child) { child_ = child; }
 
   PFaceConstHandle next_pface() const { return next_pface_; }
   void set_next_pface(PFaceHandle pface) { next_pface_ = pface; }
@@ -63,17 +72,12 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
   PFaceConstHandle mate_pface() const { return mate_pface_; }
   void set_mate_pface(PFaceHandle pface) { mate_pface_ = pface; }
 
-  Orientation orientation() const { return orientation_; }
-  void set_orientation(Orientation orientation) {orientation_ = orientation; }
-
  private:
-  // TODO(gwink): Implement the shell pointer once the corresponding types
-  // have been defined.
-  // ShellHandle parent_shell_;
-  EntityHandle  child_;  // Child pointer, either a Face, Edge, or VertexHandle.
+  ShellHandle parent_shell_;
+  VariantHandle child_;  // Child pointer, either a Face, Edge, or VertexHandle.
   PFaceHandle next_pface_;  // Next pface around the same shell.
   PFaceHandle mate_pface_;  // Mate pface on opposite side of child face.
-  Orientation orientation_;  // Orientation relative to child face.
+  PFaceOrientation orientation_;  // Orientation relative to child face.
 };
 
 }  // namespace geometry
