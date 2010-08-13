@@ -29,8 +29,8 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
 
   PartialDSLoop() { }
 
-  FaceConstHandle parent() const { return parent_; }
-  void set_parent(FaceHandle parent) { parent_ = parent; }
+  FaceConstHandle parent_face() const { return parent_face_; }
+  void set_parent_face(FaceHandle face) { parent_face_ = face; }
 
   PEdgeConstHandle boundary_pedge() const { return boundary_pedge_; }
   void set_boundary_pedge(PEdgeHandle pedge) { boundary_pedge_ = pedge; }
@@ -39,8 +39,8 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   void set_next_hole(LoopHandle loop) { next_hole_ = loop; }
 
  private:
-  FaceHandle parent_;  // Parent face.
-  PEdgeHandle boundary_pedge_;  // An edge along the boundary.
+  FaceHandle parent_face_;  // Parent face.
+  PEdgeHandle boundary_pedge_;  // A pedge along the boundary.
   LoopHandle next_hole_;  // Next hole loop.
 };
 
