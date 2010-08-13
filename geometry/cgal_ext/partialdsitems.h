@@ -24,7 +24,7 @@ namespace geometry {
 // that make up the partial-entity data structure. 
 class PartialDSItems {
  public:
-  template <class TypeRefs, class Traits>
+  template <class TypeRefs>
   struct EntityWrapper {
       typedef PartialDSEntity<TypeRefs> Entity;
   };
