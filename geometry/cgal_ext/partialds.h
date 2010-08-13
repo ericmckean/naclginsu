@@ -23,6 +23,7 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_H_
 
+#include <assert.h>
 #include <CGAL/basic.h>
 #include <CGAL/In_place_list.h>
 #include <CGAL/memory.h>
@@ -237,6 +238,42 @@ class PartialDSTypes {
     // TODO(gwink): Add validation checks.
     return f;
   }
+  
+  static PVertexHandle AsPVertex(VariantHandle variant_handle) {
+    PVertex* v = reinterpret_cast<PVertex*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return v;
+  }
+  
+  static PVertexConstHandle AsPVertex(VariantConstHandle variant_handle) {
+    const PVertex* v = reinterpret_cast<const PVertex*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return v;
+  }
+  
+  static PEdgeHandle AsPEdge(VariantHandle variant_handle) {
+    PEdge* e = reinterpret_cast<PEdge*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return e;
+  }
+  
+  static PEdgeConstHandle AsPEdge(VariantConstHandle variant_handle) {
+    const PEdge* e = reinterpret_cast<const PEdge*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return e;
+  }
+  
+  static PFaceHandle AsPFace(VariantHandle variant_handle) {
+    PFace* f = reinterpret_cast<PFace*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return f;
+  }
+  
+  static PFaceConstHandle AsPFace(VariantConstHandle variant_handle) {
+    const PFace* f = reinterpret_cast<const PFace*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return f;
+  }
 };
 
 // PartialDS: The the partial-entity data structure.
@@ -260,8 +297,14 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::RegionList                 RegionList;
 
   typedef typename Types::VertexHandle               VertexHandle;
-  typedef typename Types::VertexHandle               EdgeHandle;
+  typedef typename Types::PVertexHandle              PVertexHandle;
+  typedef typename Types::EdgeHandle                 EdgeHandle;
+  typedef typename Types::PEdgeHandle                PEdgeHandle;
   typedef typename Types::FaceHandle                 FaceHandle;
+  typedef typename Types::PFaceHandle                PFaceHandle;
+  typedef typename Types::LoopHandle                 LoopHandle;
+  typedef typename Types::ShellHandle                ShellHandle;
+  typedef typename Types::RegionHandle               RegionHandle;
 
   // Use these function to allocate and destroy Partial DS items. The Make
   // function both allocate an item and insert it into the corresponding list.
@@ -271,17 +314,53 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   void DestroyVertex(VertexHandle v) {
     DestroyItem<VertexHandle, VertexList>(v, &vertices_);
   }
+  PVertexHandle MakePVertex() {
+    return MakeItem<PVertexHandle, PVertexList>(&pvertices_);
+  }
+  void DestroyPVertex(PVertexHandle v) {
+    DestroyItem<PVertexHandle, PVertexList>(v, &pvertices_);
+  }
   EdgeHandle MakeEdge() {
     return MakeItem<EdgeHandle, EdgeList>(&edges_);
   }
   void DestroyEdge(EdgeHandle e) {
     DestroyItem<EdgeHandle, EdgeList>(e, &edges_);
   }
+  PEdgeHandle MakePEdge() {
+    return MakeItem<PEdgeHandle, PEdgeList>(&pedges_);
+  }
+  void DestroyPEdge(PEdgeHandle e) {
+    DestroyItem<PEdgeHandle, PEdgeList>(e, &pedges_);
+  }
   FaceHandle MakeFace() {
     return MakeItem<FaceHandle, FaceList>(&faces_);
   }
   void DestroyFace(FaceHandle f) {
     DestroyItem<FaceHandle, FaceList>(f, &faces_);
+  }
+  PFaceHandle MakePFace() {
+    return MakeItem<PFaceHandle, PFaceList>(&pfaces_);
+  }
+  void DestroyPFace(PFaceHandle f) {
+    DestroyItem<PFaceHandle, PFaceList>(f, &pfaces_);
+  }
+  LoopHandle MakeLoop() {
+    return MakeItem<LoopHandle, LoopList>(&loops_);
+  }
+  void DestroyLoop(LoopHandle l) {
+    DestroyItem<LoopHandle, LoopList>(l, &loops_);
+  }
+  ShellHandle MakeShell() {
+    return MakeItem<ShellHandle, ShellList>(&shells_);
+  }
+  void DestroyShell(ShellHandle s) {
+    DestroyItem<ShellHandle, ShellList>(s, &shells_);
+  }
+  RegionHandle MakeRegion() {
+    return MakeItem<RegionHandle, RegionList>(&regions_);
+  }
+  void DestroyRegion(RegionHandle r) {
+    DestroyItem<RegionHandle, RegionList>(r, &regions_);
   }
 
  private:
