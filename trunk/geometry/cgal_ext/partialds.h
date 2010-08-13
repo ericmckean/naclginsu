@@ -71,34 +71,25 @@ class PartialDSTypes {
   typedef TraitsType                            Traits;
   typedef ItemsType                             Items;
 
-  // Entity is the base class for all items in the partial DS. There should
-  // never be a need to allocate Entity instances directly. Neither is there any
-  // use for a list of entities. We're declaring type EntityList for the sole
-  // purpose of declaring EntityIterator and EntityHandle, which are used
-  // throughout the partial DS classes.
-  typedef typename Items::template EntityWrapper<Self,Traits> EntityWrapper;
-  typedef typename EntityWrapper::Entity                      EntityBase;
-  typedef PartialDSListItem<EntityBase>                       Entity;
-  typedef CGAL_ALLOCATOR(Entity)                              EntityAllocator;
-  typedef CGAL::In_place_list<Entity, false, EntityAllocator> EntityList;
-  typedef typename EntityList::iterator                       EntityIterator;
-  typedef typename EntityList::const_iterator               EntityConstIterator;
-  typedef EntityIterator                                      EntityHandle;
-  typedef EntityConstIterator                                 EntityConstHandle;
+  // VariantHandle is used internally where a parent or child pointer may link
+  // to one of several types of entities, such as a Vertex pointing to either a
+  // PFace or PVertex.
+  typedef void*                                 VariantHandle;
+  typedef const void*                           VariantConstHandle;
 
   // We keep all vertices in a list to easily iterate over them. A vertex
   // handle is also an iterator into that list.
   typedef typename Items::template
-      VertexWrapper<Self, Traits>              VertexWrapper;
-  typedef typename VertexWrapper::Vertex       VertexBase;
-  typedef PartialDSListItem<VertexBase>        Vertex;
-  typedef CGAL_ALLOCATOR(Vertex)               VertexAllocator;
+      VertexWrapper<Self, Traits>               VertexWrapper;
+  typedef typename VertexWrapper::Vertex        VertexBase;
+  typedef PartialDSListItem<VertexBase>         Vertex;
+  typedef CGAL_ALLOCATOR(Vertex)                VertexAllocator;
   typedef CGAL::In_place_list<Vertex, false,
-                              VertexAllocator> VertexList;
-  typedef typename VertexList::iterator        VertexIterator;
-  typedef typename VertexList::const_iterator  VertexConstIterator;
-  typedef VertexIterator                       VertexHandle;
-  typedef VertexConstIterator                  VertexConstHandle;
+                              VertexAllocator>  VertexList;
+  typedef typename VertexList::iterator         VertexIterator;
+  typedef typename VertexList::const_iterator   VertexConstIterator;
+  typedef VertexIterator                        VertexHandle;
+  typedef VertexConstIterator                   VertexConstHandle;
 
   // Ditto with p-vertices.
   typedef typename Items::template
@@ -201,6 +192,51 @@ class PartialDSTypes {
   typedef typename RegionList::const_iterator   RegionConstIterator;
   typedef RegionIterator                        RegionHandle;
   typedef RegionConstIterator                   RegionConstHandle;
+
+  // Map between VariantHandle and other Handles types. Not that this is
+  // generally not type safe, since a variant handle is just a pointer to void.
+  static VariantHandle AsVariant(VertexHandle vertex_handle) {
+    return reinterpret_cast<VariantHandle>(&*vertex_handle);
+  }
+  static VariantConstHandle AsVariant(VertexConstHandle vertex_handle) {
+    return static_cast<VariantConstHandle>(&*vertex_handle);
+  }
+  
+  static VertexHandle AsVertex(VariantHandle variant_handle) {
+    Vertex* v = reinterpret_cast<Vertex*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return v;
+  }
+  
+  static VertexConstHandle AsVertex(VariantConstHandle variant_handle) {
+    const Vertex* v = reinterpret_cast<const Vertex*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return v;
+  }
+  
+  static EdgeHandle AsEdge(VariantHandle variant_handle) {
+    Edge* e = reinterpret_cast<Edge*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return e;
+  }
+  
+  static EdgeConstHandle AsEdge(VariantConstHandle variant_handle) {
+    const Edge* e = reinterpret_cast<const Edge*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return e;
+  }
+  
+  static FaceHandle AsFace(VariantHandle variant_handle) {
+    Face* f = reinterpret_cast<Face*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return f;
+  }
+  
+  static FaceConstHandle AsFace(VariantConstHandle variant_handle) {
+    const Face* f = reinterpret_cast<const Face*>(variant_handle);
+    // TODO(gwink): Add validation checks.
+    return f;
+  }
 };
 
 // PartialDS: The the partial-entity data structure.
@@ -223,7 +259,50 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::ShellList                  ShellList;
   typedef typename Types::RegionList                 RegionList;
 
- protected:
+  typedef typename Types::VertexHandle               VertexHandle;
+  typedef typename Types::VertexHandle               EdgeHandle;
+  typedef typename Types::FaceHandle                 FaceHandle;
+
+  // Use these function to allocate and destroy Partial DS items. The Make
+  // function both allocate an item and insert it into the corresponding list.
+  VertexHandle MakeVertex() {
+    return MakeItem<VertexHandle, VertexList>(&vertices_);
+  }
+  void DestroyVertex(VertexHandle v) {
+    DestroyItem<VertexHandle, VertexList>(v, &vertices_);
+  }
+  EdgeHandle MakeEdge() {
+    return MakeItem<EdgeHandle, EdgeList>(&edges_);
+  }
+  void DestroyEdge(EdgeHandle e) {
+    DestroyItem<EdgeHandle, EdgeList>(e, &edges_);
+  }
+  FaceHandle MakeFace() {
+    return MakeItem<FaceHandle, FaceList>(&faces_);
+  }
+  void DestroyFace(FaceHandle f) {
+    DestroyItem<FaceHandle, FaceList>(f, &faces_);
+  }
+
+ private:
+  // Template function for making and destroying PartialDS items.
+  template <class ItemHandle, class ItemList>
+  ItemHandle MakeItem (ItemList* item_list) {
+    typedef typename ItemList::pointer Pointer;
+    typedef typename ItemList::value_type Vertex;
+    
+    Pointer pv = item_list->get_allocator().allocate(1);
+    new (pv) Vertex();
+    item_list->push_back(*pv);
+    return item_list->begin();
+  }
+  
+  template <class ItemHandle, class ItemList>
+  void DestroyItem(ItemHandle item, ItemList* item_list) {
+    item_list->erase(item);
+    item_list->get_allocator().destroy(&*item);
+  }
+
   VertexList vertices_;
   PVertexList pvertices_;
   EdgeList edges_;
@@ -233,13 +312,9 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   PFaceList pfaces_;
   ShellList shells_;
   RegionList regions_;
-  // TODO(gwink): Or not TODO, that is the question. The PE paper also defines
-  // a list of models, each consissting of a list of region. I think we're
-  // better of having each PE instance represent a single model, and manage
-  // the list of models outside the PE class. If we should reverse this decision
-  // later, then the RegionList above will contain the regions for all models.
-  // And we'll have to add a next pointer to the PartialDSRegion class to keep
-  // track of the list of regions within a single model.
+  // Note: In Ginsu, a PartialDS instance represent a single non-manifold mesh.
+  // We keep the list of models at a higher level, outside of the PE data
+  // structure.
 };
 
 }  // namespace geometry
