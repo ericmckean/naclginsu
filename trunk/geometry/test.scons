@@ -1,0 +1,36 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2010 The Ginsu Project Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+""" Build file for tests of partial-entity data structure code
+"""
+
+import os
+import sys
+
+Import('env')
+
+sel_ldr = os.path.join(env['NACL_SDK_BASE'], 'bin', 'sel_ldr')
+if not os.path.exists(sel_ldr):
+  sys.stderr.write('sel_ldr is not installed as part of the NaCl toolchain.\n')
+  sys.exit(1)
+
+env.Append(
+  CPPDEFINES = [
+  ],
+  CPPPATH = [
+    '$MAIN_DIR/third_party/cgal/trunk/include',
+  ],
+  LIBS = ['CGAL']
+)
+
+small_test_inputs = ['cgal_ext/partialds_basic_tests.cc']
+
+env.ComponentTestProgram(
+    'small_partialds_test',
+    small_test_inputs,
+    COMPONENT_TEST_CMDLINE = '%s $PROGRAM_NAME' % sel_ldr,
+    COMPONENT_TEST_SIZE = 'small'
+)

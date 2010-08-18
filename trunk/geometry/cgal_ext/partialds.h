@@ -362,6 +362,14 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   void DestroyRegion(RegionHandle r) {
     DestroyItem<RegionHandle, RegionList>(r, &regions_);
   }
+  
+  // List accessors, to iterate over these vertices, edges, etc. E.g. to display
+  // the geometry.
+  const VertexList& vertices() const { return vertices_; }
+  const EdgeList& edges() const { return edges_;}
+  const FaceList& faces() const { return faces_; }
+  const ShellList& shells() const { return shells_; }
+  const RegionList& regions() const { return regions_; }
 
  private:
   // Template function for making and destroying PartialDS items.
