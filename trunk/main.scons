@@ -77,7 +77,12 @@ environment_list.append(nacl_opt_env)
 
 nacl_test_env = nacl_env.Clone(
     BUILD_TYPE = 'test',
-    BUILD_SCONSCRIPTS = ['c_salt/test.scons'],
+    BUILD_SCONSCRIPTS = [
+      '$MAIN_DIR/third_party/cgal/cgal.scons',
+      # TODO(dmiachael): Fix c-salt tests; they do not build any more.
+      # 'c_salt/test.scons',
+      '$MAIN_DIR/geometry/test.scons',
+    ],
     BUILD_TYPE_DESCRIPTION = 'Tests',
     COMPONENT_TEST_CMDLINE = '$NACL_SDK_BASE/bin/sel_ldr $PROGRAM_NAME',
     LIBS = ['gmock', 'gtest', 'nosys', 'pthread']
