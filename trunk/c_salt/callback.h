@@ -427,7 +427,6 @@ class BindingBase<T, RET(U::*)()> {
   BindingBase(T* instance, RET(U::*method)())
       : function_(boost::bind(method, instance)) {
     function_=boost::bind(method, instance);
-    function_(); 
   }
   boost::function<RET()> function_;
 };
