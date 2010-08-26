@@ -145,6 +145,13 @@ class Marshaller<std::string> {
     STRINGN_TO_NPVARIANT(string_copy, str_length-1, *return_val);
   }
 };
+template <>
+class Marshaller<NPObject*> {
+ public:
+  static void put(NPVariant* return_val, NPObject* value) {
+    OBJECT_TO_NPVARIANT(value, *return_val);
+  }
+};
 
 // Template magic for unmarshalling depending on type.  This is used when
 // unpacking the NPVariant array and turning it in to real C++ arguments.
@@ -188,7 +195,7 @@ class Unmarshaller<bool> {
     if (!NPVARIANT_IS_BOOLEAN(**args)) {
       *error = true;
       return false;
-    } 
+    }
     ++(*args);  // advance args to the next argument.  Note it's dangerous to do
              // this directly in the macro, since if the macro is done poorly,
              // args this could happen more than once.  Hence, we do it once
@@ -205,7 +212,7 @@ class Unmarshaller<int32_t> {
     if (!NPVARIANT_IS_INT32(**args)) {
       *error = true;
       return 0;
-    } 
+    }
     ++(*args);
     return NPVARIANT_TO_INT32(*( (*args)-1u));
   }
@@ -219,9 +226,23 @@ class Unmarshaller<double> {
     if (!NPVARIANT_IS_DOUBLE(**args)) {
       *error = true;
       return 0.0;
-    } 
+    }
     ++(*args);
     return NPVARIANT_TO_DOUBLE(*((*args)-1u));
+  }
+};
+template <>
+class Unmarshaller<NPObject*> {
+ public:
+  static NPObject* get(NPVariant** args,
+                       ScriptingBridge* bridge,
+                       bool* error) {
+    if (!NPVARIANT_IS_OBJECT(**args)) {
+      *error = true;
+      return NULL;
+    }
+    ++(*args);
+    return NPVARIANT_TO_OBJECT(*((*args)-1u));
   }
 };
 template <>
@@ -236,9 +257,7 @@ class Unmarshaller<std::string> {
     }
     ++(*args);
     NPString np_string(NPVARIANT_TO_STRING(*((*args)-1u)));
-    // TODO(dmichael):  
-    //     Is the conversion from NPUTF8 to char the right thing to do?
-    return std::string(np_string.UTF8Characters, np_string.UTF8Length); 
+    return std::string(np_string.UTF8Characters, np_string.UTF8Length);
   }
 };
 
@@ -426,7 +445,6 @@ class BindingBase<T, RET(U::*)()> {
  protected:
   BindingBase(T* instance, RET(U::*method)())
       : function_(boost::bind(method, instance)) {
-    function_=boost::bind(method, instance);
   }
   boost::function<RET()> function_;
 };
@@ -435,7 +453,6 @@ class BindingBase<T, RET(U::*)(ARG1)> {
  protected:
   BindingBase(T* instance, RET(U::*method)(ARG1))
       : function_(boost::bind(method, instance, _1)) {
-         function_=boost::bind(method, instance, _1);
   }
   boost::function<RET(ARG1)> function_;
 };
