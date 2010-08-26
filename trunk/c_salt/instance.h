@@ -2,41 +2,42 @@
 // Use of this source code is governed by a BSD-style license that can
 // be found in the LICENSE file.
 
-#ifndef C_SALT_MODULE_H_
-#define C_SALT_MODULE_H_
+#ifndef C_SALT_INSTANCE_H_
+#define C_SALT_INSTANCE_H_
 
 #include <nacl/nacl_npapi.h>
 #include <nacl/npruntime.h>
 #include <nacl/npapi_extensions.h>
 
+#include "boost/noncopyable.hpp"
+#include "boost/scoped_ptr.hpp"
 #include "c_salt/basic_macros.h"
+#include "c_salt/scripting_bridge.h"
 
 namespace c_salt {
 
-class ScriptingBridge;
-
 // The base class for the Native Client module.  Subclasses must implement the
-// CreateModule() factory method.  A Module instance can publish a
-// ScriptingBridge instance to the browser.  A Module will create an instance
+// CreateInstance() factory method.  An Instance can publish a
+// ScriptingBridge to the browser.  An Instance will create an instance
 // of a ScriptingBridge when asked via the NPP_GetScriptableInstance()
-// NPAPI.  When the Module instance is deallocated, this ScriptingBridge
-// instance is also deallocated.
+// NPAPI.  When the Instance is deallocated, this ScriptingBridge instance is
+// also deallocated.
 
 // TODO(dspringer): This becomes a subclass of pp::Instance when Pepper v2
 // becomes available.
 
-class Module {
+class Instance : public boost::noncopyable {
  public:
   // Factory method must be implemented in the subclass.
-  static Module* CreateModule();
+  static Instance* CreateInstance();
 
-  Module() : scripting_bridge_(NULL), is_loaded_(false) {}
-  virtual ~Module() = 0;
+  Instance() : is_loaded_(false) {}
+  virtual ~Instance();
 
   // Called during initialization to publish the module's method names that
   // can be called from JavaScript.
   virtual void InitializeMethods(ScriptingBridge* bridge);
-  
+
   // Called during initialization to publish the module's properties that can
   // be called from JavaScript.
   virtual void InitializeProperties(ScriptingBridge* bridge);
@@ -63,11 +64,11 @@ class Module {
 
   // Accessor for the internal scripting bridge object.
   ScriptingBridge* scripting_bridge() const {
-    return scripting_bridge_;
+    return scripting_bridge_.get();
   }
 
   // Accessor/mutator for |is_loaded_|.  This is used to determine when to call
-  // the ModuleDidLoad() method.
+  // the InstanceDidLoad() method.
   bool is_loaded() const {
     return is_loaded_;
   }
@@ -76,12 +77,10 @@ class Module {
   }
 
  private:
-  // TODO(dspringer): this should be a smart (scoped?) pointer.
-  ScriptingBridge* scripting_bridge_;
+  boost::scoped_ptr<ScriptingBridge> scripting_bridge_;
   bool is_loaded_;
-  DISALLOW_COPY_AND_ASSIGN(Module);
 };
 
 }  // namespace c_salt
 
-#endif  // C_SALT_MODULE_H_
+#endif  // C_SALT_INSTANCE_H_

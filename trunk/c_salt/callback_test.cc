@@ -2,22 +2,16 @@
 // Author: dmichael@google.com (Dave Michael)
 #include "c_salt/callback.h"
 
-#include <iostream>
-
-/* #include <stdio.h>
-#include "common/google.h"
-#include "common/commandlineflags.h"
-#include "common/logging.h"
-#include "testing/googletest.h" */
-
 #include <nacl/npruntime.h>
+
+#include <iostream>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "c_salt/module.h"
+#include "c_salt/instance.h"
 
-using namespace c_salt;
-using namespace c_salt::c_salt_private;
+using namespace c_salt;  // NOLINT
+using namespace c_salt::c_salt_private;  // NOLINT
 
 namespace {
   NPObject* const kInvalidNPObjectPointer =
@@ -55,7 +49,7 @@ namespace {
       return kInvalidScriptingBridgePointer;
     }
   };
-  
+
   struct NPArgMakerBase {
     virtual ~NPArgMakerBase() {}
     NPArgMakerBase() : args(NULL), num_args(0) {}
@@ -67,7 +61,7 @@ namespace {
 
   template <class RET, class ARG1>
   struct NPArgMaker<RET(ARG1)> : public NPArgMakerBase {
-    NPArgMaker(ARG1 a1) {
+    explicit NPArgMaker(ARG1 a1) {
       num_args = 1u;
       args = new NPVariant[1];
       Marshaller<ARG1>::put(args, a1);
@@ -109,7 +103,8 @@ namespace {
 
   template <class RET>
   struct NPInvoker<RET(*)()> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce, ScriptingBridge* sb) {
+    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
+                              ScriptingBridge* sb) {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
       NPArgMaker<RET()> arg_maker;
@@ -123,10 +118,12 @@ namespace {
   };
   template <class RET, class ARG1>
   struct NPInvoker<RET(*)(ARG1)> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce, ScriptingBridge* sb, ARG1 a1) {
+    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
+                              ScriptingBridge* sb,
+                              ARG1 a1) {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
-      NPArgMaker<RET (ARG1)> arg_maker(a1);
+      NPArgMaker<RET(ARG1)>arg_maker(a1);
       mce->Execute(sb, arg_maker.args, arg_maker.num_args, &retval);
       bool dummy;
       return Unmarshaller<RET>::get(&retval_ptr, sb, &dummy);
@@ -141,10 +138,13 @@ namespace {
   };
   template <class RET, class ARG1, class ARG2>
   struct NPInvoker<RET(*)(ARG1, ARG2)> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce, ScriptingBridge* sb, ARG1 a1, ARG2 a2) {
+    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
+                              ScriptingBridge* sb,
+                              ARG1 a1,
+                              ARG2 a2) {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
-      NPArgMaker<RET (ARG1, ARG2)> arg_maker(a1, a2);
+      NPArgMaker<RET(ARG1, ARG2)>arg_maker(a1, a2);
       mce->Execute(sb, arg_maker.args, arg_maker.num_args, &retval);
       bool dummy;
       return Unmarshaller<RET>::get(&retval_ptr, sb, &dummy);
@@ -159,10 +159,14 @@ namespace {
   };
   template <class RET, class ARG1, class ARG2, class ARG3>
   struct NPInvoker<RET(*)(ARG1, ARG2, ARG3)> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce, ScriptingBridge* sb, ARG1 a1, ARG2 a2, ARG3 a3) {
+    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
+                              ScriptingBridge* sb,
+                              ARG1 a1,
+                              ARG2 a2,
+                              ARG3 a3) {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
-      NPArgMaker<RET (ARG1, ARG2, ARG3)> arg_maker(a1, a2, a3);
+      NPArgMaker<RET(ARG1, ARG2, ARG3)>arg_maker(a1, a2, a3);
       mce->Execute(sb, arg_maker.args, arg_maker.num_args, &retval);
       bool dummy;
       return Unmarshaller<RET>::get(&retval_ptr, sb, &dummy);
@@ -178,10 +182,15 @@ namespace {
   };
   template <class RET, class ARG1, class ARG2, class ARG3, class ARG4>
   struct NPInvoker<RET(*)(ARG1, ARG2, ARG3, ARG4)> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce, ScriptingBridge* sb, ARG1 a1, ARG2 a2, ARG3 a3, ARG4 a4) {
+    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
+                              ScriptingBridge* sb,
+                              ARG1 a1,
+                              ARG2 a2,
+                              ARG3 a3,
+                              ARG4 a4) {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
-      NPArgMaker<RET (ARG1, ARG2, ARG3, ARG4)> arg_maker(a1, a2, a3, a4);
+      NPArgMaker<RET(ARG1, ARG2, ARG3, ARG4)>arg_maker(a1, a2, a3, a4);
       mce->Execute(sb, arg_maker.args, arg_maker.num_args, &retval);
       bool dummy;
       return Unmarshaller<RET>::get(&retval_ptr, sb, &dummy);
@@ -261,7 +270,7 @@ namespace {
 {\
   CallbackMock<SIGTYPE> cb;\
   MethodCallbackExecutor* mce(\
-         MakeMethodCallbackExecutor(&cb,\
+         MakeMethodCallbackExecutor(&cb, \
                                     &CallbackMock<SIGTYPE>::Func));\
   ScriptingBridge* sb(ValueMaker<ScriptingBridge*>::Make());\
   NPInvoker<SIGTYPE>::Invoke(mce, sb);\
@@ -273,20 +282,22 @@ class CallbackTest : public ::testing::Test {
 };
 
 TEST_F(CallbackTest, TestIt) {
-    // TODO This is cheating...  for now, I just want to see it's working
-    // but I need to turn it in to a real automated test
-    //
-    TEST_SIGNATURE(std::string(*)());
-    TEST_SIGNATURE(int32_t(*)(double));
-    TEST_SIGNATURE(double(*)(bool, int32_t));
-    TEST_SIGNATURE(bool(*)(std::string, double, int32_t, bool));
-    TEST_SIGNATURE(bool(*)(NPObject*, int32_t, double, bool));
+    // TODO(dmichael): This is cheating...  for now, I just want to see it's
+    // working but I need to turn it in to a real automated test.  Note that
+    // lint wants to see arg names in these function calls, which are not
+    // necessary here.
+    TEST_SIGNATURE(std::string(*)());  // NOLINT
+    TEST_SIGNATURE(int32_t(*)(double));  // NOLINT
+    TEST_SIGNATURE(double(*)(bool, int32_t));  // NOLINT
+    TEST_SIGNATURE(bool(*)(std::string, double, int32_t, bool));  // NOLINT
+    TEST_SIGNATURE(bool(*)(NPObject*, int32_t, double, bool));  // NOLINT
     // void return not currently supported
-    //TEST_SIGNATURE(void(*)(std::string, double, int32_t, bool));
+    // TEST_SIGNATURE(void(*)(std::string, double, int32_t, bool));
     //
     NPObject npo;
 }
 
-class MyModule : public c_salt::Module
-{};
-c_salt::Module* c_salt::Module::CreateModule() { return new MyModule; }
+class MyInstance : public c_salt::Instance {
+};
+
+c_salt::Instance* c_salt::Instance::CreateInstance() { return new MyInstance; }

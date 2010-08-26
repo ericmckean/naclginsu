@@ -12,19 +12,21 @@ namespace c_salt {
 StringType::StringType(const NPString& np_string)
     : Type(kStringTypeId),
       string_value_(static_cast<const char*>(np_string.UTF8Characters),
-                    np_string.UTF8Length){
+                    np_string.UTF8Length) {
 }
 
 StringType::~StringType() {
 }
 
-bool StringType::CreateNPVariantCopy(NPVariant& np_var) const {
-  NULL_TO_NPVARIANT(np_var);
+bool StringType::CreateNPVariantCopy(NPVariant* np_var) const {
+  if (np_var == NULL)
+    return false;
+  NULL_TO_NPVARIANT(*np_var);
   uint32_t length = string_value_.size();
   NPUTF8* utf8_string = reinterpret_cast<NPUTF8*>(NPN_MemAlloc(length+1));
   memcpy(utf8_string, string_value_.c_str(), length);
   utf8_string[length] = '\0';
-  STRINGN_TO_NPVARIANT(utf8_string, length, np_var);
+  STRINGN_TO_NPVARIANT(utf8_string, length, *np_var);
   return true;
 }
 

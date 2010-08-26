@@ -5,12 +5,13 @@
 #ifndef C_SALT_SCRIPTING_BRIDGE_H_
 #define C_SALT_SCRIPTING_BRIDGE_H_
 
-#include <map>
-#include <string>
-
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <nacl/nacl_npapi.h>
 #include <nacl/npruntime.h>
+
+#include <map>
+#include <string>
 
 #include "c_salt/basic_macros.h"
 #include "c_salt/callback.h"
@@ -32,7 +33,7 @@ class PropertyMutatorCallbackExecutor;
 // TODO(dspringer): |browser_binding_| gets replaced by pp::ScriptableObject
 // when Pepper v2 becomes available.
 
-class ScriptingBridge {
+class ScriptingBridge : public boost::noncopyable {
  public:
   // Shared pointer types used in the method and property maps.
   typedef boost::shared_ptr<MethodCallbackExecutor>
@@ -45,6 +46,7 @@ class ScriptingBridge {
   // Creates an instance of the scripting bridge object in the browser, with
   // a corresponding ScriptingBridge object instance.
   static ScriptingBridge* CreateScriptingBridge(NPP npp);
+  virtual ~ScriptingBridge();
 
   // Causes |method_name| to be published as a method that can be called by
   // JavaScript.  Associated this method with |method|.
@@ -99,8 +101,9 @@ class ScriptingBridge {
   //     may allow for reasonable automatic type conversions, if that is
   //     desired.
   template <class T, class Signature>
-  bool AddMethodNamed(const std::string& method_name, T* handler, Signature method)
-  {
+  bool AddMethodNamed(const std::string& method_name,
+                      T* handler,
+                      Signature method) {
     if (method_name.empty() || method == NULL)
       return false;
     NPIdentifier method_id = NPN_GetStringIdentifier(method_name.c_str());
@@ -113,7 +116,8 @@ class ScriptingBridge {
 
   // Associate property accessor and mutator with |property_name|.  This
   // publishes |property_name| to the JavaScript.  |property_accessor| must not
-  // be NULL; if |property_mutator| is NULL the property is considered read-only.
+  // be NULL; if |property_mutator| is NULL the property is considered
+  // read-only.
   bool AddPropertyNamed(const char* property_name,
       SharedPropertyAccessorCallbackExecutor property_accessor,
       SharedPropertyMutatorCallbackExecutor property_mutator);
@@ -123,8 +127,8 @@ class ScriptingBridge {
   // count to increment, such as NPP_GetScriptableInstance().
   NPObject* CopyBrowserBinding() {
     if (browser_binding_)
-      return NPN_RetainObject(browser_binding_);
-    return NULL;
+      NPN_RetainObject(browser_binding_);
+    return browser_binding_;
   }
 
   // Release the browser binding object.  Note that this *might* cause |this|
@@ -160,7 +164,6 @@ class ScriptingBridge {
       PropertyMutatorDictionary;
 
   ScriptingBridge(NPP npp, NPObject* browser_binding);
-  virtual ~ScriptingBridge();
 
   // NPAPI support methods.
   bool HasMethod(NPIdentifier name);
@@ -181,8 +184,6 @@ class ScriptingBridge {
   MethodDictionary method_dictionary_;
   PropertyAccessorDictionary property_accessor_dictionary_;
   PropertyMutatorDictionary property_mutator_dictionary_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptingBridge);
 };
 
 }  // namespace c_salt
