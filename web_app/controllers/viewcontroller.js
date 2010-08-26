@@ -45,15 +45,13 @@ ginsu.controllers.ViewController = function(element) {
   }
   // The container is the containing DOM element.
   this.container_ = element;
-  
-  /* TODO(dspringer): Enbale this error checking once it's implemented in Ginsu.
+
   if (typeof this.container_['getValueForKey'] != 'function' ||
       typeof this.container_['setValueForKey'] != 'function') {
     throw new Error(
         'ViewController() Element does not implement getValueForKey() ' +
         'and setValueForKey()');
   }
-  */
 
   /**
    * Mouse drag event object.

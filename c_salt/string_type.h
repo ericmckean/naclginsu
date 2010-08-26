@@ -5,15 +5,14 @@
 #ifndef C_SALT_STRING_TYPE_H_
 #define C_SALT_STRING_TYPE_H_
 
-#include "boost/scoped_ptr.hpp"
-#include "c_salt/basic_macros.h"
-#include "c_salt/type.h"
-
 #include <string>
+
+#include "boost/noncopyable.hpp"
+#include "c_salt/type.h"
 
 namespace c_salt {
 
-class StringType : public Type {
+class StringType : public Type, public boost::noncopyable {
  public:
   // Possible results from the Compare methods.
   typedef enum {
@@ -27,10 +26,11 @@ class StringType : public Type {
   explicit StringType(const NPString& np_string);
   virtual ~StringType();
 
-  // Creates a copy of the internal string in the browser's memory.  The caller
-  // is responsible for deleting the memory.  The string pointer must be freed
-  // using NPN_MemFree().
-  bool CreateNPVariantCopy(NPVariant& np_var) const;
+  // Creates a copy of the internal string in the browser's memory which is
+  // referenced by |np_var|.  The caller is responsible for deleting the memory
+  // associated with |np_var| using NPN_MemFree().  If |np_var| is NULL, this
+  // method does nothing and returns |false|.
+  bool CreateNPVariantCopy(NPVariant* np_var) const;
 
   // Compare |other_string| with this one.
   // TODO(dspringer): Flesh this out to have anchoring, case-insensitivity,
@@ -51,7 +51,6 @@ class StringType : public Type {
   }
 
   std::string string_value_;
-  DISALLOW_COPY_AND_ASSIGN(StringType);
 };
 
 }  // namespace c_salt

@@ -4,17 +4,12 @@
 
 // TODO(dspringer): This file will disappear when we migrate to Pepper V2.
 
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
 
 #include <nacl/npupp.h>
 
-#include <new>
+#include "c_salt/instance.h"
 
-#include "c_salt/module.h"
-
-using c_salt::Module;
+using c_salt::Instance;
 using c_salt::ScriptingBridge;
 
 NPError NPP_New(NPMIMEType mime_type,
@@ -36,7 +31,7 @@ NPError NPP_New(NPMIMEType mime_type,
   // while (--argc) {
   //   attribute_dict[argn[argc]] = argv[argc];
   // }
-  Module* module_instance = Module::CreateModule(/* attribute_dict */);
+  Instance* module_instance = Instance::CreateInstance(/* attribute_dict */);
   if (module_instance == NULL) {
     return NPERR_OUT_OF_MEMORY_ERROR;
   }
@@ -48,7 +43,7 @@ NPError NPP_Destroy(NPP instance, NPSavedData** save) {
   if (instance == NULL) {
     return NPERR_INVALID_INSTANCE_ERROR;
   }
-  Module* module_instance = static_cast<Module*>(instance->pdata);
+  Instance* module_instance = static_cast<Instance*>(instance->pdata);
   if (module_instance != NULL) {
     delete module_instance;
   }
@@ -62,7 +57,7 @@ NPObject* NPP_GetScriptableInstance(NPP instance) {
     return NULL;
   }
 
-  Module* module_instance = static_cast<Module*>(instance->pdata);
+  Instance* module_instance = static_cast<Instance*>(instance->pdata);
   if (!module_instance) {
     return NULL;
   }
@@ -84,7 +79,7 @@ int16_t NPP_HandleEvent(NPP instance, void* event) {
   if (instance == NULL) {
     return 0;
   }
-  Module* module_instance = static_cast<Module*>(instance->pdata);
+  Instance* module_instance = static_cast<Instance*>(instance->pdata);
   if (!module_instance)
     return 0;
   return module_instance->ReceiveEvent(
@@ -98,10 +93,10 @@ NPError NPP_SetWindow(NPP instance, NPWindow* window) {
   if (window == NULL) {
     return NPERR_GENERIC_ERROR;
   }
-  Module* module_instance = static_cast<Module*>(instance->pdata);
+  Instance* module_instance = static_cast<Instance*>(instance->pdata);
   if (!module_instance)
     return NPERR_INVALID_INSTANCE_ERROR;
-  // The first call to NPP_SetWindow indicates that the module is all loaded
+  // The first call to NPP_SetWindow indicates that the instance is all loaded
   // up and Pepper devices are ready for use.
   if (!module_instance->is_loaded()) {
     module_instance->InstanceDidLoad(instance, window->width, window->height);
@@ -112,7 +107,6 @@ NPError NPP_SetWindow(NPP instance, NPWindow* window) {
 }
 
 extern "C" {
-
 NPError InitializePepperGateFunctions(NPPluginFuncs* plugin_funcs) {
   memset(plugin_funcs, 0, sizeof(*plugin_funcs));
   plugin_funcs->version = NPVERS_HAS_PLUGIN_THREAD_ASYNC_CALL;
@@ -124,5 +118,4 @@ NPError InitializePepperGateFunctions(NPPluginFuncs* plugin_funcs) {
   plugin_funcs->getvalue = NPP_GetValue;
   return NPERR_NO_ERROR;
 }
-
 }  // extern "C"

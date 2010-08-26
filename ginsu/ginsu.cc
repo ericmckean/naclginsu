@@ -9,26 +9,34 @@
 
 #include <cassert>
 
-#include "c_salt/module.h"
+#include "c_salt/instance.h"
+#include "c_salt/int32_type.h"
+#include "c_salt/scripting_bridge.h"
 #include "model/component.h"
 #include "model/model.h"
 #include "view/view.h"
 
 NPDevice* NPN_AcquireDevice(NPP instance, NPDeviceID device);
+
+namespace {
 const int32_t kCommandBufferSize = 1024 * 1024;
 
 // The minimum time in between frames.  Measured in milliseconds.
-static const double kFrameElapsedTime = 1.0/15.0 * 1000.0;
-static const uint32_t kQuaternionElementCount = 4;
+const double kFrameElapsedTime = 1.0/15.0 * 1000.0;
+const uint32_t kQuaternionElementCount = 4;
 
+// Keys for properties that are exposed ot the browser.
+const char* kViewKey = "view";
 
-// The c_salt module allocator.
+}  // namespace
+
+using c_salt::ScriptingBridge;
+
+// The c_salt module instance allocator.
 namespace c_salt {
-
-Module* Module::CreateModule() {
+Instance* Instance::CreateInstance() {
   return new ginsu::Ginsu();
 }
-
 }
 
 // Helper function to return the current time in milliseconds.  If there is an
@@ -49,10 +57,11 @@ Ginsu::Ginsu()
   memset(&context3d_, 0, sizeof(context3d_));
   model_.reset(new model::Model);
   model_->InitDemo();
-  //model_->AddComponent(model::Component::MakeCube());
-  //model_->AddComponent(model::Component::MakeTruncatedCone(0.3, 1.0));
   view_.reset(new view::View(model_.get()));
   last_update_ = TimeNow();
+  // TODO(dspringer, dmichael): Update this when the scripting brdige for
+  // arbitrary (in this case, View) objects is added.
+  property_dictionary_[kViewKey].reset(new c_salt::Int32Type(42));
 }
 
 Ginsu::~Ginsu() {
@@ -74,6 +83,13 @@ bool Ginsu::InstanceDidLoad(const NPP instance, int width, int height) {
   return true;
 }
 
+void Ginsu::InitializeMethods(ScriptingBridge* bridge) {
+  bridge->AddMethodNamed(
+      "getValueForKey", this, &Ginsu::GetValueForKey);
+  bridge->AddMethodNamed(
+      "setValueForKey", this, &Ginsu::SetValueForKey);
+}
+
 void Ginsu::WindowDidChangeSize(const NPP instance, int width, int height) {
   view_->SetWindowSize(width, height);
 }
@@ -87,6 +103,26 @@ void Ginsu::TickCallback(void* data) {
   static_cast<ginsu::Ginsu*>(data)->Tick();
 }
 
+int32_t Ginsu::GetValueForKey(std::string key) {
+  // In this first iteration, support a 'view_id' key, which is used to test
+  // the scripting interface.
+  // TODO(dspringer): Complete support for getting the View object's
+  // scripting bridge.
+  PropertyDictionary::const_iterator it = property_dictionary_.find(key);
+  if (it != property_dictionary_.end()) {
+    return it->second->int32_value();
+  }
+  return 0;
+}
+
+bool Ginsu::SetValueForKey(std::string key, int32_t value) {
+  PropertyDictionary::const_iterator it = property_dictionary_.find(key);
+  if (it != property_dictionary_.end()) {
+    property_dictionary_[key].reset(new c_salt::Int32Type(value));
+    return true;
+  }
+  return false;
+}
 
 void Ginsu::Tick() {
   if (UpdateAnimation())
