@@ -15,7 +15,7 @@ This can be done in the command line as follows.
 
   export NACL_SDK_BASE=<naclsdk_root>/toolchain/linux_x86
 
-Ginsu depends on the following packages from NalPorts:
+Ginsu depends on the following packages from NaClPorts:
   boost
   OpenScegeGraph
 
