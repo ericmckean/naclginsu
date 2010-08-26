@@ -11,7 +11,7 @@
 namespace ginsu {
 namespace geometry {
 
-// PartialDSPVertex: template class forp-vertex entity in the partial-entity
+// PartialDSPVertex: template class for p-vertex entity in the partial-entity
 // data structure. The template parameter is:
 //   TypeRefs: gives access to the types declared and used within the PartialDS
 //             data structure. (See PartialDSTypes in partialds.h.)
@@ -22,27 +22,18 @@ class PartialDSPVertex : public PartialDSEntity<TypeRefs> {
   typedef PartialDSEntity<TypeRefs>              Base;
   typedef TypeRefs                               PartialDS;
 
-  typedef typename PartialDS::VariantHandle      VariantHandle;
   typedef typename PartialDS::VertexHandle       VertexHandle;
   typedef typename PartialDS::VertexConstHandle  VertexConstHandle;
   typedef typename PartialDS::PVertexHandle      PVertexHandle;
   typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
   typedef typename PartialDS::EdgeHandle         EdgeHandle;
   typedef typename PartialDS::EdgeConstHandle    EdgeConstHandle;
-  typedef typename PartialDS::PEdgeHandle        PEdgeHandle;
-  typedef typename PartialDS::PEdgeConstHandle   PEdgeConstHandle;
 
-  PartialDSPVertex() : parent_(NULL) { }
+  PartialDSPVertex()
+    : parent_edge_(NULL), vertex_(NULL), next_pvertex_(NULL) { }
 
-  EdgeConstHandle GetEdgeParent() const {
-    assert(vertex_ != NULL && vertex_->flavor() == Base::kNormalVertex);
-    return PartialDS::AsEdge(parent_);
-  }
-  PEdgeConstHandle GetPEdgeParent() const {
-    assert(vertex_ != NULL && vertex_->flavor() == Base::IsolatedVertex);
-    return PartialDS::AsPEdge(parent_);
-  }
-  void set_parent(VariantHandle parent) { parent_ = parent; }
+  EdgeConstHandle parent_edge() const { return parent_edge_; }
+  void set_parent_edge(EdgeHandle edge) { parent_edge_ = edge; }
 
   VertexConstHandle vertex() const { return vertex_; }
   void set_vertex(VertexHandle vertex) { vertex_ = vertex; }
@@ -51,7 +42,7 @@ class PartialDSPVertex : public PartialDSEntity<TypeRefs> {
   void set_next_pvertex(PVertexHandle pvertex) { next_pvertex_ = pvertex; }
   
  private:
-  VariantHandle parent_;  // Either an edge or a p-edge for isolated vertices.
+  EdgeHandle parent_edge_;  // Parent edge; degenerate for isolated vertices.
   VertexHandle vertex_;  // The actual topological vertex.
   PVertexHandle next_pvertex_;  // Next p-vertex associated with vertex_.
 };

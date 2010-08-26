@@ -27,7 +27,8 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::LoopHandle       LoopHandle;
   typedef typename PartialDS::LoopConstHandle  LoopConstHandle;
 
-  PartialDSLoop() { }
+  PartialDSLoop()
+    : parent_face_(NULL), boundary_pedge_(NULL), next_hole_(NULL) { }
 
   FaceConstHandle parent_face() const { return parent_face_; }
   void set_parent_face(FaceHandle face) { parent_face_ = face; }

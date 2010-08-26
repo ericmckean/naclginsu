@@ -23,31 +23,18 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   typedef PartialDSEntity<TypeRefs>              Base;
   typedef TypeRefs                               PartialDS;
 
-  typedef typename Base::EdgeFlavor              EdgeFlavor;
-  typedef typename PartialDS::VariantHandle      VariantHandle;
   typedef typename PartialDS::EdgeHandle         EdgeHandle;
   typedef typename PartialDS::EdgeConstHandle    EdgeConstHandle;
   typedef typename PartialDS::PEdgeHandle        PEdgeHandle;
   typedef typename PartialDS::PEdgeConstHandle   PEdgeConstHandle;
   typedef typename PartialDS::PVertexHandle      PVertexHandle;
   typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
-  typedef typename PartialDS::PFaceHandle        PFaceHandle;
-  typedef typename PartialDS::PFaceConstHandle   PFaceConstHandle;
 
-  PartialDSEdge() : parent_(NULL) { }
+  PartialDSEdge()
+    : parent_pedge_(NULL), start_vertex_(NULL), end_vertex_(NULL) { }
 
-  EdgeFlavor flavor() const { return flavor_; }
-  void set_flavor(EdgeFlavor flavor) { flavor_ = flavor; }
-
-  PEdgeConstHandle GetPEdgeParent() const {
-    assert(flavor() == Base::kNormalEdge);
-    return PartialDS::AsPEdge(parent_);
-  }
-  PFaceConstHandle GetPFaceParent() const {
-    assert(flavor() == Base::kWireEdge);
-    return PartialDS::AsPFace(parent_);
-  }
-  void set_parent(VariantHandle parent) { parent_ = parent; }
+  PEdgeConstHandle parent_pedge() const { return parent_pedge_; }
+  void set_parent_pedge(PEdgeHandle pedge) { parent_pedge_ = pedge; }
 
   PVertexConstHandle start_vertex() const { return start_vertex_; }
   void set_start_vertex(PVertexHandle v) { start_vertex_ = v; }
@@ -55,8 +42,7 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   void set_end_vertex(PVertexHandle v) { end_vertex_ = v; }
 
  private:
-  EdgeFlavor flavor_;
-  VariantHandle parent_;  // Either a pface or a pedge.
+  PEdgeHandle parent_pedge_;
   PVertexHandle start_vertex_;
   PVertexHandle end_vertex_;
 };
