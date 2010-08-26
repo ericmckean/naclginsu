@@ -26,17 +26,18 @@ class PartialDSFace : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::LoopHandle       LoopHandle;
   typedef typename PartialDS::LoopConstHandle  LoopConstHandle;
 
-  PartialDSFace() { }
+  PartialDSFace()
+    : parent_pface_(NULL), outer_loop_(NULL) { }
 
-  PFaceConstHandle incident_pface() const { return incident_pface_; }
-  void set_incident_pface(PFaceHandle pface) { incident_pface_ = pface; }
+  PFaceConstHandle parent_pface() const { return parent_pface_; }
+  void set_parent_pface(PFaceHandle pface) { parent_pface_ = pface; }
 
-  LoopConstHandle boundary() const { return boundary_; }
-  void set_boundary(LoopHandle loop) { boundary_ = loop; }
+  LoopConstHandle outer_loop() const { return outer_loop_; }
+  void set_outer_loop(LoopHandle loop) { outer_loop_ = loop; }
 
  private:
-  PFaceHandle incident_pface_;  // One of the incident pfaces.
-  LoopHandle boundary_;  // The loop that forms the boundary of this face.
+  PFaceHandle parent_pface_;  // One of the incident pfaces.
+  LoopHandle outer_loop_;  // The loop that forms the boundary of this face.
 };
 
 }  // namespace geometry

@@ -24,21 +24,16 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
   typedef TypeRefs                              PartialDS;
 
   typedef typename Base::PFaceOrientation       PFaceOrientation;
-  typedef typename PartialDS::VariantHandle     VariantHandle;
-  typedef typename PartialDS::EdgeHandle        EdgeHandle;
-  typedef typename PartialDS::EdgeConstHandle   EdgeConstHandle;
   typedef typename PartialDS::FaceHandle        FaceHandle;
   typedef typename PartialDS::FaceConstHandle   FaceConstHandle;
-  typedef typename PartialDS::LoopHandle        LoopHandle;
-  typedef typename PartialDS::LoopConstHandle   LoopConstHandle;
   typedef typename PartialDS::PFaceHandle       PFaceHandle;
   typedef typename PartialDS::PFaceConstHandle  PFaceConstHandle;
   typedef typename PartialDS::ShellHandle       ShellHandle;
   typedef typename PartialDS::ShellConstHandle  ShellConstHandle;
-  typedef typename PartialDS::VertexHandle      VertexHandle;
-  typedef typename PartialDS::VertexConstHandle VertexConstHandle;
 
-  PartialDSPFace() : child_(NULL) { }
+  PartialDSPFace()
+    : parent_shell_(NULL), child_face_(NULL), next_pface_(NULL),
+      mate_pface_(NULL), orientation_() { }
 
   PFaceOrientation orientation() const { return orientation_; }
   void set_orientation(PFaceOrientation orientation) {
@@ -48,23 +43,8 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
   ShellConstHandle parent_shell() const { return parent_shell_; }
   void set_parent_shell(ShellHandle shell) { parent_shell_ = shell; }
 
-  FaceConstHandle GetChildFace() const {
-    assert(orientation() == Base::kPFaceForward ||
-           orientation() == Base::kPFaceReverse);
-    return AsFace(child_);
-  }
-
-  EdgeConstHandle GetChildEdge() const {
-    assert(orientation() == Base::kPFaceWireEdge);
-    return AsEdge(child_);
-  }
-
-  VertexConstHandle GetChildVertex() const {
-    assert(orientation() == Base::kPFaceIsolatedVertex);
-    return AsVertex(child_);
-  }
-
-  void set_child_vertex(VariantHandle child) { child_ = child; }
+  FaceConstHandle child_face() const { return child_face_; }
+  void set_child_face(FaceHandle face) { child_face_ = face; }
 
   PFaceConstHandle next_pface() const { return next_pface_; }
   void set_next_pface(PFaceHandle pface) { next_pface_ = pface; }
@@ -74,7 +54,7 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
 
  private:
   ShellHandle parent_shell_;
-  VariantHandle child_;  // Child pointer, either a Face, Edge, or VertexHandle.
+  FaceHandle child_face_;
   PFaceHandle next_pface_;  // Next pface around the same shell.
   PFaceHandle mate_pface_;  // Mate pface on opposite side of child face.
   PFaceOrientation orientation_;  // Orientation relative to child face.

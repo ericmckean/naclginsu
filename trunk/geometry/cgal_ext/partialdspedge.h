@@ -24,7 +24,6 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
   typedef TypeRefs                             PartialDS;
 
   typedef typename Base::PEdgeOrientation        PEdgeOrientation;
-  typedef typename PartialDS::VariantHandle      VariantHandle;
   typedef typename PartialDS::PVertexHandle      PVertexHandle;
   typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
   typedef typename PartialDS::EdgeHandle         EdgeHandle;
@@ -34,7 +33,10 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::LoopHandle         LoopHandle;
   typedef typename PartialDS::LoopConstHandle    LoopConstHandle;
 
-  PartialDSPEdge() : child_(NULL) { }
+  PartialDSPEdge()
+    : orientation_(Base::kPEdgeUnoriented), child_edge_(NULL),
+      start_pvertex_(NULL), loop_previous_(NULL), loop_next_(NULL),
+      radial_previous_(NULL), radial_next_(NULL) { }
 
   PEdgeOrientation orientation() const { return orientation_; }
   void set_orientation(PEdgeOrientation orientation) {
@@ -44,15 +46,8 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
   LoopConstHandle parent_loop() const { return parent_loop_; }
   void set_parent_loop(LoopHandle loop) { parent_loop_ = loop; }
 
-  EdgeConstHandle GetEdgeChild() const {
-    assert(orientation() != Base::kPEdgeUnoriented);
-    return AsEdge(child_);
-  }
-  PVertexConstHandle GetPVertexChild() const {
-    assert(orientation() == Base::kPEdgeUnoriented);
-    return AsPVertex(child_);
-  }
-  void set_child(VariantHandle child) { child_ = child; }
+  EdgeConstHandle child_edge() const { return child_edge_; }
+  void set_child_edge(EdgeHandle edge) { child_edge_ = edge; }
 
   PVertexConstHandle start_pvertex() const { return start_pvertex_; }
   void set_start_pvertex(PVertexHandle* pvertex) { start_pvertex_ = pvertex; }
@@ -70,7 +65,7 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
  private:
   PEdgeOrientation orientation_;
   LoopHandle parent_loop_;
-  VariantHandle child_;  // Either an edge or a pvertex.
+  EdgeHandle child_edge_;
   PVertexHandle start_pvertex_;  // Start pvertex for this pedge
   PEdgeHandle loop_previous_;  // Previous p-edge in loop cycle.
   PEdgeHandle loop_next_;  // Next p-edge in loop cycle.

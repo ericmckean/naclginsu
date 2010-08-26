@@ -18,7 +18,13 @@
 // TypeRefs. It is also used as the base class for class PartialDS.
 //
 // PartialDS: The partial-entity data structure, used the represent non-manifold
-// geometry.
+// geometry, per "Partial Entity Structure: A Compact Non-Manifold Boundary
+// Representation Based on Partial Topological Entities," Sang Hun Lee and
+// Kunwoo Lee in Solid Modeling 2001. We actually use a variation of Lees' work
+// where the data structure is uniform and wire edges and isolated vertices are
+// associated with degenerate elements. E.g. an isolated vertex links to a
+// p-vertex that links to a degenerate (zero-length) edge, etc. In other words,
+// we got rid of the dashed edges in Lees class diagram in Figure 6.
 
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_H_
@@ -71,12 +77,6 @@ class PartialDSTypes {
   typedef PartialDSTypes<TraitsType, ItemsType> Self;
   typedef TraitsType                            Traits;
   typedef ItemsType                             Items;
-
-  // VariantHandle is used internally where a parent or child pointer may link
-  // to one of several types of entities, such as a Vertex pointing to either a
-  // PFace or PVertex.
-  typedef void*                                 VariantHandle;
-  typedef const void*                           VariantConstHandle;
 
   // We keep all vertices in a list to easily iterate over them. A vertex
   // handle is also an iterator into that list.
@@ -193,87 +193,6 @@ class PartialDSTypes {
   typedef typename RegionList::const_iterator   RegionConstIterator;
   typedef RegionIterator                        RegionHandle;
   typedef RegionConstIterator                   RegionConstHandle;
-
-  // Map between VariantHandle and other Handles types. Not that this is
-  // generally not type safe, since a variant handle is just a pointer to void.
-  static VariantHandle AsVariant(VertexHandle vertex_handle) {
-    return reinterpret_cast<VariantHandle>(&*vertex_handle);
-  }
-  static VariantConstHandle AsVariant(VertexConstHandle vertex_handle) {
-    return static_cast<VariantConstHandle>(&*vertex_handle);
-  }
-  
-  static VertexHandle AsVertex(VariantHandle variant_handle) {
-    Vertex* v = reinterpret_cast<Vertex*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return v;
-  }
-  
-  static VertexConstHandle AsVertex(VariantConstHandle variant_handle) {
-    const Vertex* v = reinterpret_cast<const Vertex*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return v;
-  }
-  
-  static EdgeHandle AsEdge(VariantHandle variant_handle) {
-    Edge* e = reinterpret_cast<Edge*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return e;
-  }
-  
-  static EdgeConstHandle AsEdge(VariantConstHandle variant_handle) {
-    const Edge* e = reinterpret_cast<const Edge*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return e;
-  }
-  
-  static FaceHandle AsFace(VariantHandle variant_handle) {
-    Face* f = reinterpret_cast<Face*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return f;
-  }
-  
-  static FaceConstHandle AsFace(VariantConstHandle variant_handle) {
-    const Face* f = reinterpret_cast<const Face*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return f;
-  }
-  
-  static PVertexHandle AsPVertex(VariantHandle variant_handle) {
-    PVertex* v = reinterpret_cast<PVertex*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return v;
-  }
-  
-  static PVertexConstHandle AsPVertex(VariantConstHandle variant_handle) {
-    const PVertex* v = reinterpret_cast<const PVertex*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return v;
-  }
-  
-  static PEdgeHandle AsPEdge(VariantHandle variant_handle) {
-    PEdge* e = reinterpret_cast<PEdge*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return e;
-  }
-  
-  static PEdgeConstHandle AsPEdge(VariantConstHandle variant_handle) {
-    const PEdge* e = reinterpret_cast<const PEdge*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return e;
-  }
-  
-  static PFaceHandle AsPFace(VariantHandle variant_handle) {
-    PFace* f = reinterpret_cast<PFace*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return f;
-  }
-  
-  static PFaceConstHandle AsPFace(VariantConstHandle variant_handle) {
-    const PFace* f = reinterpret_cast<const PFace*>(variant_handle);
-    // TODO(gwink): Add validation checks.
-    return f;
-  }
 };
 
 // PartialDS: The the partial-entity data structure.

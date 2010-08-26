@@ -27,7 +27,8 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::ShellHandle       ShellHandle;
   typedef typename PartialDS::ShellConstHandle  ShellConstHandle;
 
-  PartialDSShell() { }
+  PartialDSShell()
+    : parent_region_(NULL), next_void_shell_(NULL), pface_(NULL) { }
 
   ShellConstHandle next_void_shell() const { return next_void_shell_; }
   void set_next_void_shell(ShellHandle shell) { next_void_shell_ = shell; }

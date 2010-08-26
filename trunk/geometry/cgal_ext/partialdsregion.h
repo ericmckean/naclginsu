@@ -25,17 +25,18 @@ class PartialDSRegion : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::ShellHandle      ShellHandle;
   typedef typename PartialDS::ShellConstHandle ShellConstHandle;
 
-  PartialDSRegion() { }
+  PartialDSRegion()
+    : flavor_(Base::kEmptyRegion), outer_shell_(NULL) { }
 
   RegionFlavor flavor() const { return flavor_; }
   void set_falvor(RegionFlavor flavor) { flavor_ = flavor; }
 
-  ShellConstHandle shell() const { return shell_; }
-  void set_shell(ShellHandle shell) { shell_ = shell; }
+  ShellConstHandle outer_shell() const { return outer_shell_; }
+  void set_outer_shell(ShellHandle shell) { outer_shell_ = shell; }
 
  private:
   RegionFlavor flavor_;
-  ShellHandle shell_;  // The peripheral shell for this region.
+  ShellHandle outer_shell_;  // The shell that encloses this region.
 };
 
 }  // namespace geometry
