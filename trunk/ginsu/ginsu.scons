@@ -21,6 +21,7 @@ ginsu_input_libs = [
 
 ginsu_sources = [
   'ginsu.cc',
+  'ginsu_module.cc',
 ]
 
 env.Append(

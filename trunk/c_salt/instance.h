@@ -11,15 +11,13 @@
 
 #include "boost/noncopyable.hpp"
 #include "boost/scoped_ptr.hpp"
-#include "c_salt/basic_macros.h"
 #include "c_salt/scripting_bridge.h"
 
 namespace c_salt {
 
-// The base class for the Native Client module.  Subclasses must implement the
-// CreateInstance() factory method.  An Instance can publish a
-// ScriptingBridge to the browser.  An Instance will create an instance
-// of a ScriptingBridge when asked via the NPP_GetScriptableInstance()
+// The base class for the Native Client module instance.  An Instance can
+// publish a ScriptingBridge to the browser.  An Instance will create an
+// instance of a ScriptingBridge when asked via the NPP_GetScriptableInstance()
 // NPAPI.  When the Instance is deallocated, this ScriptingBridge instance is
 // also deallocated.
 
@@ -28,9 +26,6 @@ namespace c_salt {
 
 class Instance : public boost::noncopyable {
  public:
-  // Factory method must be implemented in the subclass.
-  static Instance* CreateInstance();
-
   Instance() : is_loaded_(false) {}
   virtual ~Instance();
 

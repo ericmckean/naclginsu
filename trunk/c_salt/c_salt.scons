@@ -13,7 +13,7 @@ c_salt_sources = [
   'double_type.cc',
   'instance.cc',
   'int32_type.cc',
-  'loader.cc',
+  'module.cc',
   'npn_bridge.cc',
   'npp_gate.cc',
   'object_type.cc',
