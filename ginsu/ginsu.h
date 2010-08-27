@@ -17,6 +17,7 @@
 #include "boost/scoped_ptr.hpp"
 #include "boost/shared_ptr.hpp"
 #include "c_salt/instance.h"
+#include "c_salt/module.h"
 #include "c_salt/type.h"
 
 namespace ginsu {
@@ -76,7 +77,6 @@ class Ginsu : public c_salt::Instance {
 
   double last_update_;  // Time measured in milliseconds.
 };
-
 }  // namespace ginsu
 
 #endif  // GINSU_GINSU_H_

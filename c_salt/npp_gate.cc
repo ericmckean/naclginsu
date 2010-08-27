@@ -8,8 +8,10 @@
 #include <nacl/npupp.h>
 
 #include "c_salt/instance.h"
+#include "c_salt/module.h"
 
 using c_salt::Instance;
+using c_salt::Module;
 using c_salt::ScriptingBridge;
 
 NPError NPP_New(NPMIMEType mime_type,
@@ -27,14 +29,17 @@ NPError NPP_New(NPMIMEType mime_type,
   InitializePepperExtensions(instance);
 
   // Build the attribute key/value map.
+  // TODO(dspringer): Add this implementation when we switch to Pepper V2.
   // std::map<std::string, std::string> attribute_dict;
   // while (--argc) {
   //   attribute_dict[argn[argc]] = argv[argc];
   // }
-  Instance* module_instance = Instance::CreateInstance(/* attribute_dict */);
+  Instance* module_instance =
+      Module::GetModuleSingleton().CreateInstance();
   if (module_instance == NULL) {
     return NPERR_OUT_OF_MEMORY_ERROR;
   }
+  // module_instance->SetAttributes(attribute_dict);
   instance->pdata = reinterpret_cast<void*>(module_instance);
   return NPERR_NO_ERROR;
 }

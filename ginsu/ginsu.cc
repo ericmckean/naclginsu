@@ -27,17 +27,9 @@ const uint32_t kQuaternionElementCount = 4;
 
 // Keys for properties that are exposed ot the browser.
 const char* kViewKey = "view";
-
 }  // namespace
 
 using c_salt::ScriptingBridge;
-
-// The c_salt module instance allocator.
-namespace c_salt {
-Instance* Instance::CreateInstance() {
-  return new ginsu::Ginsu();
-}
-}
 
 // Helper function to return the current time in milliseconds.  If there is an
 // error getting the current time, this returns -1.
