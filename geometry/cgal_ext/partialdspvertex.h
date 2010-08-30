@@ -4,8 +4,7 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_PVERTEX_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_PVERTEX_H_
 
-#include <assert.h>
-#include <CGAL/basic.h>
+#include "CGAL/basic.h"
 #include "geometry/cgal_ext/partialdsentity.h"
 
 namespace ginsu {
@@ -42,7 +41,7 @@ class PartialDSPVertex : public PartialDSEntity<TypeRefs> {
   void set_next_pvertex(PVertexHandle pvertex) { next_pvertex_ = pvertex; }
   
  private:
-  EdgeHandle parent_edge_;  // Parent edge; degenerate for isolated vertices.
+  EdgeHandle parent_edge_;  // Parent edge.
   VertexHandle vertex_;  // The actual topological vertex.
   PVertexHandle next_pvertex_;  // Next p-vertex associated with vertex_.
 };

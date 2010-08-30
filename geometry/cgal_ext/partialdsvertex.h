@@ -4,8 +4,7 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_VERTEX_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_VERTEX_H_
 
-#include <assert.h>
-#include <CGAL/basic.h>
+#include "CGAL/basic.h"
 #include "geometry/cgal_ext/partialdsentity.h"
 
 namespace ginsu {
@@ -30,16 +29,16 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::PVertexHandle      PVertexHandle;
   typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
 
-  PartialDSVertex() : parent_vertex_(NULL) { }
+  PartialDSVertex() : parent_pvertex_(NULL) { }
 
-  PVertexConstHandle parent_vertex() const { return parent_vertex_; }
-  void set_parent_vertex(PVertexHandle pvertex) { parent_vertex_ = pvertex; }
+  PVertexConstHandle parent_pvertex() const { return parent_pvertex_; }
+  void set_parent_pvertex(PVertexHandle pvertex) { parent_pvertex_ = pvertex; }
 
   const Point& point() const { return p_; }
   void set_point(const Point& p) { p_ = p; }
-
+  
  private:
-  PVertexHandle parent_vertex_; 
+  PVertexHandle parent_pvertex_; 
   Point p_;
 };
 

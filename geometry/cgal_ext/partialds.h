@@ -29,13 +29,11 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_H_
 
-#include <assert.h>
-#include <CGAL/basic.h>
-#include <CGAL/In_place_list.h>
-#include <CGAL/memory.h>
+#include <cassert>
+#include "CGAL/basic.h"
+#include "CGAL/In_place_list.h"
+#include "CGAL/memory.h"
 #include "geometry/cgal_ext/partialdsitems.h"
-
-using namespace CGAL;
 
 namespace ginsu {
 namespace geometry {
@@ -48,8 +46,9 @@ namespace geometry {
 // - Item: The item type that needs to be inserted into a doubly-linked list,
 //   most likely a vertex, edge, face, etc.
 template <class Item>
-class PartialDSListItem : public Item,
-                          public In_place_list_base<PartialDSListItem<Item> > {
+class PartialDSListItem : 
+    public Item,
+    public CGAL::In_place_list_base<PartialDSListItem<Item> > {
  public:
   typedef PartialDSListItem<Item> Self;
     
@@ -58,7 +57,7 @@ class PartialDSListItem : public Item,
 
   // Assignment operator: copy item data without affecting the dlist pointers.
   Self& operator=(const Self& v) {
-    *((Item*)this) = ((const Item&)v);
+    *(static_cast<Item*>(this)) = ((const Item&)v);
     return *this;
   }
 };
@@ -216,8 +215,11 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::RegionList                 RegionList;
 
   typedef typename Types::VertexHandle               VertexHandle;
+  typedef typename Types::VertexConstHandle          VertexConstHandle;
   typedef typename Types::PVertexHandle              PVertexHandle;
+  typedef typename Types::PVertexConstHandle         PVertexConstHandle;
   typedef typename Types::EdgeHandle                 EdgeHandle;
+  typedef typename Types::EdgeConstHandle            EdgeConstHandle;
   typedef typename Types::PEdgeHandle                PEdgeHandle;
   typedef typename Types::FaceHandle                 FaceHandle;
   typedef typename Types::PFaceHandle                PFaceHandle;
@@ -290,6 +292,10 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   const ShellList& shells() const { return shells_; }
   const RegionList& regions() const { return regions_; }
 
+  // Validation functions; no-op unless either _DEBUG or _GEOM_TESTS id defined.
+  static bool ValidateVertex(VertexConstHandle v);
+  static bool ValidatePVertex(PVertexConstHandle pv);
+
  private:
   // Template function for making and destroying PartialDS items.
   template <class ItemHandle, class ItemList>
@@ -325,6 +331,8 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
 
 }  // namespace geometry
 }  // namespace ginsu
+
+#include "geometry/cgal_ext/partialds_validations_inl.h"
 
 
 #endif  // GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_H_
