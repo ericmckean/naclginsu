@@ -5,9 +5,9 @@
 #ifndef C_SALT_DOUBLE_TYPE_H_
 #define C_SALT_DOUBLE_TYPE_H_
 
-#include "c_salt/type.h"
+#include <cmath>
 
-#include <math.h>
+#include "c_salt/type.h"
 
 namespace c_salt {
 
@@ -15,12 +15,13 @@ class DoubleType : public Type {
  public:
   explicit DoubleType(double double_value);
   virtual ~DoubleType();
+  virtual bool ConvertToNPVariant(NPVariant* np_var) const;
 
   virtual bool bool_value() const {
     return double_value() != 0.0;
   }
   virtual int32_t int32_value() const {
-    return static_cast<int32_t>(floor(double_value()) + 0.5);
+    return static_cast<int32_t>(std::floor(double_value()) + 0.5);
   }
 
   virtual double double_value() const {

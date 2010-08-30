@@ -9,9 +9,6 @@
 
 namespace c_salt {
 
-// Must be implemented in the sub-class!
-// Instance* Instance::CreateInstance() {}
-
 Instance::~Instance() {
   if (scripting_bridge_.get()) {
     scripting_bridge_->ReleaseBrowserBinding();

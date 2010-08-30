@@ -17,7 +17,7 @@ class ObjectType : public Type {
 
   // Assign the internal NPObject to |np_var|, and increase the ref count.
   // Caller must free the resulting object using NPN_ReleaseObject().
-  bool CreateNPVariantCopy(NPVariant& np_var);
+  virtual bool ConvertToNPVariant(NPVariant* np_var) const;
 
   virtual bool bool_value() const;
   virtual int32_t int32_value() const;

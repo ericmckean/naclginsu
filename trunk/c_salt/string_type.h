@@ -7,12 +7,11 @@
 
 #include <string>
 
-#include "boost/noncopyable.hpp"
 #include "c_salt/type.h"
 
 namespace c_salt {
 
-class StringType : public Type, public boost::noncopyable {
+class StringType : public Type {
  public:
   // Possible results from the Compare methods.
   typedef enum {
@@ -30,7 +29,7 @@ class StringType : public Type, public boost::noncopyable {
   // referenced by |np_var|.  The caller is responsible for deleting the memory
   // associated with |np_var| using NPN_MemFree().  If |np_var| is NULL, this
   // method does nothing and returns |false|.
-  bool CreateNPVariantCopy(NPVariant* np_var) const;
+  virtual bool ConvertToNPVariant(NPVariant* np_var) const;
 
   // Compare |other_string| with this one.
   // TODO(dspringer): Flesh this out to have anchoring, case-insensitivity,

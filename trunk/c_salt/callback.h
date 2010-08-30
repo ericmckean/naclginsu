@@ -49,13 +49,13 @@ class MethodCallbackExecutor {
 // The ::c_salt::c_salt_private namespace is used for code that is internal to c_salt, and
 // for which clients should have no expectation of stability.
 namespace c_salt_private {
-// A simple traitsy class to turn a member function type in to a 
+// A simple traitsy class to turn a member function type in to a
 // non-member type.  If you need more arguments, just expand on the pattern.
 // Usage is:
 //   typedef MakeNonMemFun<void(Foo::*)(int,bool)>::type NonMemType;
 // In this case, NonMemType will be a typedef for void(*)(int,bool).  I.e., a
 // non-member version of the pointer-to-member-function type that was provided,
-// with the same return and argument types.  
+// with the same return and argument types.
 // TODO(dmichael):  This might be useful in other generic programming contexts,
 // especially if it also worked as a "do-nothing" for non-member function types.
 // TODO(dmichael):  Would variadic template args help here?  Or macro magic?
@@ -520,7 +520,7 @@ class MethodCallbackExecutorImpl : public MethodCallbackExecutor,
 
   MethodCallbackExecutorImpl(T* instance, MemFunSignature method)
       : ::c_salt::c_salt_private::BindingBase<T, MemFunSignature>(instance,
-                                                                  method) {} 
+                                                                  method) {}
   virtual ~MethodCallbackExecutorImpl() {}
 
   virtual bool Execute(ScriptingBridge* bridge,
@@ -574,19 +574,19 @@ class PropertyAccessorCallback : public PropertyAccessorCallbackExecutor {
 class PropertyMutatorCallbackExecutor {
  public:
   virtual bool Execute(ScriptingBridge* bridge,
-                       const NPVariant* value) = 0;
+                       const NPVariant& value) = 0;
 };
 
 template <class T>
 class PropertyMutatorCallback : public PropertyMutatorCallbackExecutor {
  public:
   typedef bool (T::*Method)(ScriptingBridge* bridge,
-                            const NPVariant* return_value);
+                            const NPVariant& value);
 
   PropertyMutatorCallback(T* instance, Method method)
       : instance_(instance), method_(method) {}
   virtual bool Execute(ScriptingBridge* bridge,
-                       const NPVariant* value) {
+                       const NPVariant& value) {
     // Use "this->" to force C++ to look inside our templatized base class; see
     // Effective C++, 3rd Ed, item 43, p210 for details.
     return ((this->instance_)->*(this->method_))(bridge, value);

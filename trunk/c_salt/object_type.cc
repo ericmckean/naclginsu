@@ -4,6 +4,8 @@
 
 #include "c_salt/object_type.h"
 
+#include <cassert>
+
 namespace c_salt {
 
 ObjectType::ObjectType(NPObject* np_object) : Type(kObjectTypeId) {
@@ -18,10 +20,11 @@ ObjectType::~ObjectType() {
     NPN_ReleaseObject(np_object_);
 }
 
-bool ObjectType::CreateNPVariantCopy(NPVariant& np_var) {
-  if (np_object_ == NULL)
+bool ObjectType::ConvertToNPVariant(NPVariant* np_var) const {
+  assert(np_var);
+  if (np_object_ == NULL || np_var == NULL)
     return false;
-  OBJECT_TO_NPVARIANT(NPN_RetainObject(np_object_), np_var);
+  OBJECT_TO_NPVARIANT(NPN_RetainObject(np_object_), *np_var);
   return true;
 }
 

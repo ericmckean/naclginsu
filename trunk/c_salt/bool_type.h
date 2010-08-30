@@ -13,6 +13,7 @@ class BoolType : public Type {
  public:
   explicit BoolType(bool bool_value);
   virtual ~BoolType();
+  virtual bool ConvertToNPVariant(NPVariant* np_var) const;
 
   virtual int32_t int32_value() const {
     return bool_value() ? 1 : 0;

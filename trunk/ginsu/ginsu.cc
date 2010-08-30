@@ -51,7 +51,7 @@ Ginsu::Ginsu()
   model_->InitDemo();
   view_.reset(new view::View(model_.get()));
   last_update_ = TimeNow();
-  // TODO(dspringer, dmichael): Update this when the scripting brdige for
+  // TODO(dspringer, dmichael): Update this when the scripting bridge for
   // arbitrary (in this case, View) objects is added.
   property_dictionary_[kViewKey].reset(new c_salt::Int32Type(42));
 }

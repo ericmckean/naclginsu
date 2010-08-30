@@ -9,6 +9,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "c_salt/instance.h"
+#include "c_salt/module.h"
 
 using namespace c_salt;  // NOLINT
 using namespace c_salt::c_salt_private;  // NOLINT
@@ -300,4 +301,18 @@ TEST_F(CallbackTest, TestIt) {
 class MyInstance : public c_salt::Instance {
 };
 
-c_salt::Instance* c_salt::Instance::CreateInstance() { return new MyInstance; }
+// This is the connection to the c_salt Module machinery.  The Module singleton
+// calls CreateInstance to make new copies of each in-browser instance of
+// Ginsu.
+class TestModule : public c_salt::Module {
+ public:
+  virtual c_salt::Instance* CreateInstance() {
+    return new MyInstance();
+  }
+};
+
+namespace c_salt {
+Module* CreateModule() {
+  return new TestModule();
+}
+}  // namespace c_salt
