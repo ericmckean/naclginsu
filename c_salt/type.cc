@@ -3,6 +3,9 @@
 // be found in the LICENSE file.
 
 #include "c_salt/type.h"
+
+#include <cassert>
+
 #include "c_salt/bool_type.h"
 #include "c_salt/double_type.h"
 #include "c_salt/int32_type.h"
@@ -36,6 +39,15 @@ Type* Type::CreateFromNPVariant(const NPVariant& np_var) {
   return type;
 }
 
+bool Type::ConvertToNPVariant(NPVariant* np_var) const {
+  assert(np_var);
+  // The base class assumes a Void type.
+  if (np_var == NULL)
+    return false;
+  VOID_TO_NPVARIANT(*np_var);
+  return true;
+}
+
 Type::TypeArray* Type::CreateArrayFromNPVariant(const ScriptingBridge* bridge,
                                                 const NPVariant& np_array) {
   if (!NPVARIANT_IS_OBJECT(np_array))
@@ -58,7 +70,7 @@ Type::TypeArray* Type::CreateArrayFromNPVariant(const ScriptingBridge* bridge,
                             array_object,
                             identifier[j],
                             &array_elem)) {
-          type_array->push_back(CreateFromNPVariant(array_elem));	
+          type_array->push_back(CreateFromNPVariant(array_elem));
         }
       }
     }

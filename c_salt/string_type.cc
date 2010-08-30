@@ -4,8 +4,9 @@
 
 #include "c_salt/string_type.h"
 
-#include <stdlib.h>
-#include <string.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 namespace c_salt {
 
@@ -18,7 +19,8 @@ StringType::StringType(const NPString& np_string)
 StringType::~StringType() {
 }
 
-bool StringType::CreateNPVariantCopy(NPVariant* np_var) const {
+bool StringType::ConvertToNPVariant(NPVariant* np_var) const {
+  assert(np_var);
   if (np_var == NULL)
     return false;
   NULL_TO_NPVARIANT(*np_var);
@@ -40,7 +42,7 @@ const StringType::StringCompareResult StringType::Compare(
   // Use strncmp to guard against buffer overruns.
   const char* c_str = string_value_.c_str();
   const char* other_c_str = other_string.c_str();
-  int compare_result = strncmp(c_str, other_c_str, string_value_.size());
+  int compare_result = std::strncmp(c_str, other_c_str, string_value_.size());
   return compare_result < 0 ? kStringLexicallyLessThan :
          compare_result > 0 ? kStringLexicallyGreaterThan :
                               kStringLexicallyEqual;
@@ -49,16 +51,16 @@ const StringType::StringCompareResult StringType::Compare(
 bool StringType::bool_value() const {
   if (string_value_.size() == 0)
     return false;
-  int ch = tolower(string_value_.at(0));
+  int ch = std::tolower(string_value_.at(0));
   return ch == 'y' || ch == '1' || ch == 't';
 }
 
 int32_t StringType::int32_value() const {
-  return string_value_.size() ? atol(string_value_.c_str()) : 0;
+  return string_value_.size() ? std::atol(string_value_.c_str()) : 0;
 }
 
 double StringType::double_value() const {
-  return string_value_.size() ? atof(string_value_.c_str()) : 0.0;
+  return string_value_.size() ? std::atof(string_value_.c_str()) : 0.0;
 }
 
 }  // namespace c_salt

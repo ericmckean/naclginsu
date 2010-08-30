@@ -7,10 +7,10 @@
 
 #include <nacl/npruntime.h>
 
-#include "c_salt/basic_macros.h"
-
 #include <string>
 #include <vector>
+
+#include "boost/noncopyable.hpp"
 
 // A polymorphic type container.  All the various number and string types
 // are derived from this basic class.
@@ -19,11 +19,11 @@ namespace c_salt {
 
 class ScriptingBridge;
 
-class Type {
+class Type : public boost::noncopyable {
  public:
   typedef int TypeId;
   typedef std::vector<Type*> TypeArray;
-  
+
   static const int kClassVersion = 1;
   enum {
     kNullTypeId,
@@ -54,6 +54,11 @@ class Type {
     return type_id_;
   }
 
+  // Package the underlying representation as an NPVariant.  On return,
+  // |np_var| will contain the NPVariant representation of the Type's intrinsic
+  // value.  If |np_var| is NULL, this method does nothing and returns.
+  virtual bool ConvertToNPVariant(NPVariant* np_var) const;
+
   // Return the closest representation of the internal type that matches the
   // requested type.  Some conversion are not possible; if the the internal
   // type is an object, an attempt is made to evaluate the object.
@@ -61,15 +66,15 @@ class Type {
   virtual int32_t int32_value() const;
   virtual double double_value() const;
   // TODO(dspringer): This needs to return a const scoped_ptr<std::string>&;
-  // implement this when we can pull in boost o some other lib that has a
+  // implement this when we can pull in boost or some other lib that has a
   // scoped_ptr.
-  //virtual const std::string& string_value() const;
+  // virtual const std::string& string_value() const;
 
  private:
   uint32_t class_version_;
   TypeId type_id_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Type);
+  Type() : boost::noncopyable() {}
 };
 
 }  // namespace c_salt

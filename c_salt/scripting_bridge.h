@@ -5,15 +5,14 @@
 #ifndef C_SALT_SCRIPTING_BRIDGE_H_
 #define C_SALT_SCRIPTING_BRIDGE_H_
 
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
 #include <nacl/nacl_npapi.h>
 #include <nacl/npruntime.h>
 
 #include <map>
 #include <string>
 
-#include "c_salt/basic_macros.h"
+#include "boost/noncopyable.hpp"
+#include "boost/shared_ptr.hpp"
 #include "c_salt/callback.h"
 
 namespace c_salt {
@@ -23,12 +22,18 @@ class MethodCallbackExecutor;
 class Module;
 class PropertyAccessorCallbackExecutor;
 class PropertyMutatorCallbackExecutor;
+class Type;
 
 // This class handles all the calls across the bridge to the browser via its
 // browser binding object, |browser_binding_|.  Note that NPObjects cannot have
 // a vtable, hence the PIMPL pattern used here.  Use AddMethodNamed() and
 // AddPropertyNamed() to publish methods and properties that can be accessed
 // from the browser code.
+//
+// This class also maintains a dictionary of dynamically-added properties.
+// These properties are added at run-time by JavaScript; they can also be
+// dynamically removed when the browser calls RemoveProperty().  Properties
+// added via AddPropertyNamed() cannot be dynamically removed.
 
 // TODO(dspringer): |browser_binding_| gets replaced by pp::ScriptableObject
 // when Pepper v2 becomes available.
@@ -162,18 +167,22 @@ class ScriptingBridge : public boost::noncopyable {
       PropertyAccessorDictionary;
   typedef std::map<NPIdentifier, SharedPropertyMutatorCallbackExecutor>
       PropertyMutatorDictionary;
+  typedef std::map<NPIdentifier, Type*> DynamicPropertyDictionary;
 
+  ScriptingBridge() : boost::noncopyable() {}
   ScriptingBridge(NPP npp, NPObject* browser_binding);
 
   // NPAPI support methods.
   bool HasMethod(NPIdentifier name);
+  void Invalidate();
   bool Invoke(NPIdentifier name,
               const NPVariant* args,
               uint32_t arg_count,
               NPVariant* return_value);
   bool HasProperty(NPIdentifier name);
   bool GetProperty(NPIdentifier name, NPVariant* return_value);
-  bool SetProperty(NPIdentifier name, const NPVariant* return_value);
+  bool SetProperty(NPIdentifier name, const NPVariant& return_value);
+  bool RemoveProperty(NPIdentifier name);
 
   NPP npp_;
   NPObject* browser_binding_;
@@ -184,6 +193,7 @@ class ScriptingBridge : public boost::noncopyable {
   MethodDictionary method_dictionary_;
   PropertyAccessorDictionary property_accessor_dictionary_;
   PropertyMutatorDictionary property_mutator_dictionary_;
+  DynamicPropertyDictionary dynamic_property_dictionary_;
 };
 
 }  // namespace c_salt

@@ -13,6 +13,7 @@ class Int32Type : public Type {
  public:
   explicit Int32Type(int32_t int32_value);
   virtual ~Int32Type();
+  virtual bool ConvertToNPVariant(NPVariant* np_var) const;
 
   virtual bool bool_value() const {
     return int32_value() != 0;

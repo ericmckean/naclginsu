@@ -4,11 +4,11 @@
 
 #include "c_salt/scripting_bridge.h"
 
-#include <assert.h>
-#include <boost/scoped_ptr.hpp>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 #include <string>
 
+#include "boost/scoped_ptr.hpp"
 #include "c_salt/callback.h"
 #include "c_salt/instance.h"
 #include "c_salt/type.h"
@@ -27,6 +27,9 @@ class BrowserBinding : public NPObject {
   bool HasMethod(NPIdentifier name) {
     return scripting_bridge_->HasMethod(name);
   }
+  void Invalidate() {
+    return scripting_bridge_->Invalidate();
+  }
   bool Invoke(NPIdentifier name,
               const NPVariant* args,
               uint32_t arg_count,
@@ -39,8 +42,11 @@ class BrowserBinding : public NPObject {
   bool GetProperty(NPIdentifier name, NPVariant* return_value) {
     return scripting_bridge_->GetProperty(name, return_value);
   }
-  bool SetProperty(NPIdentifier name, const NPVariant* return_value) {
-    return scripting_bridge_->SetProperty(name, return_value);
+  bool SetProperty(NPIdentifier name, const NPVariant& value) {
+    return scripting_bridge_->SetProperty(name, value);
+  }
+  bool RemoveProperty(NPIdentifier name) {
+    return scripting_bridge_->RemoveProperty(name);
   }
 
   ScriptingBridge* scripting_bridge() {
@@ -68,6 +74,7 @@ void Deallocate(NPObject* object) {
 }
 
 void Invalidate(NPObject* object) {
+  cast_browser_binding(object)->Invalidate();
 }
 
 bool HasMethod(NPObject* object, NPIdentifier name) {
@@ -98,11 +105,11 @@ bool GetProperty(NPObject* object, NPIdentifier name, NPVariant* result) {
 }
 
 bool SetProperty(NPObject* object, NPIdentifier name, const NPVariant* value) {
-  return cast_browser_binding(object)->SetProperty(name, value);
+  return cast_browser_binding(object)->SetProperty(name, *value);
 }
 
 bool RemoveProperty(NPObject* object, NPIdentifier name) {
-  return false;
+  return cast_browser_binding(object)->RemoveProperty(name);
 }
 
 static NPClass bridge_class = {
@@ -112,7 +119,7 @@ static NPClass bridge_class = {
   c_salt::Invalidate,
   c_salt::HasMethod,
   c_salt::Invoke,
-  c_salt::InvokeDefault,
+  NULL,  // InvokeDefault is not implemented
   c_salt::HasProperty,
   c_salt::GetProperty,
   c_salt::SetProperty,
@@ -211,6 +218,15 @@ NPObject* ScriptingBridge::window_object() const {
   return window_object_;
 }
 
+void ScriptingBridge::Invalidate() {
+  // This is called from the browser after NPP_Delete, on all objects with
+  // dangling references.
+  method_dictionary_.clear();
+  property_accessor_dictionary_.clear();
+  property_mutator_dictionary_.clear();
+  dynamic_property_dictionary_.clear();
+}
+
 bool ScriptingBridge::HasMethod(NPIdentifier name) {
   MethodDictionary::const_iterator i;
   i = method_dictionary_.find(name);
@@ -218,31 +234,74 @@ bool ScriptingBridge::HasMethod(NPIdentifier name) {
 }
 
 bool ScriptingBridge::HasProperty(NPIdentifier name) {
-  // Only look for the "get" property - there is never a "set" without a "get",
-  // but there can be "get" without "set" (read-only).
-  PropertyAccessorDictionary::const_iterator i;
-  i = property_accessor_dictionary_.find(name);
-  return i != property_accessor_dictionary_.end();
+  // If |name| is not a property, then it *could* be a method.  Consider this
+  // JavaScript:
+  //   module.method();
+  // In NPAPI, the browser first calls HasProperty("method"), and if it gets a
+  // |false| return it then calls HasMethod("method").  That means this
+  // function should return |false| _only_ if |name| is a valid method name.
+  // In all other cases, it returns |true|.  The |true| return will
+  // cause the browser to attempt either a GetProperty() or a SetProperty().
+  // If a Get is attempted on a non-existent property, then GetProperty()
+  // method will return |false| and the JavaScript will (correctly) get an
+  // undefined object.  Alternatively, if the browser attempts a Set then
+  // SetProperty will update an existing property or insert it as a new dynamic
+  // if it doesn't exist.
+  bool has_method = HasMethod(name);
+  // Writing this out long-hand so hopefully it's more understandable.
+  return has_method ? false : true;
 }
 
 bool ScriptingBridge::GetProperty(NPIdentifier name,
                                   NPVariant *return_value) {
   VOID_TO_NPVARIANT(*return_value);
-
-  PropertyAccessorDictionary::iterator i;
-  i = property_accessor_dictionary_.find(name);
-  if (i != property_accessor_dictionary_.end()) {
-    return (*i->second).Execute(this, return_value);
+  PropertyAccessorDictionary::const_iterator get_iter =
+      property_accessor_dictionary_.find(name);
+  if (get_iter != property_accessor_dictionary_.end()) {
+    return (*get_iter->second).Execute(this, return_value);
   }
+  // See if the property is in the list of dynamic properties.
+  DynamicPropertyDictionary::const_iterator dyn_iter =
+      dynamic_property_dictionary_.find(name);
+  if (dyn_iter != dynamic_property_dictionary_.end()) {
+    // TODO(dspringer,dmichael): implement the observer pattern here.
+    // delegate_->WillGetPropertyNamed(name);
+    dyn_iter->second->ConvertToNPVariant(return_value);
+    // delegate_->DidGetPropertyNamed(name);
+    return true;
+  }
+  // |name| does not exist as a property.
+  return false;
+}
+
+bool ScriptingBridge::SetProperty(NPIdentifier name, const NPVariant& value) {
+  PropertyMutatorDictionary::iterator set_iter =
+      property_mutator_dictionary_.find(name);
+  if (set_iter != property_mutator_dictionary_.end()) {
+    // SetProperty() can only return |false| if this callback returns |false|.
+    return (*set_iter->second).Execute(this, value);
+  }
+  // |name| is not a static property: insert if absent, update if present.
+  // TODO(dspringer,dmichael): implement the observer pattern here.
+  // delegate_->WillSetPropertyNamed(name);
+  dynamic_property_dictionary_[name] = Type::CreateFromNPVariant(value);
+  // delegate_->DidSetPropertyNamed(name);
+  // Setting a dynamic property always succeeds.
   return true;
 }
 
-bool ScriptingBridge::SetProperty(NPIdentifier name, const NPVariant* value) {
-  PropertyMutatorDictionary::iterator i;
-  i = property_mutator_dictionary_.find(name);
-  if (i != property_mutator_dictionary_.end()) {
-    return (*i->second).Execute(this, value);
+bool ScriptingBridge::RemoveProperty(NPIdentifier name) {
+  // Remove a property only if it has been dynamically added.  Pre-declared
+  // properties cannot be removed.
+  PropertyAccessorDictionary::iterator dyn_iter;
+  dyn_iter = property_accessor_dictionary_.find(name);
+  if (dyn_iter == property_accessor_dictionary_.end()) {
+    return false;  // This is a static property, or |name| doesn't exist.
   }
+  // TODO(dspringer,dmichael): implement the observer pattern here.
+  // delegate_->WillRemovePropertyNamed(name);
+  property_accessor_dictionary_.erase(dyn_iter);
+  // delegate_->DidRemovePropertyNamed(name);
   return true;
 }
 
