@@ -26,9 +26,7 @@ goog.require('ginsu.events.EventType');
  * drags.  Objects, like tools, that respond to those events can then query the
  * plugin.
  * @param {!Object} element The DOM element that represents a ViewController.
- *     If undefined, an error is thrown.  The element is expected to conform to
- *     the Ginsu JavaScript bridge API (it has methods getValueForKey() and
- *     setValueForKey()).
+ *     If undefined, an error is thrown.
  * @constructor
  * @extends {goog.events.EventTarget}
  */
@@ -45,13 +43,6 @@ ginsu.controllers.ViewController = function(element) {
   }
   // The container is the containing DOM element.
   this.container_ = element;
-
-  if (typeof this.container_['getValueForKey'] != 'function' ||
-      typeof this.container_['setValueForKey'] != 'function') {
-    throw new Error(
-        'ViewController() Element does not implement getValueForKey() ' +
-        'and setValueForKey()');
-  }
 
   /**
    * Mouse drag event object.
@@ -98,31 +89,12 @@ ginsu.controllers.ViewController.prototype.frame = function() {
 };
 
 /**
- * Method to get a value for a key from the Ginsu plugin.  This method
- * forwards the request to the Ginsu plugin via the JavaScript bridge.
- * Throws an exception if the key does not represent a property defined in
- * the Ginsu plugin.
- * @param {!String} key The name of the property in the Ginsu plugin.
- *     Cannot be null or undefined.
- * @return {!Object} The value for the property.  Can be null.
+ * Method to get the JavaScript object that represents the NaCL View object.
+ * @return {Object} The JavaScript object that represents the NaCl View object.
  */
-ginsu.controllers.ViewController.prototype.getValueForKey = function(key) {
-  return this.container_.getValueForKey(key);
-};
-
-/**
- * Method to get a value for a key from the Ginsu plugin.  This method
- * forwards the request to the Ginsu plugin via the JavaScript bridge.
- * Throws an exception if the key does not represent a property defined in
- * the Ginsu plugin.
- * @param {!Object} value The value for the property.  Can be null, but must be
- *     defined.
- * @param {!String} key The name of the property in the Ginsu plugin.
- *     Cannot be null or undefined.
- */
-ginsu.controllers.ViewController.prototype.setValueForKey = function(key, value) {
-  this.container_.setValueForKey(key, value);
-};
+ginsu.controllers.ViewController.prototype.view = function() {
+  return this.container_.getView();
+}
 
 /**
  * Handle the drag START event: dispatch a DRAG_START event from this view

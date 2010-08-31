@@ -32,7 +32,7 @@ class View;
 // The main class for the Ginsu application.
 class Ginsu : public c_salt::Instance {
  public:
-  Ginsu();
+  explicit Ginsu(const NPP& npp_instance);
   virtual ~Ginsu();
 
   // Specialization of c_salt::Instance informal protocol.
@@ -40,15 +40,12 @@ class Ginsu : public c_salt::Instance {
   virtual void WindowDidChangeSize(const NPP instance, int width, int height);
   virtual void InitializeMethods(c_salt::ScriptingBridge* bridge);
 
-  // Exposed to the browser via the ScriptingBridge.  The ScriptingBridge
-  // classes don't handle const params yet.
-  // TODO(dspringer): change to const std::string& when this is available.
-  int32_t GetValueForKey(std::string key);
-  // Sets |value| for the property named |key|, but only if |key| already
-  // exists in the property dictionary.
-  bool SetValueForKey(std::string key, int32_t value);
+  // Return the ScriptingBridge that represents the View object.  Exposed to
+  // the browser via the ScriptingBridge.
+  NPObject* GetView();
 
  private:
+  Ginsu();  // Not implemented, do not use.
   static void RepaintCallback(NPP npp, NPDeviceContext3D* context);
   static void TickCallback(void* data);
   void Paint();
@@ -57,17 +54,9 @@ class Ginsu : public c_salt::Instance {
   // Returns true if anything was updated.
   bool UpdateAnimation();
 
-  // The keys in this map are available to the Browser via Get|SetValueForKey().
-  // The values are c_salt::Types, currently they are marshaled explicitly as
-  // return types to the browser depending on the key value.
-  typedef boost::shared_ptr<c_salt::Type> SharedTypePtr;
-  typedef std::map<std::string, SharedTypePtr> PropertyDictionary;
-  PropertyDictionary property_dictionary_;
-
   // TODO(dspringer): Move this into a c_salt View3D class.
   void CreateContext(const NPP instance);
   void DestroyContext(const NPP instance);
-  NPP npp_instance_;  // Weak reference.
   NPDevice* device3d_;
   NPDeviceContext3D context3d_;
   PGLContext pgl_context_;

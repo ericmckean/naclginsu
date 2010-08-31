@@ -59,5 +59,31 @@ void View::Draw() {
   scene_view_->Draw();
 }
 
+double View::GetCameraOrientation() {
+  return 42.0;
+}
+
+bool View::SetCameraOrientation(double orientation) {
+  return true;
+}
+
+c_salt::ScriptingBridge* View::CreateScriptingBridgeWithInstance(
+      const c_salt::Instance* instance) {
+  if (!scripting_bridge_.get()) {
+    // Note that CreateScriptingBridgeWithInstance() performs a synchronous
+    // rendezvous with the browser. If it returns non-NULL, |scripting_bridge_|
+    // is all hooked up to the browser and is ready to use.
+    scripting_bridge_.reset(
+        c_salt::ScriptingBridge::CreateScriptingBridgeWithInstance(instance));
+    scripting_bridge_->AddMethodNamed("getCameraOrientation",
+                                      this,
+                                      &View::GetCameraOrientation);
+    scripting_bridge_->AddMethodNamed("setCameraOrientation",
+                                      this,
+                                      &View::SetCameraOrientation);
+  }
+  return scripting_bridge_.get();
+}
+
 }  // namespace view
 }  // namespace ginsu

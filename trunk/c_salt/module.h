@@ -26,7 +26,7 @@ class Module : public boost::noncopyable {
 
   // Create and return an instance of the module.  The subclass can create a
   // specific class instance.
-  virtual Instance* CreateInstance() = 0;
+  virtual Instance* CreateInstance(const NPP& npp_instance) = 0;
 
  protected:
   Module();

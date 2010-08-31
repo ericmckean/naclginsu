@@ -14,8 +14,8 @@ namespace ginsu {
 // Ginsu.
 class GinsuModule : public c_salt::Module {
  public:
-  virtual c_salt::Instance* CreateInstance() {
-    return new Ginsu();
+  virtual c_salt::Instance* CreateInstance(const NPP& npp_instance) {
+    return new Ginsu(npp_instance);
   }
 };
 }  // namespace ginsu
