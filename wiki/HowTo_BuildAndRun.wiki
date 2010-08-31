@@ -1,0 +1,43 @@
+#summary How to build and run Ginsu
+
+= Prerequisites =
+
+  # An installed copy of [http://dev.chromium.org/developers/how-tos/depottools depot_tools] for gclient and gcl
+  # An installed copy of the [http://code.google.com/p/nativeclient-sdk/ Native Client SDK]
+  # Set the environment variable `NACL_SDK_BASE` to point into the toolchain of your !NaCl SDK installation, e.g.:<blockquote><code>
+export NACL_SDK_BASE=/usr/local/my_ldap/native_client_sdk/toolchain/mac_x86
+</code></blockquote>
+
+= Building Ginsu =
+
+  # Create a place for the project:<blockquote><code>
+mkdir /usr/local/my_ldap/ginsu
+</code></blockquote>
+  # Set the `GINSU_ROOT` environment variable to point into your ginsu client directory, e.g.:<blockquote><code>
+export GINSU_ROOT=/usr/local/my_ldap/ginsu/trunk
+</code></blockquote>
+  # Check out the code:<blockquote><code>
+cd /usr/local/my_ldap/ginsu
+gclient config https://naclginsu.googlecode.com/svn/trunk
+gclient sync
+ </code></blockquote>
+  # Run the script that sets up all the naclports libraries:<blockquote><code>
+cd ginsu/trunk
+python scripts/setup_naclports_packages.py
+</code></blockquote>
+  # Build ginsu using hammer:<blockquote><code>
+./hammer.sh
+</code></blockquote>
+
+= Running Ginsu =
+
+*Note: Ginsu only builds and runs in 32-bits.*
+
+  # Run the python-based HTTP server:<blockquote><code>
+cd scons-out/dbg/staging
+python httpd.py &
+</code></blockquote>
+  # Run a supported version of Chrome with the `--enable-nacl` flag (see also [http://code.google.com/p/nativeclient-sdk/wiki/HowTo_GetStarted the Getting Started] page in the !NaCl SDK codesite).  We recommend that you start a new incognito window to make sure ginsu is not cached.
+  # Enter this in the address bar:<blockquote><code>
+http://localhost:5103/ginsu.html
+</code></blockquote>
