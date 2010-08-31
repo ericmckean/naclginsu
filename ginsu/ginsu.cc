@@ -43,43 +43,36 @@ static double TimeNow() {
 
 namespace ginsu {
 
-Ginsu::Ginsu()
-    : npp_instance_(NULL),
+Ginsu::Ginsu(const NPP& npp_instance)
+    : c_salt::Instance(npp_instance),
       device3d_(NULL) {
   memset(&context3d_, 0, sizeof(context3d_));
   model_.reset(new model::Model);
   model_->InitDemo();
   view_.reset(new view::View(model_.get()));
   last_update_ = TimeNow();
-  // TODO(dspringer, dmichael): Update this when the scripting bridge for
-  // arbitrary (in this case, View) objects is added.
-  property_dictionary_[kViewKey].reset(new c_salt::Int32Type(42));
 }
 
 Ginsu::~Ginsu() {
   pglMakeCurrent(pgl_context_);
   view_->ReleaseGL();
   pglMakeCurrent(PGL_NO_CONTEXT);
-  DestroyContext(npp_instance_);
+  DestroyContext(npp_instance());
 }
 
 bool Ginsu::InstanceDidLoad(const NPP instance, int width, int height) {
-  npp_instance_ = instance;
-  device3d_ = NPN_AcquireDevice(npp_instance_, NPPepper3DDevice);
+  device3d_ = NPN_AcquireDevice(npp_instance(), NPPepper3DDevice);
   assert(device3d_);
   if (!pgl_context_) {
-    CreateContext(npp_instance_);
+    CreateContext(npp_instance());
     // Schedule first call to Tick.
-    NPN_PluginThreadAsyncCall(npp_instance_, TickCallback, this);
+    NPN_PluginThreadAsyncCall(npp_instance(), TickCallback, this);
   }
   return true;
 }
 
 void Ginsu::InitializeMethods(ScriptingBridge* bridge) {
-  bridge->AddMethodNamed(
-      "getValueForKey", this, &Ginsu::GetValueForKey);
-  bridge->AddMethodNamed(
-      "setValueForKey", this, &Ginsu::SetValueForKey);
+  bridge->AddMethodNamed("getView", this, &Ginsu::GetView);
 }
 
 void Ginsu::WindowDidChangeSize(const NPP instance, int width, int height) {
@@ -95,38 +88,22 @@ void Ginsu::TickCallback(void* data) {
   static_cast<ginsu::Ginsu*>(data)->Tick();
 }
 
-int32_t Ginsu::GetValueForKey(std::string key) {
-  // In this first iteration, support a 'view_id' key, which is used to test
-  // the scripting interface.
-  // TODO(dspringer): Complete support for getting the View object's
-  // scripting bridge.
-  PropertyDictionary::const_iterator it = property_dictionary_.find(key);
-  if (it != property_dictionary_.end()) {
-    return it->second->int32_value();
-  }
-  return 0;
-}
-
-bool Ginsu::SetValueForKey(std::string key, int32_t value) {
-  PropertyDictionary::const_iterator it = property_dictionary_.find(key);
-  if (it != property_dictionary_.end()) {
-    property_dictionary_[key].reset(new c_salt::Int32Type(value));
-    return true;
-  }
-  return false;
+NPObject* Ginsu::GetView() {
+  ScriptingBridge* view_bridge = view_->CreateScriptingBridgeWithInstance(this);
+  return view_bridge->CopyBrowserBinding();
 }
 
 void Ginsu::Tick() {
   if (UpdateAnimation())
     Paint();
   // Schedule another call to Tick.
-  NPN_PluginThreadAsyncCall(npp_instance_, TickCallback, this);
+  NPN_PluginThreadAsyncCall(npp_instance(), TickCallback, this);
 }
 
 void Ginsu::Paint() {
   if (!pglMakeCurrent(pgl_context_) && pglGetError() == PGL_CONTEXT_LOST) {
-    DestroyContext(npp_instance_);
-    CreateContext(npp_instance_);
+    DestroyContext(npp_instance());
+    CreateContext(npp_instance());
     pglMakeCurrent(pgl_context_);
   }
 

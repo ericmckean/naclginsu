@@ -26,7 +26,8 @@ namespace c_salt {
 
 class Instance : public boost::noncopyable {
  public:
-  Instance() : is_loaded_(false) {}
+  explicit Instance(const NPP& npp_instance)
+      : npp_instance_(npp_instance), is_loaded_(false) {}
   virtual ~Instance();
 
   // Called during initialization to publish the module's method names that
@@ -55,11 +56,11 @@ class Instance : public boost::noncopyable {
   // increments the ref count of the existing instance.  When a new
   // ScriptingBridge instance is created, both InitializeMethods() and
   // InitializeProperties() are called with the new instance.
-  virtual NPObject* CreateScriptingBridge(NPP instance);
+  virtual NPObject* CreateScriptingBridge();
 
-  // Accessor for the internal scripting bridge object.
-  ScriptingBridge* scripting_bridge() const {
-    return scripting_bridge_.get();
+  // Accessor for the in-browser NPAPI instance associated with this Instance.
+  const NPP npp_instance() const {
+    return npp_instance_;
   }
 
   // Accessor/mutator for |is_loaded_|.  This is used to determine when to call
@@ -72,7 +73,10 @@ class Instance : public boost::noncopyable {
   }
 
  private:
+  Instance();  // Not implemented, do not use.
+
   boost::scoped_ptr<ScriptingBridge> scripting_bridge_;
+  NPP npp_instance_;
   bool is_loaded_;
 };
 

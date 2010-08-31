@@ -21,7 +21,7 @@ namespace c_salt {
 class BrowserBinding : public NPObject {
  public:
   explicit BrowserBinding(NPP npp)
-      : scripting_bridge_(new ScriptingBridge(npp, this)) {}
+      : npp_(npp), scripting_bridge_(new ScriptingBridge(this)) {}
   ~BrowserBinding() {}
 
   bool HasMethod(NPIdentifier name) {
@@ -49,22 +49,27 @@ class BrowserBinding : public NPObject {
     return scripting_bridge_->RemoveProperty(name);
   }
 
+  const NPP npp() const {
+    return npp_;
+  }
+
   ScriptingBridge* scripting_bridge() {
     return scripting_bridge_.get();
   }
 
  private:
+  NPP npp_;
   boost::scoped_ptr<ScriptingBridge> scripting_bridge_;
 };
 
-// Helper function for dereferencing the bridging object.
+// Helper functions for dereferencing the bridging object.
 static inline BrowserBinding* cast_browser_binding(NPObject* np_object) {
   assert(np_object);
   return static_cast<BrowserBinding*>(np_object);
 }
+
 // The browser-facing entry points that represent the bridge's class methods.
 // These are the function wrappers that the browser calls.
-
 NPObject* Allocate(NPP npp, NPClass* npclass) {
   return new BrowserBinding(npp);
 }
@@ -126,19 +131,19 @@ static NPClass bridge_class = {
   c_salt::RemoveProperty
 };
 
-ScriptingBridge* ScriptingBridge::CreateScriptingBridge(NPP npp) {
+ScriptingBridge* ScriptingBridge::CreateScriptingBridgeWithInstance(
+    const Instance* instance) {
   // This is a synchronous call to the browser.  Memory has been allocated
   // and ctors called by the time it returns.
-  BrowserBinding* browser_binding =
-       static_cast<BrowserBinding*>(NPN_CreateObject(npp, &bridge_class));
+  BrowserBinding* browser_binding = static_cast<BrowserBinding*>(
+      NPN_CreateObject(instance->npp_instance(), &bridge_class));
   if (browser_binding)
     return browser_binding->scripting_bridge();
   return NULL;
 }
 
-ScriptingBridge::ScriptingBridge(NPP npp, NPObject* browser_binding)
-    : npp_(npp),
-      browser_binding_(browser_binding),
+ScriptingBridge::ScriptingBridge(NPObject* browser_binding)
+    : browser_binding_(browser_binding),
       window_object_(NULL) {
 }
 
@@ -193,14 +198,21 @@ bool ScriptingBridge::LogToConsole(const std::string& msg) const {
     console_stript.UTF8Length = strlen(kConsoleAccessor);
     console_stript.UTF8Characters = kConsoleAccessor;
     NPVariant console;
-    if (NPN_Evaluate(npp(), window, &console_stript, &console)) {
+    if (NPN_Evaluate(GetBrowserInstance(),
+                     window,
+                     &console_stript,
+                     &console)) {
       if (NPVARIANT_IS_OBJECT(console)) {
         // Convert the message to NPString;
         NPVariant text;
         STRINGN_TO_NPVARIANT(msg.c_str(), msg.size(), text);
         NPVariant result;
-        if (NPN_Invoke(npp(), NPVARIANT_TO_OBJECT(console),
-                       NPN_GetStringIdentifier("log"), &text, 1, &result)) {
+        if (NPN_Invoke(GetBrowserInstance(),
+                       NPVARIANT_TO_OBJECT(console),
+                       NPN_GetStringIdentifier("log"),
+                       &text,
+                       1,
+                       &result)) {
           NPN_ReleaseVariantValue(&result);
           success = true;
         }
@@ -211,9 +223,15 @@ bool ScriptingBridge::LogToConsole(const std::string& msg) const {
   return success;
 }
 
+const NPP ScriptingBridge::GetBrowserInstance() const {
+  return static_cast<const BrowserBinding*>(browser_binding_)->npp();
+}
+
 NPObject* ScriptingBridge::window_object() const {
   if (!window_object_) {
-    NPN_GetValue(npp(), NPNVWindowNPObject,  &window_object_);
+    NPN_GetValue(GetBrowserInstance(),
+                 NPNVWindowNPObject,
+                 &window_object_);
   }
   return window_object_;
 }

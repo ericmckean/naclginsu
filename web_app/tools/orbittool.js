@@ -220,7 +220,7 @@ ginsu.tools.OrbitTool.prototype.handleStartDrag =
   // Cache the camera orientation.  The orientations from the trackball as it
   // rolls are concatenated to this orientation and pushed back into the
   // plugin on the other side of the JavaScript bridge.
-  var view = controller.getValueForKey(ginsu.tools.OrbitTool.VIEW_KEY);
+  var view = controller.view();
   this.cameraOrientation_ = view.getValueForKey(
       ginsu.tools.OrbitTool.CAMERA_ORIENTATION_KEY);
   // Invert the y-coordinate for the trackball computations.
@@ -243,7 +243,7 @@ ginsu.tools.OrbitTool.prototype.handleStartDrag =
 ginsu.tools.OrbitTool.prototype.handleDrag =
     function(controller, dragEvent) {
   // Flip the y-coordinate so that the 2D origin is in the lower-left corner.
-  var view = controller.getValueForKey(ginsu.tools.OrbitTool.VIEW_KEY);
+  var view = controller.view();
   var frame = controller.frame();
   var flippedY = frame.height - dragEvent.clientY;
   view.setValueForKey(
@@ -265,7 +265,7 @@ ginsu.tools.OrbitTool.prototype.handleDrag =
 ginsu.tools.OrbitTool.prototype.handleEndDrag =
     function(controller, dragEndEvent) {
   // Flip the y-coordinate so that the 2D origin is in the lower-left corner.
-  var view = controller.getValueForKey(ginsu.tools.OrbitTool.VIEW_KEY);
+  var view = controller.view();
   var frame = controller.frame();
   var flippedY = frame.height - dragEndEvent.clientY;
   view.setValueForKey(
@@ -312,9 +312,3 @@ ginsu.tools.OrbitTool.DOUBLE_EPSILON = 1.0e-16;
  * @type {string}
  */
 ginsu.tools.OrbitTool.CAMERA_ORIENTATION_KEY = 'camera_orientation';
-
-/**
- * Key to fetch the view class from the Ginsu plugin instance.
- * @type {string}
- */
-ginsu.tools.OrbitTool.VIEW_KEY = 'view';

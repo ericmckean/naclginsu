@@ -18,6 +18,7 @@
 namespace c_salt {
 
 class BrowserBinding;
+class Instance;
 class MethodCallbackExecutor;
 class Module;
 class PropertyAccessorCallbackExecutor;
@@ -50,7 +51,8 @@ class ScriptingBridge : public boost::noncopyable {
 
   // Creates an instance of the scripting bridge object in the browser, with
   // a corresponding ScriptingBridge object instance.
-  static ScriptingBridge* CreateScriptingBridge(NPP npp);
+  static ScriptingBridge* CreateScriptingBridgeWithInstance(
+      const Instance* instance);
   virtual ~ScriptingBridge();
 
   // Causes |method_name| to be published as a method that can be called by
@@ -144,10 +146,10 @@ class ScriptingBridge : public boost::noncopyable {
   // message when using a JavaScript debugger, such as Chrome Developer Tools.
   bool LogToConsole(const std::string& msg) const;
 
+  // Return the browser instance associated with this ScriptingBridge.
+  const NPP GetBrowserInstance() const;
+
   // Accessors.
-  const NPP npp() const {
-    return npp_;
-  }
   const NPObject* browser_binding() const {
     return browser_binding_;
   }
@@ -169,8 +171,8 @@ class ScriptingBridge : public boost::noncopyable {
       PropertyMutatorDictionary;
   typedef std::map<NPIdentifier, Type*> DynamicPropertyDictionary;
 
-  ScriptingBridge() : boost::noncopyable() {}
-  ScriptingBridge(NPP npp, NPObject* browser_binding);
+  ScriptingBridge();  // Not implemented, do not use.
+  explicit ScriptingBridge(NPObject* browser_binding);
 
   // NPAPI support methods.
   bool HasMethod(NPIdentifier name);
@@ -184,7 +186,6 @@ class ScriptingBridge : public boost::noncopyable {
   bool SetProperty(NPIdentifier name, const NPVariant& return_value);
   bool RemoveProperty(NPIdentifier name);
 
-  NPP npp_;
   NPObject* browser_binding_;
   // |window_object_| is mutable so that the const accessor can create it
   // lazily.

@@ -10,9 +10,6 @@
 namespace c_salt {
 
 Instance::~Instance() {
-  if (scripting_bridge_.get()) {
-    scripting_bridge_->ReleaseBrowserBinding();
-  }
   set_is_loaded(false);
 }
 
@@ -33,10 +30,11 @@ bool Instance::ReceiveEvent(const NPPepperEvent& event) {
   return false;
 }
 
-NPObject* Instance::CreateScriptingBridge(NPP instance) {
+NPObject* Instance::CreateScriptingBridge() {
   if (!scripting_bridge_.get()) {
     // This is a synchronous call.
-    scripting_bridge_.reset(ScriptingBridge::CreateScriptingBridge(instance));
+    scripting_bridge_.reset(
+        ScriptingBridge::CreateScriptingBridgeWithInstance(this));
     InitializeMethods(scripting_bridge_.get());
     InitializeProperties(scripting_bridge_.get());
   }

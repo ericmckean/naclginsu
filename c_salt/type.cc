@@ -54,7 +54,7 @@ Type::TypeArray* Type::CreateArrayFromNPVariant(const ScriptingBridge* bridge,
     return NULL;
   // Unpack the expression object.  This turns the JavasCript array into a
   // vector of strings, which is then passed into the Calculator object.
-  NPP npp = bridge->npp();
+  const NPP npp = bridge->GetBrowserInstance();
   NPIdentifier* identifier = NULL;
   uint32_t element_count = 0;
   NPObject* array_object = NPVARIANT_TO_OBJECT(np_array);

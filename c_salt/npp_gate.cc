@@ -35,7 +35,7 @@ NPError NPP_New(NPMIMEType mime_type,
   //   attribute_dict[argn[argc]] = argv[argc];
   // }
   Instance* module_instance =
-      Module::GetModuleSingleton().CreateInstance();
+      Module::GetModuleSingleton().CreateInstance(instance);
   if (module_instance == NULL) {
     return NPERR_OUT_OF_MEMORY_ERROR;
   }
@@ -66,7 +66,7 @@ NPObject* NPP_GetScriptableInstance(NPP instance) {
   if (!module_instance) {
     return NULL;
   }
-  return module_instance->CreateScriptingBridge(instance);
+  return module_instance->CreateScriptingBridge();
 }
 
 NPError NPP_GetValue(NPP instance, NPPVariable variable, void *value) {
