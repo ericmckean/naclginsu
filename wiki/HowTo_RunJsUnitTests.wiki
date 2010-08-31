@@ -14,7 +14,7 @@ included in the project.  It gets installed in `$STAGING_DIR` (for debug, it's
 `scons-out/dbg/staging`).  All of the test pages for jsUnit tests are installed
 in the same staging dir.  This will change once we get automated tests working.
 
-Open FireFox, and enter
+Open your browser, and enter
 <blockquote><code>localhost:5013/jsunit/testRunner.html</code></blockquote> in the address
 bar.  In the test page box, enter the test you want, prefixed with
 `localhost:5013/`; for example, to run the orbittool_test, enter
