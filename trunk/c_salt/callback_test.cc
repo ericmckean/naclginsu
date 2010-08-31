@@ -299,6 +299,8 @@ TEST_F(CallbackTest, TestIt) {
 }
 
 class MyInstance : public c_salt::Instance {
+ public:
+  explicit MyInstance(const NPP& instance) : c_salt::Instance(instance) {}
 };
 
 // This is the connection to the c_salt Module machinery.  The Module singleton
@@ -306,8 +308,8 @@ class MyInstance : public c_salt::Instance {
 // Ginsu.
 class TestModule : public c_salt::Module {
  public:
-  virtual c_salt::Instance* CreateInstance() {
-    return new MyInstance();
+  virtual c_salt::Instance* CreateInstance(const NPP& instance) {
+    return new MyInstance(instance);
   }
 };
 
