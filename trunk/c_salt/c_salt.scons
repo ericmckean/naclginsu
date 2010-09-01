@@ -18,6 +18,7 @@ c_salt_sources = [
   'npn_bridge.cc',
   'npp_gate.cc',
   'object_type.cc',
+  'property.cc',
   'scripting_bridge.cc',
   'string_type.cc',
   'type.cc',

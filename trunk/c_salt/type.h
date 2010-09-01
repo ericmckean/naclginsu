@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "boost/noncopyable.hpp"
+#include "boost/shared_ptr.hpp"
 
 // A polymorphic type container.  All the various number and string types
 // are derived from this basic class.
@@ -74,8 +75,10 @@ class Type : public boost::noncopyable {
   uint32_t class_version_;
   TypeId type_id_;
 
-  Type() : boost::noncopyable() {}
+  Type();  // Not implemented, do not use.
 };
+
+typedef boost::shared_ptr<Type> SharedType;
 
 }  // namespace c_salt
 
