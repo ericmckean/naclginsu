@@ -5,20 +5,21 @@
 #include <nacl/npruntime.h>
 
 #include <iostream>
+#include <string>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "c_salt/instance.h"
 #include "c_salt/module.h"
+#include "c_salt/npapi/npvariant_converter.h"
+#include "c_salt/npapi/npapi_method_callback.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace c_salt;  // NOLINT
-using namespace c_salt::c_salt_private;  // NOLINT
+using namespace c_salt::npapi;  // NOLINT
 
 namespace {
   NPObject* const kInvalidNPObjectPointer =
                            reinterpret_cast<NPObject*>(0xdeadbeef);
-  ScriptingBridge* const kInvalidScriptingBridgePointer =
-                           reinterpret_cast<ScriptingBridge*>(0xbeefdead);
   template <class T>
   struct ValueMaker;
 
@@ -44,18 +45,13 @@ namespace {
       return kInvalidNPObjectPointer;
     }
   };
-  template <>
-  struct ValueMaker<ScriptingBridge*> {
-    static ScriptingBridge* Make() {
-      return kInvalidScriptingBridgePointer;
-    }
-  };
 
   struct NPArgMakerBase {
     virtual ~NPArgMakerBase() {}
     NPArgMakerBase() : args(NULL), num_args(0) {}
     NPVariant* args;
     uint32_t num_args;
+    NPVariantConverter converter;
   };
   template <class Signature>
   struct NPArgMaker : public NPArgMakerBase {};
@@ -65,7 +61,7 @@ namespace {
     explicit NPArgMaker(ARG1 a1) {
       num_args = 1u;
       args = new NPVariant[1];
-      Marshaller<ARG1>::put(args, a1);
+      converter(args, a1);
     }
   };
   template <class RET, class ARG1, class ARG2>
@@ -73,8 +69,8 @@ namespace {
     NPArgMaker(ARG1 a1, ARG2 a2) {
       num_args = 2u;
       args = new NPVariant[2];
-      Marshaller<ARG1>::put(args, a1);
-      Marshaller<ARG2>::put(args+1, a2);
+      converter(args, a1);
+      converter(args+1, a2);
     }
   };
   template <class RET, class ARG1, class ARG2, class ARG3>
@@ -82,9 +78,9 @@ namespace {
     NPArgMaker(ARG1 a1, ARG2 a2, ARG3 a3) {
       num_args = 3u;
       args = new NPVariant[3];
-      Marshaller<ARG1>::put(args, a1);
-      Marshaller<ARG2>::put(args+1, a2);
-      Marshaller<ARG3>::put(args+2, a3);
+      converter(args, a1);
+      converter(args+1, a2);
+      converter(args+2, a3);
     }
   };
   template <class RET, class ARG1, class ARG2, class ARG3, class ARG4>
@@ -92,10 +88,10 @@ namespace {
     NPArgMaker(ARG1 a1, ARG2 a2, ARG3 a3, ARG4 a4) {
       num_args = 4u;
       args = new NPVariant[4];
-      Marshaller<ARG1>::put(args, a1);
-      Marshaller<ARG2>::put(args+1, a2);
-      Marshaller<ARG3>::put(args+2, a3);
-      Marshaller<ARG4>::put(args+3, a4);
+      converter(args, a1);
+      converter(args+1, a2);
+      converter(args+2, a3);
+      converter(args+3, a4);
     }
   };
 
@@ -104,34 +100,35 @@ namespace {
 
   template <class RET>
   struct NPInvoker<RET(*)()> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
-                              ScriptingBridge* sb) {
+    static RET InvokeWithArgs(NPAPIMethodCallbackExecutor* mce) {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
       NPArgMaker<RET()> arg_maker;
-      mce->Execute(sb, arg_maker.args, arg_maker.num_args, &retval);
-      bool dummy;
-      return Unmarshaller<RET>::get(&retval_ptr, sb, &dummy);
+      mce->Execute(arg_maker.args, arg_maker.num_args, &retval);
+      RET real_retval;
+      NPVariantConverter converter;
+      converter(&real_retval, retval);
+      return real_retval;
     }
-    static void Invoke(MethodCallbackExecutor* mce, ScriptingBridge* sb) {
-      std::cout << "Returned " << InvokeWithArgs(mce, sb) << std::endl;
+    static void Invoke(NPAPIMethodCallbackExecutor* mce) {
+      std::cout << "Returned " << InvokeWithArgs(mce) << std::endl;
     }
   };
   template <class RET, class ARG1>
   struct NPInvoker<RET(*)(ARG1)> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
-                              ScriptingBridge* sb,
+    static RET InvokeWithArgs(NPAPIMethodCallbackExecutor* mce,
                               ARG1 a1) {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
       NPArgMaker<RET(ARG1)>arg_maker(a1);
-      mce->Execute(sb, arg_maker.args, arg_maker.num_args, &retval);
-      bool dummy;
-      return Unmarshaller<RET>::get(&retval_ptr, sb, &dummy);
+      mce->Execute(arg_maker.args, arg_maker.num_args, &retval);
+      RET real_retval;
+      NPVariantConverter converter;
+      converter(&real_retval, retval);
+      return real_retval;
     }
-    static void Invoke(MethodCallbackExecutor* mce, ScriptingBridge* sb) {
+    static void Invoke(NPAPIMethodCallbackExecutor* mce) {
       std::cout << "Returned " << InvokeWithArgs(mce,
-                                                 sb,
                                                  ValueMaker<ARG1>::Make())
 
           << std::endl;
@@ -139,20 +136,20 @@ namespace {
   };
   template <class RET, class ARG1, class ARG2>
   struct NPInvoker<RET(*)(ARG1, ARG2)> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
-                              ScriptingBridge* sb,
+    static RET InvokeWithArgs(NPAPIMethodCallbackExecutor* mce,
                               ARG1 a1,
                               ARG2 a2) {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
       NPArgMaker<RET(ARG1, ARG2)>arg_maker(a1, a2);
-      mce->Execute(sb, arg_maker.args, arg_maker.num_args, &retval);
-      bool dummy;
-      return Unmarshaller<RET>::get(&retval_ptr, sb, &dummy);
+      mce->Execute(arg_maker.args, arg_maker.num_args, &retval);
+      RET real_retval;
+      NPVariantConverter converter;
+      converter(&real_retval, retval);
+      return real_retval;
     }
-    static void Invoke(MethodCallbackExecutor* mce, ScriptingBridge* sb) {
+    static void Invoke(NPAPIMethodCallbackExecutor* mce) {
       std::cout << "Returned " << InvokeWithArgs(mce,
-                                                 sb,
                                                  ValueMaker<ARG1>::Make(),
                                                  ValueMaker<ARG2>::Make())
           << std::endl;
@@ -160,21 +157,21 @@ namespace {
   };
   template <class RET, class ARG1, class ARG2, class ARG3>
   struct NPInvoker<RET(*)(ARG1, ARG2, ARG3)> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
-                              ScriptingBridge* sb,
+    static RET InvokeWithArgs(NPAPIMethodCallbackExecutor* mce,
                               ARG1 a1,
                               ARG2 a2,
                               ARG3 a3) {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
       NPArgMaker<RET(ARG1, ARG2, ARG3)>arg_maker(a1, a2, a3);
-      mce->Execute(sb, arg_maker.args, arg_maker.num_args, &retval);
-      bool dummy;
-      return Unmarshaller<RET>::get(&retval_ptr, sb, &dummy);
+      mce->Execute(arg_maker.args, arg_maker.num_args, &retval);
+      RET real_retval;
+      NPVariantConverter converter;
+      converter(&real_retval, retval);
+      return real_retval;
     }
-    static void Invoke(MethodCallbackExecutor* mce, ScriptingBridge* sb) {
+    static void Invoke(NPAPIMethodCallbackExecutor* mce) {
       std::cout << "Returned " << InvokeWithArgs(mce,
-                                                 sb,
                                                  ValueMaker<ARG1>::Make(),
                                                  ValueMaker<ARG2>::Make(),
                                                  ValueMaker<ARG3>::Make())
@@ -183,8 +180,7 @@ namespace {
   };
   template <class RET, class ARG1, class ARG2, class ARG3, class ARG4>
   struct NPInvoker<RET(*)(ARG1, ARG2, ARG3, ARG4)> {
-    static RET InvokeWithArgs(MethodCallbackExecutor* mce,
-                              ScriptingBridge* sb,
+    static RET InvokeWithArgs(NPAPIMethodCallbackExecutor* mce,
                               ARG1 a1,
                               ARG2 a2,
                               ARG3 a3,
@@ -192,13 +188,14 @@ namespace {
       NPVariant retval;
       NPVariant* retval_ptr(&retval);
       NPArgMaker<RET(ARG1, ARG2, ARG3, ARG4)>arg_maker(a1, a2, a3, a4);
-      mce->Execute(sb, arg_maker.args, arg_maker.num_args, &retval);
-      bool dummy;
-      return Unmarshaller<RET>::get(&retval_ptr, sb, &dummy);
+      mce->Execute(arg_maker.args, arg_maker.num_args, &retval);
+      RET real_retval;
+      NPVariantConverter converter;
+      converter(&real_retval, retval);
+      return real_retval;
     }
-    static void Invoke(MethodCallbackExecutor* mce, ScriptingBridge* sb) {
+    static void Invoke(NPAPIMethodCallbackExecutor* mce) {
       std::cout << "Returned " << InvokeWithArgs(mce,
-                                                 sb,
                                                  ValueMaker<ARG1>::Make(),
                                                  ValueMaker<ARG2>::Make(),
                                                  ValueMaker<ARG3>::Make(),
@@ -267,14 +264,24 @@ namespace {
   };
 }
 
+// A helper function that creates an appropriate NPAPIMethodCallbackExecutor
+// that, when invoked via its NPAPI-based Execute function, will convert the
+// call in to an appropriate application-level native C++ call.
+template <class T, class Signature>
+NPAPIMethodCallbackExecutor* MakeNPAPIMethodCallbackExecutor(T* target,
+                                                   Signature method) {
+  return new NPAPIMethodCallbackExecutorImpl<Signature>(target,
+                                                                  method);
+}
+
 #define TEST_SIGNATURE(SIGTYPE) \
 {\
   CallbackMock<SIGTYPE> cb;\
-  MethodCallbackExecutor* mce(\
-         MakeMethodCallbackExecutor(&cb, \
+  NPAPIMethodCallbackExecutor* mce(\
+         MakeNPAPIMethodCallbackExecutor(&cb, \
                                     &CallbackMock<SIGTYPE>::Func));\
-  ScriptingBridge* sb(ValueMaker<ScriptingBridge*>::Make());\
-  NPInvoker<SIGTYPE>::Invoke(mce, sb);\
+  NPInvoker<SIGTYPE>::Invoke(mce);\
+  delete mce;\
 }
 
 class CallbackTest : public ::testing::Test {
@@ -282,20 +289,57 @@ class CallbackTest : public ::testing::Test {
   virtual void SetUp() {}
 };
 
-TEST_F(CallbackTest, TestIt) {
-    // TODO(dmichael): This is cheating...  for now, I just want to see it's
-    // working but I need to turn it in to a real automated test.  Note that
-    // lint wants to see arg names in these function calls, which are not
-    // necessary here.
-    TEST_SIGNATURE(std::string(*)());  // NOLINT
-    TEST_SIGNATURE(int32_t(*)(double));  // NOLINT
-    TEST_SIGNATURE(double(*)(bool, int32_t));  // NOLINT
-    TEST_SIGNATURE(bool(*)(std::string, double, int32_t, bool));  // NOLINT
-    TEST_SIGNATURE(bool(*)(NPObject*, int32_t, double, bool));  // NOLINT
-    // void return not currently supported
-    // TEST_SIGNATURE(void(*)(std::string, double, int32_t, bool));
-    //
-    NPObject npo;
+TEST_F(CallbackTest, Signatures) {
+  // TODO(dmichael): This is cheating...  for now, I just want to see it's
+  // working but I need to turn it in to a real automated test.
+  // Note that lint thinks these are function declarations and expects to see
+  // parameter names, but they are in fact just function pointer types, where
+  // parameters would not make sense.
+  TEST_SIGNATURE(std::string(*)());  // NOLINT
+  TEST_SIGNATURE(int32_t(*)(double));  // NOLINT
+  TEST_SIGNATURE(double(*)(bool, int32_t));  // NOLINT
+  TEST_SIGNATURE(bool(*)(std::string, double, int32_t, bool));  // NOLINT
+  TEST_SIGNATURE(bool(*)(NPObject*, int32_t, double, bool));  // NOLINT
+  // void return not currently supported
+  // TEST_SIGNATURE(void(*)(std::string, double, int32_t, bool));
+  //
+}
+
+//  Try passing parameters other than the expected ones.
+TEST_F(CallbackTest, InvokeWithUnexpectedParameters) {
+  // Lint thinks these are C-style casts, but they're not.  They're typedefs
+  // of function pointer types.
+  typedef bool(*Signature)(std::string, int32_t, double, bool);  // NOLINT
+  CallbackMock<Signature> mock;
+  NPAPIMethodCallbackExecutor* mce(
+      MakeNPAPIMethodCallbackExecutor(&mock,
+                                      &CallbackMock<Signature>::Func));
+  typedef bool(*IntSignature)(int32_t, int32_t, int32_t, int32_t);  //NOLINT
+  NPInvoker<IntSignature>::Invoke(mce);  // NOLINT
+  typedef bool(*DoubleSignature)(double, double, double, double);  //NOLINT
+  NPInvoker<DoubleSignature>::Invoke(mce);
+  typedef bool(*BoolSignature)(bool, bool, bool, bool);  //NOLINT
+  NPInvoker<BoolSignature>::Invoke(mce);
+}
+
+//  Try const-ref parameters, and passing types other than the expected ones.
+TEST_F(CallbackTest, InvokeWithConstRefParameters) {
+  // Lint thinks these are C-style casts, but they're not.  They're typedefs
+  // of function pointer types.
+  typedef bool(*Signature)(const std::string&, // NOLINT
+                           const int32_t&,
+                           const double&,
+                           const bool&);
+  CallbackMock<Signature> mock;
+  NPAPIMethodCallbackExecutor* mce(
+      MakeNPAPIMethodCallbackExecutor(&mock,
+                                 &CallbackMock<Signature>::Func));
+  typedef bool(*IntSignature)(int32_t, int32_t, int32_t, int32_t);  //NOLINT
+  NPInvoker<IntSignature>::Invoke(mce);  // NOLINT
+  typedef bool(*DoubleSignature)(double, double, double, double);  //NOLINT
+  NPInvoker<DoubleSignature>::Invoke(mce);
+  typedef bool(*BoolSignature)(bool, bool, bool, bool);  //NOLINT
+  NPInvoker<BoolSignature>::Invoke(mce);
 }
 
 class MyInstance : public c_salt::Instance {

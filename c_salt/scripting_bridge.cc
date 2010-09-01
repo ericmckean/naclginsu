@@ -171,24 +171,6 @@ void ScriptingBridge::ReleaseBrowserBinding() {
   // unpredictable results.
 }
 
-bool ScriptingBridge::AddPropertyNamed(
-    const char* property_name,
-    SharedPropertyAccessorCallbackExecutor property_accessor,
-    SharedPropertyMutatorCallbackExecutor property_mutator) {
-  if (property_name == NULL || property_accessor == NULL)
-    return false;
-  NPIdentifier property_id = NPN_GetStringIdentifier(property_name);
-  property_accessor_dictionary_.insert(
-      std::pair<NPIdentifier,
-      SharedPropertyAccessorCallbackExecutor>(property_id, property_accessor));
-  if (property_mutator) {
-    property_mutator_dictionary_.insert(
-        std::pair<NPIdentifier,
-        SharedPropertyMutatorCallbackExecutor>(property_id, property_mutator));
-  }
-  return true;
-}
-
 bool ScriptingBridge::LogToConsole(const std::string& msg) const {
   bool success = false;
   NPObject* window = window_object();
@@ -240,9 +222,7 @@ void ScriptingBridge::Invalidate() {
   // This is called from the browser after NPP_Delete, on all objects with
   // dangling references.
   method_dictionary_.clear();
-  property_accessor_dictionary_.clear();
-  property_mutator_dictionary_.clear();
-  dynamic_property_dictionary_.clear();
+  // property_dictionary_.clear();  //TODO(dspringer, dmichael)
 }
 
 bool ScriptingBridge::HasMethod(NPIdentifier name) {
@@ -273,54 +253,63 @@ bool ScriptingBridge::HasProperty(NPIdentifier name) {
 bool ScriptingBridge::GetProperty(NPIdentifier name,
                                   NPVariant *return_value) {
   VOID_TO_NPVARIANT(*return_value);
-  PropertyAccessorDictionary::const_iterator get_iter =
-      property_accessor_dictionary_.find(name);
-  if (get_iter != property_accessor_dictionary_.end()) {
-    return (*get_iter->second).Execute(this, return_value);
-  }
-  // See if the property is in the list of dynamic properties.
-  DynamicPropertyDictionary::const_iterator dyn_iter =
-      dynamic_property_dictionary_.find(name);
-  if (dyn_iter != dynamic_property_dictionary_.end()) {
-    // TODO(dspringer,dmichael): implement the observer pattern here.
-    // delegate_->WillGetPropertyNamed(name);
-    dyn_iter->second->ConvertToNPVariant(return_value);
-    // delegate_->DidGetPropertyNamed(name);
-    return true;
-  }
-  // |name| does not exist as a property.
+  // TODO(dspringer, dmichael):  Fill in with new implementation based on
+  // dspringer's Property class.
+  // PropertyDictionary::const_iterator iter = property_dictionary_.find(name);
+  // if (iter != property_dictionary_.end()) {
+  //   iter->second->GetValue()->ConvertToNPVariant(return_value);
+  //   return true;
+  // }
   return false;
 }
 
 bool ScriptingBridge::SetProperty(NPIdentifier name, const NPVariant& value) {
-  PropertyMutatorDictionary::iterator set_iter =
-      property_mutator_dictionary_.find(name);
-  if (set_iter != property_mutator_dictionary_.end()) {
-    // SetProperty() can only return |false| if this callback returns |false|.
-    return (*set_iter->second).Execute(this, value);
-  }
-  // |name| is not a static property: insert if absent, update if present.
-  // TODO(dspringer,dmichael): implement the observer pattern here.
-  // delegate_->WillSetPropertyNamed(name);
-  dynamic_property_dictionary_[name] = Type::CreateFromNPVariant(value);
-  // delegate_->DidSetPropertyNamed(name);
-  // Setting a dynamic property always succeeds.
-  return true;
+  // TODO(dspringer, dmichael):  Fill in with new implementation based on
+  // dspringer's Property class.
+  // PropertyDictionary::iterator iter = property_dictionary_.find(name);
+  // if (iter != property_dictionary_.end()) {
+  //   if (iter->second.is_mutable()) {
+  //     if (iter->second.is_static()) {
+  //       // If it is static, force the type to stick.
+  //       // Note:  SetFromNPVariant doesn't exist;  either we should write it,
+  //       // or just wait for a different implementation of Property using a
+  //       // variant.
+  //       iter->second.GetValue()->SetFromNPVariant(return_value);
+  //     } else {
+  //       // It is dynamic;  set the type to whatever is indicated by the
+  //       // NPVariant.
+  //       iter->second.SetValue(Type::CreateFromNPVariant(value));
+  //     }
+  //     // It is mutable, and we've successfully set it now.
+  //     return true;
+  //   }
+  //   // It was not mutable, so disallow assignment.
+  //   return false;
+  // }
+  // // No property was found.  Create one and add it.  Note that properties
+  // // created by the browser are always dynamic and mutable.
+  // PropertyAttributes prop_attrs(name, Type::CreateFromNPVariant(value));
+  // Property prop(PropertyAttributes(name,
+  //                                  Type::CreateFromNPVariant(value))
+  //                                 .set_dynamic()
+  //                                 .set_mutable());
+  // property_dictionary_.insert(PropertyDictionary::value_type(name, prop));
+  // return true;
+  return false;
 }
 
 bool ScriptingBridge::RemoveProperty(NPIdentifier name) {
-  // Remove a property only if it has been dynamically added.  Pre-declared
-  // properties cannot be removed.
-  PropertyAccessorDictionary::iterator dyn_iter;
-  dyn_iter = property_accessor_dictionary_.find(name);
-  if (dyn_iter == property_accessor_dictionary_.end()) {
-    return false;  // This is a static property, or |name| doesn't exist.
-  }
-  // TODO(dspringer,dmichael): implement the observer pattern here.
-  // delegate_->WillRemovePropertyNamed(name);
-  property_accessor_dictionary_.erase(dyn_iter);
-  // delegate_->DidRemovePropertyNamed(name);
-  return true;
+  // TODO(dspringer, dmichael):  Fill in with new implementation based on
+  // dspringer's Property class.
+  // // If the property exists and is dynamic, delete it.
+  // PropertyDictionary::iterator iter = property_dictionary_.find(name);
+  // if (iter != property_dictionary_.end()) {
+  //   if (!iter->second.is_static()) {
+  //     property_dictionary_.erase(iter);
+  //     return true;
+  //   }
+  // }
+  return false;
 }
 
 bool ScriptingBridge::Invoke(NPIdentifier name,
@@ -330,7 +319,7 @@ bool ScriptingBridge::Invoke(NPIdentifier name,
   MethodDictionary::iterator i;
   i = method_dictionary_.find(name);
   if (i != method_dictionary_.end()) {
-    return (*i->second).Execute(this, args, arg_count, return_value);
+    return (*i->second).Execute(args, arg_count, return_value);
   }
   return false;
 }
