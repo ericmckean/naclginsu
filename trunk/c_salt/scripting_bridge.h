@@ -14,6 +14,7 @@
 #include "boost/noncopyable.hpp"
 #include "boost/shared_ptr.hpp"
 #include "c_salt/callback.h"
+#include "c_salt/npapi/npapi_method_callback.h"
 
 namespace c_salt {
 
@@ -21,8 +22,6 @@ class BrowserBinding;
 class Instance;
 class MethodCallbackExecutor;
 class Module;
-class PropertyAccessorCallbackExecutor;
-class PropertyMutatorCallbackExecutor;
 class Type;
 
 // This class handles all the calls across the bridge to the browser via its
@@ -31,23 +30,14 @@ class Type;
 // AddPropertyNamed() to publish methods and properties that can be accessed
 // from the browser code.
 //
-// This class also maintains a dictionary of dynamically-added properties.
-// These properties are added at run-time by JavaScript; they can also be
-// dynamically removed when the browser calls RemoveProperty().  Properties
-// added via AddPropertyNamed() cannot be dynamically removed.
-
 // TODO(dspringer): |browser_binding_| gets replaced by pp::ScriptableObject
 // when Pepper v2 becomes available.
 
 class ScriptingBridge : public boost::noncopyable {
  public:
   // Shared pointer types used in the method and property maps.
-  typedef boost::shared_ptr<MethodCallbackExecutor>
-      SharedMethodCallbackExecutor;
-  typedef boost::shared_ptr<PropertyAccessorCallbackExecutor>
-      SharedPropertyAccessorCallbackExecutor;
-  typedef boost::shared_ptr<PropertyMutatorCallbackExecutor>
-      SharedPropertyMutatorCallbackExecutor;
+  typedef boost::shared_ptr<npapi::NPAPIMethodCallbackExecutor>
+      SharedNPAPIMethodCallbackExecutor;
 
   // Creates an instance of the scripting bridge object in the browser, with
   // a corresponding ScriptingBridge object instance.
@@ -114,20 +104,12 @@ class ScriptingBridge : public boost::noncopyable {
     if (method_name.empty() || method == NULL)
       return false;
     NPIdentifier method_id = NPN_GetStringIdentifier(method_name.c_str());
-    SharedMethodCallbackExecutor method_ptr(MakeMethodCallbackExecutor(handler,
-                                                                       method));
+    SharedNPAPIMethodCallbackExecutor method_ptr(
+      new npapi::NPAPIMethodCallbackExecutorImpl<Signature>(handler, method));
     method_dictionary_.insert(MethodDictionary::value_type(method_id,
                                                            method_ptr));
     return true;
   }
-
-  // Associate property accessor and mutator with |property_name|.  This
-  // publishes |property_name| to the JavaScript.  |property_accessor| must not
-  // be NULL; if |property_mutator| is NULL the property is considered
-  // read-only.
-  bool AddPropertyNamed(const char* property_name,
-      SharedPropertyAccessorCallbackExecutor property_accessor,
-      SharedPropertyMutatorCallbackExecutor property_mutator);
 
   // Make a copy of the browser binding object by asking the browser to retain
   // it.  Use this for the return value of functions that expect the retain
@@ -164,12 +146,9 @@ class ScriptingBridge : public boost::noncopyable {
   friend class BrowserBinding;
 
  private:
-  typedef std::map<NPIdentifier, SharedMethodCallbackExecutor> MethodDictionary;
-  typedef std::map<NPIdentifier, SharedPropertyAccessorCallbackExecutor>
-      PropertyAccessorDictionary;
-  typedef std::map<NPIdentifier, SharedPropertyMutatorCallbackExecutor>
-      PropertyMutatorDictionary;
-  typedef std::map<NPIdentifier, Type*> DynamicPropertyDictionary;
+  typedef std::map<NPIdentifier,
+                   SharedNPAPIMethodCallbackExecutor> MethodDictionary;
+  // typedef std::map<NPIdentifier, Property> PropertyDictionary;
 
   ScriptingBridge();  // Not implemented, do not use.
   explicit ScriptingBridge(NPObject* browser_binding);
@@ -192,9 +171,7 @@ class ScriptingBridge : public boost::noncopyable {
   mutable NPObject* window_object_;
 
   MethodDictionary method_dictionary_;
-  PropertyAccessorDictionary property_accessor_dictionary_;
-  PropertyMutatorDictionary property_mutator_dictionary_;
-  DynamicPropertyDictionary dynamic_property_dictionary_;
+  // PropertyDictionary property_dictionary_;
 };
 
 }  // namespace c_salt
