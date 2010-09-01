@@ -332,7 +332,7 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
 }  // namespace geometry
 }  // namespace ginsu
 
-#include "geometry/cgal_ext/partialds_validations_inl.h"
+#include "geometry/cgal_ext/partialds_inl.h"
 
 
 #endif  // GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_H_
