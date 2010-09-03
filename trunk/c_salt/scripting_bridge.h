@@ -15,6 +15,7 @@
 #include "boost/shared_ptr.hpp"
 #include "c_salt/callback.h"
 #include "c_salt/npapi/npapi_method_callback.h"
+#include "c_salt/property.h"
 
 namespace c_salt {
 
@@ -27,7 +28,7 @@ class Type;
 // This class handles all the calls across the bridge to the browser via its
 // browser binding object, |browser_binding_|.  Note that NPObjects cannot have
 // a vtable, hence the PIMPL pattern used here.  Use AddMethodNamed() and
-// AddPropertyNamed() to publish methods and properties that can be accessed
+// AddProperty() to publish methods and static properties that can be accessed
 // from the browser code.
 //
 // TODO(dspringer): |browser_binding_| gets replaced by pp::ScriptableObject
@@ -111,6 +112,14 @@ class ScriptingBridge : public boost::noncopyable {
     return true;
   }
 
+  // Adds |property| to the property dictionary.  These properties should all
+  // be declared as static, mutable properties (the default).  See
+  // c_salt/property.h for details.  Example usage:
+  //   SharedType value(new c_salt::Int32Type(42));
+  //   PropertyAttributes prop_attrib("myProp", value);
+  //   bridge->AddProperty(Property(prop_attribs));
+  bool AddProperty(const Property& property);
+
   // Make a copy of the browser binding object by asking the browser to retain
   // it.  Use this for the return value of functions that expect the retain
   // count to increment, such as NPP_GetScriptableInstance().
@@ -148,7 +157,7 @@ class ScriptingBridge : public boost::noncopyable {
  private:
   typedef std::map<NPIdentifier,
                    SharedNPAPIMethodCallbackExecutor> MethodDictionary;
-  // typedef std::map<NPIdentifier, Property> PropertyDictionary;
+  typedef std::map<NPIdentifier, Property> PropertyDictionary;
 
   ScriptingBridge();  // Not implemented, do not use.
   explicit ScriptingBridge(NPObject* browser_binding);
@@ -171,7 +180,7 @@ class ScriptingBridge : public boost::noncopyable {
   mutable NPObject* window_object_;
 
   MethodDictionary method_dictionary_;
-  // PropertyDictionary property_dictionary_;
+  PropertyDictionary property_dictionary_;
 };
 
 }  // namespace c_salt

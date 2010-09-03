@@ -28,7 +28,13 @@ Type* Type::CreateFromNPVariant(const NPVariant& np_var) {
     type = new DoubleType(np_var.value.doubleValue);
     break;
   case NPVariantType_String:
-    type = new StringType(np_var.value.stringValue);
+    {
+      const NPString& np_string = np_var.value.stringValue;
+      std::string string_value(
+          static_cast<const char*>(np_string.UTF8Characters),
+                                   np_string.UTF8Length);
+      type = new StringType(string_value);
+    }
     break;
   case NPVariantType_Object:
     type = new ObjectType(np_var.value.objectValue);
@@ -37,6 +43,35 @@ Type* Type::CreateFromNPVariant(const NPVariant& np_var) {
     break;
   }
   return type;
+}
+
+Type* Type::CreateFromTypeWithTypeId(const Type& type, TypeId type_id) {
+  Type* new_type = NULL;
+  switch (type_id) {
+  case kNullTypeId:
+    new_type = new Type(kNullTypeId);
+    break;
+  case kBoolTypeId:
+    new_type = new BoolType(type.bool_value());
+    break;
+  case kInt32TypeId:
+    new_type = new Int32Type(type.int32_value());
+    break;
+  case kDoubleTypeId:
+    new_type = new DoubleType(type.double_value());
+    break;
+  case kStringTypeId:
+    new_type = new StringType(type.string_value());
+    break;
+  case kObjectTypeId:
+    new_type = new ObjectType(type.object_value());
+    break;
+  default:
+    // NOTREACHED
+    assert(true);
+    break;
+  }
+  return new_type;
 }
 
 bool Type::ConvertToNPVariant(NPVariant* np_var) const {
@@ -95,6 +130,14 @@ int32_t Type::int32_value() const {
 
 double Type::double_value() const {
   return 0.0;
+}
+
+std::string Type::string_value() const {
+  return "";
+}
+
+NPObject* Type::object_value() const {
+  return NULL;
 }
 
 }  // namespace c_salt

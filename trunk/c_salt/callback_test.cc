@@ -11,8 +11,6 @@
 #include <vector>
 
 #include "boost/variant.hpp"
-#include "c_salt/instance.h"
-#include "c_salt/module.h"
 #include "c_salt/npapi/npvariant_converter.h"
 #include "c_salt/npapi/npapi_method_callback.h"
 #include "gmock/gmock.h"
@@ -504,26 +502,3 @@ TEST_F(CallbackTest, CheckConstRefParams) {
     InvokeAndCheckEquivalence(params, false, mock6);
   }
 }
-
-// The boilerplate to run as a c_salt NaCl module:
-//
-class MyInstance : public c_salt::Instance {
- public:
-  explicit MyInstance(const NPP& instance) : c_salt::Instance(instance) {}
-};
-
-// This is the connection to the c_salt Module machinery.  The Module singleton
-// calls CreateInstance to make new copies of each in-browser instance of
-// Ginsu.
-class TestModule : public c_salt::Module {
- public:
-  virtual c_salt::Instance* CreateInstance(const NPP& instance) {
-    return new MyInstance(instance);
-  }
-};
-
-namespace c_salt {
-Module* CreateModule() {
-  return new TestModule();
-}
-}  // namespace c_salt

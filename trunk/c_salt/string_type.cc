@@ -10,10 +10,9 @@
 
 namespace c_salt {
 
-StringType::StringType(const NPString& np_string)
+StringType::StringType(const std::string& string)
     : Type(kStringTypeId),
-      string_value_(static_cast<const char*>(np_string.UTF8Characters),
-                    np_string.UTF8Length) {
+      string_value_(string) {
 }
 
 StringType::~StringType() {
