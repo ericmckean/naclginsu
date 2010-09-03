@@ -5,6 +5,8 @@
 #include "c_salt/double_type.h"
 
 #include <cassert>
+#include <limits>
+#include <sstream>
 
 namespace c_salt {
 
@@ -23,6 +25,16 @@ bool DoubleType::ConvertToNPVariant(NPVariant* np_var) const {
     return false;
   DOUBLE_TO_NPVARIANT(double_value(), *np_var);
   return true;
+}
+
+std::string DoubleType::string_value() const {
+  std::stringstream str_val;
+  // Try to get enough places after the decimal so that converting back
+  // to a double type preserves as much of the precision as possible.
+  str_val.precision(std::numeric_limits<double>::digits10);
+  str_val.setf(std::ios::fixed, std::ios::floatfield);
+  str_val << double_value();
+  return str_val.str();
 }
 
 }  // namespace c_salt

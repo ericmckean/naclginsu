@@ -5,6 +5,8 @@
 #ifndef C_SALT_INT32_TYPE_H_
 #define C_SALT_INT32_TYPE_H_
 
+#include <string>
+
 #include "c_salt/type.h"
 
 namespace c_salt {
@@ -25,6 +27,8 @@ class Int32Type : public Type {
   virtual int32_t int32_value() const {
     return int32_value_;
   }
+
+  virtual std::string string_value() const;
 
  private:
   static const size_t kMaxStrLength;

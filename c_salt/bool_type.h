@@ -5,6 +5,8 @@
 #ifndef C_SALT_BOOL_TYPE_H_
 #define C_SALT_BOOL_TYPE_H_
 
+#include <string>
+
 #include "c_salt/type.h"
 
 namespace c_salt {
@@ -24,6 +26,10 @@ class BoolType : public Type {
 
   virtual bool bool_value() const {
     return bool_value_;
+  }
+
+  virtual std::string string_value() const {
+    return bool_value() ? "TRUE" : "FALSE";
   }
 
  private:

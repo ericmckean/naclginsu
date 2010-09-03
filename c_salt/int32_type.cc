@@ -5,6 +5,7 @@
 #include "c_salt/int32_type.h"
 
 #include <cassert>
+#include <sstream>
 
 namespace c_salt {
 
@@ -23,6 +24,12 @@ bool Int32Type::ConvertToNPVariant(NPVariant* np_var) const {
     return false;
   INT32_TO_NPVARIANT(int32_value(), *np_var);
   return true;
+}
+
+std::string Int32Type::string_value() const {
+  std::stringstream str_val;
+  str_val << int32_value();
+  return str_val.str();
 }
 
 }  // namespace c_salt

@@ -6,6 +6,7 @@
 #define C_SALT_DOUBLE_TYPE_H_
 
 #include <cmath>
+#include <string>
 
 #include "c_salt/type.h"
 
@@ -27,6 +28,8 @@ class DoubleType : public Type {
   virtual double double_value() const {
     return double_value_;
   }
+
+  virtual std::string string_value() const;
 
  private:
   static const size_t kMaxStrLength;

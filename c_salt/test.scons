@@ -17,7 +17,11 @@ if not os.path.exists(sel_ldr):
   sys.stderr.write('sel_ldr is not installed as part of the NaCl toolchain.\n')
   sys.exit(1)
 
-small_test_inputs = ['string_type_test.cc', 'callback_test.cc']
+small_test_inputs = ['c_salt_test_module.cc',
+                     'callback_test.cc',
+                     'string_type_test.cc',
+                     'type_test.cc',
+                    ]
 
 env.ComponentTestProgram(
     'small_c_salt_test',

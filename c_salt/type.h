@@ -14,7 +14,7 @@
 #include "boost/shared_ptr.hpp"
 
 // A polymorphic type container.  All the various number and string types
-// are derived from this basic class.
+// are derived from this basic class.  The value is immutable.
 
 namespace c_salt {
 
@@ -43,6 +43,10 @@ class Type : public boost::noncopyable {
   // ctors.
   static Type* CreateFromNPVariant(const NPVariant& np_var);
 
+  // Create a new Type form another Type, but change the underlying storage
+  // hint to be |type_id|.
+  static Type* CreateFromTypeWithTypeId(const Type& type, TypeId type_id);
+
   // Create a new TypeArray from the contents of |np_array|.  The caller is
   // responsible for deleting the resulting array.
   static TypeArray* CreateArrayFromNPVariant(const ScriptingBridge* bridge,
@@ -66,10 +70,11 @@ class Type : public boost::noncopyable {
   virtual bool bool_value() const;
   virtual int32_t int32_value() const;
   virtual double double_value() const;
-  // TODO(dspringer): This needs to return a const scoped_ptr<std::string>&;
-  // implement this when we can pull in boost or some other lib that has a
-  // scoped_ptr.
-  // virtual const std::string& string_value() const;
+  // Note that this returns a copy of the internal string: Use with caution!
+  // TODO(depsringer): We should probably consider handling string separately
+  // from the rest of the variants.
+  virtual std::string string_value() const;
+  virtual NPObject* object_value() const;
 
  private:
   uint32_t class_version_;

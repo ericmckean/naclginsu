@@ -21,8 +21,8 @@ class StringType : public Type {
   } StringCompareResult;
 
   // Ctor makes a copy of string in local memory.  If the string ever needs to
-  // be sent back to the browser, use CreateNPStringCopy();
-  explicit StringType(const NPString& np_string);
+  // be sent back to the browser, use ConvertToNPVariant();
+  explicit StringType(const std::string& string);
   virtual ~StringType();
 
   // Creates a copy of the internal string in the browser's memory which is
@@ -40,15 +40,11 @@ class StringType : public Type {
   virtual bool bool_value() const;
   virtual int32_t int32_value() const;
   virtual double double_value() const;
-
- private:
-  // Private accessor for the internal string, this is provided
-  // TODO(dspringer): This seems dangerous and wrong, but short of wrapping
-  // all of the std::string API this will have to do for now.
-  const std::string& string_value() const {
+  virtual std::string string_value() const {
     return string_value_;
   }
 
+ private:
   std::string string_value_;
 };
 

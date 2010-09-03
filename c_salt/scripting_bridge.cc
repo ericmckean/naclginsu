@@ -176,13 +176,13 @@ bool ScriptingBridge::LogToConsole(const std::string& msg) const {
   NPObject* window = window_object();
   if (window) {
     static const char* kConsoleAccessor = "top.console";
-    NPString console_stript = { 0 };
-    console_stript.UTF8Length = strlen(kConsoleAccessor);
-    console_stript.UTF8Characters = kConsoleAccessor;
+    NPString console_script = { 0 };
+    console_script.UTF8Length = strlen(kConsoleAccessor);
+    console_script.UTF8Characters = kConsoleAccessor;
     NPVariant console;
     if (NPN_Evaluate(GetBrowserInstance(),
                      window,
-                     &console_stript,
+                     &console_script,
                      &console)) {
       if (NPVARIANT_IS_OBJECT(console)) {
         // Convert the message to NPString;
@@ -231,6 +231,15 @@ bool ScriptingBridge::HasMethod(NPIdentifier name) {
   return i != method_dictionary_.end();
 }
 
+bool ScriptingBridge::AddProperty(const Property& property) {
+  if (property.name().empty())
+    return false;
+  NPIdentifier property_id = NPN_GetStringIdentifier(property.name().c_str());
+  property_dictionary_.insert(PropertyDictionary::value_type(property_id,
+                                                             property));
+  return true;
+}
+
 bool ScriptingBridge::HasProperty(NPIdentifier name) {
   // If |name| is not a property, then it *could* be a method.  Consider this
   // JavaScript:
@@ -253,62 +262,57 @@ bool ScriptingBridge::HasProperty(NPIdentifier name) {
 bool ScriptingBridge::GetProperty(NPIdentifier name,
                                   NPVariant *return_value) {
   VOID_TO_NPVARIANT(*return_value);
-  // TODO(dspringer, dmichael):  Fill in with new implementation based on
-  // dspringer's Property class.
-  // PropertyDictionary::const_iterator iter = property_dictionary_.find(name);
-  // if (iter != property_dictionary_.end()) {
-  //   iter->second->GetValue()->ConvertToNPVariant(return_value);
-  //   return true;
-  // }
+  PropertyDictionary::const_iterator iter = property_dictionary_.find(name);
+  if (iter != property_dictionary_.end()) {
+    iter->second.GetValue()->ConvertToNPVariant(return_value);
+    return true;
+  }
   return false;
 }
 
-bool ScriptingBridge::SetProperty(NPIdentifier name, const NPVariant& value) {
-  // TODO(dspringer, dmichael):  Fill in with new implementation based on
-  // dspringer's Property class.
-  // PropertyDictionary::iterator iter = property_dictionary_.find(name);
-  // if (iter != property_dictionary_.end()) {
-  //   if (iter->second.is_mutable()) {
-  //     if (iter->second.is_static()) {
-  //       // If it is static, force the type to stick.
-  //       // Note:  SetFromNPVariant doesn't exist;  either we should write it,
-  //       // or just wait for a different implementation of Property using a
-  //       // variant.
-  //       iter->second.GetValue()->SetFromNPVariant(return_value);
-  //     } else {
-  //       // It is dynamic;  set the type to whatever is indicated by the
-  //       // NPVariant.
-  //       iter->second.SetValue(Type::CreateFromNPVariant(value));
-  //     }
-  //     // It is mutable, and we've successfully set it now.
-  //     return true;
-  //   }
-  //   // It was not mutable, so disallow assignment.
-  //   return false;
-  // }
-  // // No property was found.  Create one and add it.  Note that properties
-  // // created by the browser are always dynamic and mutable.
-  // PropertyAttributes prop_attrs(name, Type::CreateFromNPVariant(value));
-  // Property prop(PropertyAttributes(name,
-  //                                  Type::CreateFromNPVariant(value))
-  //                                 .set_dynamic()
-  //                                 .set_mutable());
-  // property_dictionary_.insert(PropertyDictionary::value_type(name, prop));
-  // return true;
-  return false;
+bool ScriptingBridge::SetProperty(NPIdentifier name,
+                                  const NPVariant& np_value) {
+  PropertyDictionary::iterator iter = property_dictionary_.find(name);
+  if (iter != property_dictionary_.end()) {
+    if (iter->second.is_mutable()) {
+      if (iter->second.is_static()) {
+        // If it is static, force the type to stick.
+        Type* orig_value = Type::CreateFromNPVariant(np_value);
+        SharedType value(Type::CreateFromTypeWithTypeId(*orig_value,
+            iter->second.GetValue()->type_id()));
+        iter->second.SetValue(value);
+      } else {
+        // It is dynamic;  set the type to whatever is indicated by the
+        // NPVariant.
+        SharedType value(Type::CreateFromNPVariant(np_value));
+        iter->second.SetValue(value);
+      }
+      // It is mutable, and we've successfully set it now.
+      return true;
+    }
+    // It was not mutable, so disallow assignment.
+    return false;
+  }
+  // No property was found.  Create one and add it.  Note that properties
+  // created by the browser are always dynamic and mutable.
+  SharedType value(Type::CreateFromNPVariant(np_value));
+  const std::string str_name(NPN_UTF8FromIdentifier(name));
+  PropertyAttributes prop_attrs(str_name, value);
+  prop_attrs.set_dynamic().set_mutable();
+  property_dictionary_.insert(
+      PropertyDictionary::value_type(name, Property(prop_attrs)));
+  return true;
 }
 
 bool ScriptingBridge::RemoveProperty(NPIdentifier name) {
-  // TODO(dspringer, dmichael):  Fill in with new implementation based on
-  // dspringer's Property class.
-  // // If the property exists and is dynamic, delete it.
-  // PropertyDictionary::iterator iter = property_dictionary_.find(name);
-  // if (iter != property_dictionary_.end()) {
-  //   if (!iter->second.is_static()) {
-  //     property_dictionary_.erase(iter);
-  //     return true;
-  //   }
-  // }
+  // If the property exists and is dynamic, delete it.
+  PropertyDictionary::iterator iter = property_dictionary_.find(name);
+  if (iter != property_dictionary_.end()) {
+    if (!iter->second.is_static()) {
+      property_dictionary_.erase(iter);
+      return true;
+    }
+  }
   return false;
 }
 

@@ -42,4 +42,8 @@ double ObjectType::double_value() const {
   return 0.0;
 }
 
+std::string ObjectType::string_value() const {
+  return "";
+}
+
 }  // namespace c_salt

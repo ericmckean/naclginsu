@@ -5,6 +5,8 @@
 #ifndef C_SALT_OBJECT_TYPE_H_
 #define C_SALT_OBJECT_TYPE_H_
 
+#include <string>
+
 #include "c_salt/type.h"
 
 namespace c_salt {
@@ -22,8 +24,9 @@ class ObjectType : public Type {
   virtual bool bool_value() const;
   virtual int32_t int32_value() const;
   virtual double double_value() const;
+  virtual std::string string_value() const;
 
-  NPObject* object_value() const {
+  virtual NPObject* object_value() const {
     return np_object_;
   }
 
