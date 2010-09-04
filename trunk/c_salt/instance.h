@@ -72,6 +72,12 @@ class Instance : public boost::noncopyable {
     is_loaded_ = flag;
   }
 
+  // Access to window object if the scripting bridge is necessary for now in
+  // order to support NPAPI coding for subclasses.
+  const NPObject* WindowObject() const {
+    return scripting_bridge_->window_object();
+  }
+
  private:
   Instance();  // Not implemented, do not use.
 
