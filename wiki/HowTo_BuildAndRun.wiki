@@ -4,8 +4,8 @@
 
   # An installed copy of [http://dev.chromium.org/developers/how-tos/depottools depot_tools] for gclient and gcl
   # An installed copy of the [http://code.google.com/p/nativeclient-sdk/ Native Client SDK]
-  # Set the environment variable `NACL_SDK_BASE` to point into the toolchain of your !NaCl SDK installation, e.g.:<blockquote><code>
-export NACL_SDK_BASE=/usr/local/my_ldap/native_client_sdk/toolchain/mac_x86
+  # Set the environment variable `NACL_TOOLCHAIN_ROOT` to point into the toolchain of your !NaCl SDK installation, e.g.:<blockquote><code>
+export NACL_TOOLCHAIN_ROOT=/usr/local/my_ldap/native_client_sdk/toolchain/mac_x86
 </code></blockquote>
 
 = Building Ginsu =
