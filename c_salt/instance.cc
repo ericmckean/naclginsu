@@ -34,7 +34,7 @@ NPObject* Instance::CreateScriptingBridge() {
   if (!scripting_bridge_.get()) {
     // This is a synchronous call.
     scripting_bridge_.reset(
-        ScriptingBridge::CreateScriptingBridgeWithInstance(this));
+        ScriptingBridge::CreateScriptingBridgeWithInstance(*this));
     InitializeMethods(scripting_bridge_.get());
     InitializeProperties(scripting_bridge_.get());
   }

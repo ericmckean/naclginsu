@@ -89,6 +89,7 @@ inline PropertyAttributes& PropertyAttributes::set_mutable() {
 
 class Property {
  public:
+
   explicit Property(const PropertyAttributes& attributes);
 
   // Get the value of the property.  This triggers the observer's
