@@ -5,9 +5,6 @@
 #ifndef C_SALT_SCRIPTING_BRIDGE_H_
 #define C_SALT_SCRIPTING_BRIDGE_H_
 
-#include <nacl/nacl_npapi.h>
-#include <nacl/npruntime.h>
-
 #include <map>
 #include <string>
 
@@ -19,11 +16,14 @@
 
 namespace c_salt {
 
-class BrowserBinding;
 class Instance;
 class MethodCallbackExecutor;
 class Module;
 class Type;
+
+namespace npapi {
+class BrowserBinding;
+}  // namespace npapi
 
 // This class handles all the calls across the bridge to the browser via its
 // browser binding object, |browser_binding_|.  Note that NPObjects cannot have
@@ -43,7 +43,7 @@ class ScriptingBridge : public boost::noncopyable {
   // Creates an instance of the scripting bridge object in the browser, with
   // a corresponding ScriptingBridge object instance.
   static ScriptingBridge* CreateScriptingBridgeWithInstance(
-      const Instance* instance);
+      const Instance& instance);
   virtual ~ScriptingBridge();
 
   // Causes |method_name| to be published as a method that can be called by
@@ -104,10 +104,9 @@ class ScriptingBridge : public boost::noncopyable {
                       Signature method) {
     if (method_name.empty() || method == NULL)
       return false;
-    NPIdentifier method_id = NPN_GetStringIdentifier(method_name.c_str());
     SharedNPAPIMethodCallbackExecutor method_ptr(
       new npapi::NPAPIMethodCallbackExecutorImpl<Signature>(handler, method));
-    method_dictionary_.insert(MethodDictionary::value_type(method_id,
+    method_dictionary_.insert(MethodDictionary::value_type(method_name,
                                                            method_ptr));
     return true;
   }
@@ -119,15 +118,20 @@ class ScriptingBridge : public boost::noncopyable {
   //   PropertyAttributes prop_attrib("myProp", value);
   //   bridge->AddProperty(Property(prop_attribs));
   bool AddProperty(const Property& property);
+  // Return a Property by value so this can be made thread-safe.  Note that
+  // this method creates a Type and returns that new instance, the caller is
+  // responsible for freeing it.  Sets |value| to point to a NULL Type and
+  // returns |false| if no such property exists.
+  bool GetValueForPropertyNamed(const std::string& name, Type** value) const;
+  // Sets the value of the property associated with |name|.  Returns |false|
+  // if no such property exists.
+  bool SetValueForPropertyNamed(const std::string& name, const Type& value);
+
 
   // Make a copy of the browser binding object by asking the browser to retain
   // it.  Use this for the return value of functions that expect the retain
   // count to increment, such as NPP_GetScriptableInstance().
-  NPObject* CopyBrowserBinding() {
-    if (browser_binding_)
-      NPN_RetainObject(browser_binding_);
-    return browser_binding_;
-  }
+  NPObject* CopyBrowserBinding();
 
   // Release the browser binding object.  Note that this *might* cause |this|
   // to get deleted, if the ref count of the browser binding object falls to 0.
@@ -138,10 +142,10 @@ class ScriptingBridge : public boost::noncopyable {
   bool LogToConsole(const std::string& msg) const;
 
   // Return the browser instance associated with this ScriptingBridge.
-  const NPP GetBrowserInstance() const;
+  const NPP& GetBrowserInstance() const;
 
   // Accessors.
-  const NPObject* browser_binding() const {
+  const npapi::BrowserBinding* browser_binding() const {
     return browser_binding_;
   }
 
@@ -152,31 +156,62 @@ class ScriptingBridge : public boost::noncopyable {
 
   // A hidden class that wraps the NPObject, preserving its memory layout
   // for the browser.
-  friend class BrowserBinding;
+  friend class npapi::BrowserBinding;
 
  private:
-  typedef std::map<NPIdentifier,
+  typedef std::map<std::string,
                    SharedNPAPIMethodCallbackExecutor> MethodDictionary;
-  typedef std::map<NPIdentifier, Property> PropertyDictionary;
+  typedef std::map<std::string, Property> PropertyDictionary;
 
   ScriptingBridge();  // Not implemented, do not use.
-  explicit ScriptingBridge(NPObject* browser_binding);
+  explicit ScriptingBridge(npapi::BrowserBinding* browser_binding);
 
-  // NPAPI support methods.
-  bool HasMethod(NPIdentifier name);
+  // Support for browser-exposed methods.  The browser proxy (a private,
+  // platform-specific implementation) invokes a method by first calling
+  // HasScriptMethod(), and if that returns |true|, calls InvokeScriptMethod().
+  // The browser proxy is responsible for all the variant marshaling from
+  // platform-specific types (for example NPVariant or pp::Var) into c_salt
+  // Types.
+  bool HasScriptMethod(const std::string& name);
+  // TODO(dspringer,dmichael): Migrate this code so it doesn't have NPAPI
+  // stuff in it.  This is kind of a really huge refactoring job, which touches
+  // the callback machinery and method invoking stuff and all kinds of things.
+  bool InvokeScriptMethod(const std::string& method_name,
+                          const NPVariant* args,
+                          uint32_t arg_count,
+                          NPVariant* return_value);
+
+  // Support for browser-exposed properties.  The browser proxy (which is
+  // platform-specific) first calls HasProperty() before getting or setting;
+  // the Get or Set is performed only if HasProperty() returns |true|.  The
+  // brwoser proxy is responsible for all the variant marshaling.
+  bool HasScriptProperty(const std::string& name);
+  // Set |return_value| to the value associated with property |name|.  If
+  // property |name| doesn't exist, then set |return_value| to the null type
+  // and return |false|.
+  bool GetScriptProperty(const std::string& name,
+                         SharedType return_value) const;
+  // If |name| is associated with a static property, return that value.  Else,
+  // if there is no property associated with |name|, add it as a dynamic
+  // property.  See property.h for definitions and more details.
+  bool SetScriptProperty(const std::string& name, const SharedType& value);
+  // This succeeds only if |name| is associated with a dynamic property.
+  bool RemoveScriptProperty(const std::string& name);
+
+  // This is called by some browser proxies when all references to a proxy
+  // object have been deallocated, but the proxy's ref count has not gone to 0.
+  // It's kind of an anti-leak clean-up mechanism.
   void Invalidate();
-  bool Invoke(NPIdentifier name,
-              const NPVariant* args,
-              uint32_t arg_count,
-              NPVariant* return_value);
-  bool HasProperty(NPIdentifier name);
-  bool GetProperty(NPIdentifier name, NPVariant* return_value);
-  bool SetProperty(NPIdentifier name, const NPVariant& return_value);
-  bool RemoveProperty(NPIdentifier name);
 
-  NPObject* browser_binding_;
+  // This is a weak reference.  Some kind of smart_ptr would be useful here,
+  // but the |browser_binding_| instance is actually a proxy object that is
+  // managed by the browser.  In addition, this pointer is actually a circular
+  // reference to the BrowserBinding object that owns this ScriptingBridge
+  // instance.
+  npapi::BrowserBinding* browser_binding_;
   // |window_object_| is mutable so that the const accessor can create it
   // lazily.
+  // TODO(dspringer): move this into BrowserBinding.
   mutable NPObject* window_object_;
 
   MethodDictionary method_dictionary_;

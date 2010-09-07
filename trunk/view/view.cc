@@ -68,7 +68,7 @@ bool View::SetCameraOrientation(double orientation) {
 }
 
 c_salt::ScriptingBridge* View::CreateScriptingBridgeWithInstance(
-      const c_salt::Instance* instance) {
+      const c_salt::Instance& instance) {
   if (!scripting_bridge_.get()) {
     // Note that CreateScriptingBridgeWithInstance() performs a synchronous
     // rendezvous with the browser. If it returns non-NULL, |scripting_bridge_|

@@ -89,7 +89,7 @@ void Ginsu::TickCallback(void* data) {
 }
 
 NPObject* Ginsu::GetView() {
-  ScriptingBridge* view_bridge = view_->CreateScriptingBridgeWithInstance(this);
+  ScriptingBridge* view_bridge = view_->CreateScriptingBridgeWithInstance(*this);
   return view_bridge->CopyBrowserBinding();
 }
 

@@ -36,7 +36,7 @@ class View {
   // ScriptingBridge already exists, then ask the browser to ref count it and
   // return the ref counted instance.
   c_salt::ScriptingBridge* CreateScriptingBridgeWithInstance(
-      const c_salt::Instance* instance);
+      const c_salt::Instance& instance);
 
   // These are exposed to the browser via |scripting_bridge_|.
   // GetCameraOrientation returns a std::vector<double> of 4 doubles which
