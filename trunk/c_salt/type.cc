@@ -68,7 +68,7 @@ Type* Type::CreateFromTypeWithTypeId(const Type& type, TypeId type_id) {
     break;
   default:
     // NOTREACHED
-    assert(true);
+    assert(false);
     break;
   }
   return new_type;

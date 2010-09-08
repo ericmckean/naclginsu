@@ -1,23 +1,29 @@
 Welcome to the Ginsu
 
-Updated: 29 June 2010
+Updated: 7 Sept 2010
 
-If you want to contribute to Ginsu development, please follow the instructions below.
-Ginsu development is done primarily on Linux, either 32-bit or 64-bit.
+If you want to contribute to Ginsu development, please follow the instructions
+below.
 
-DEVLEOPMENT ENVIRONMENT
-Download the Native Client SDK from
-http://build.chromium.org/buildbot/nacl_archive/nacl_new_sdk/naclsdk_linux.tgz and
-unpack at any desired location <naclsdk_root>.
-Set environment variable NACL_SDK_BASE so the toolchain can be found by the
-development environment.  It should be set to <naclsdk_root>/toolchain/linux_x86
-This can be done in the command line as follows.
+DEVELOPMENT ENVIRONMENT
+Download the Native Client SDK from the link here:
+  http://code.google.com/p/nativeclient-sdk/wiki/HowTo_GetStarted
+and unpack at any desired location <naclsdk_root>.
 
-  export NACL_SDK_BASE=<naclsdk_root>/toolchain/linux_x86
+Set environment variable NACL_TOOLCHAIN_ROOT so the toolchain can be found by
+the development environment.  It should be set to
+  <naclsdk_root>/toolchain/<platform>_x86
+Where <platform> is mac, linux, or win.  For example, you can set
+NACL_TOOLCHAIN_ROOT for lunix development like this:
+  export NACL_TOOLCHAIN_ROOT=/usr/local/myldap/toolchain/linux_x86
+
+Also set GINSU_ROOT to the root of your Ginsu source view:
+  export GINSU_ROOT=/usr/local/myldap/ginsu/trunk
+(Note: the trailing 'trunk' in the pathname is important).
 
 Ginsu depends on the following packages from NaClPorts:
   boost
-  OpenScegeGraph
+  OpenSceneGraph
 
 Install the packages Ginsu into the toolchain using a python script in the Ginsu
 project:

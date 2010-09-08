@@ -10,13 +10,13 @@
 import os
 import sys
 
-if os.getenv('NACL_SDK_BASE') is None:
-  sys.stderr.write('NACL_SDK_BASE must be defined as the root directory of NaCl'
-                   'toolchain.\n')
+if os.getenv('NACL_TOOLCHAIN_ROOT') is None:
+  sys.stderr.write('NACL_TOOLCHAIN_ROOT must be defined as the root directory'
+                   ' of NaCl toolchain.\n')
   sys.exit(1)
 
 # Check to make sure the necessary naclports packages are installed.
-naclports_include = os.path.join(os.getenv('NACL_SDK_BASE'),
+naclports_include = os.path.join(os.getenv('NACL_TOOLCHAIN_ROOT'),
                                  'nacl', 'usr', 'include')
 packages = ['boost', 'osg', 'gmock', 'gtest']
 for p in packages:
@@ -45,7 +45,7 @@ base_env = Environment(
     'BOOST_ALL_NO_LIB',
     'CGAL_NO_AUTOLINK_CGAL'
   ],
-  NACL_SDK_BASE = os.getenv('NACL_SDK_BASE')
+  NACL_TOOLCHAIN_ROOT = os.getenv('NACL_TOOLCHAIN_ROOT')
 )
 
 #-----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ nacl_env = base_env.Clone(
             'google_nacl_npruntime',
             'pthread',
             'srpc'],
-    NATIVE_CLIENT_SDK_DEFAULT_MODE='custom:' + os.getenv('NACL_SDK_BASE'),
+    NATIVE_CLIENT_SDK_DEFAULT_MODE='custom:' + os.getenv('NACL_TOOLCHAIN_ROOT'),
     CFLAGS = ['-m32'],
 )
 
@@ -84,7 +84,7 @@ nacl_test_env = nacl_env.Clone(
       '$MAIN_DIR/geometry/test.scons',
     ],
     BUILD_TYPE_DESCRIPTION = 'Tests',
-    COMPONENT_TEST_CMDLINE = '$NACL_SDK_BASE/bin/sel_ldr $PROGRAM_NAME',
+    COMPONENT_TEST_CMDLINE = '$NACL_TOOLCHAIN_ROOT/bin/sel_ldr $PROGRAM_NAME',
     LIBS = ['gmock', 'gtest', 'nosys', 'pthread', 'srpc',
             'c_salt', 'google_nacl_npruntime', 'google_nacl_imc',
             'google_nacl_pgl', 'google_nacl_gpu']
