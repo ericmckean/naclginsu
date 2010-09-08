@@ -8,6 +8,100 @@
 namespace ginsu {
 namespace geometry {
 
+// Euler operators
+
+// Basic (non-topological) make<Item> and Destroy<Item> functions.
+template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
+    PartialDS<TraitsType>::MakeVertex() {
+  return MakeItem<VertexHandle, VertexList>(&vertices_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyVertex(VertexHandle v) {
+  DestroyItem<VertexHandle, VertexList>(v, &vertices_);
+}
+
+template <class TraitsType> typename PartialDS<TraitsType>::PVertexHandle
+    PartialDS<TraitsType>::MakePVertex() {
+  return MakeItem<PVertexHandle, PVertexList>(&pvertices_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyPVertex(PVertexHandle v) {
+  DestroyItem<PVertexHandle, PVertexList>(v, &pvertices_);
+}
+
+template <class TraitsType>
+typename PartialDS<TraitsType>::EdgeHandle PartialDS<TraitsType>::MakeEdge() {
+  return MakeItem<EdgeHandle, EdgeList>(&edges_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyEdge(EdgeHandle e) {
+  DestroyItem<EdgeHandle, EdgeList>(e, &edges_);
+}
+
+template <class TraitsType>
+typename PartialDS<TraitsType>::PEdgeHandle PartialDS<TraitsType>::MakePEdge() {
+  return MakeItem<PEdgeHandle, PEdgeList>(&pedges_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyPEdge(PEdgeHandle e) {
+  DestroyItem<PEdgeHandle, PEdgeList>(e, &pedges_);
+}
+
+template <class TraitsType>
+typename PartialDS<TraitsType>::FaceHandle PartialDS<TraitsType>::MakeFace() {
+  return MakeItem<FaceHandle, FaceList>(&faces_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyFace(FaceHandle f) {
+  DestroyItem<FaceHandle, FaceList>(f, &faces_);
+}
+
+template <class TraitsType>
+typename PartialDS<TraitsType>::PFaceHandle PartialDS<TraitsType>::MakePFace() {
+  return MakeItem<PFaceHandle, PFaceList>(&pfaces_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyPFace(PFaceHandle f) {
+  DestroyItem<PFaceHandle, PFaceList>(f, &pfaces_);
+}
+
+template <class TraitsType>
+typename PartialDS<TraitsType>::LoopHandle PartialDS<TraitsType>::MakeLoop() {
+  return MakeItem<LoopHandle, LoopList>(&loops_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyLoop(LoopHandle l) {
+  DestroyItem<LoopHandle, LoopList>(l, &loops_);
+}
+
+template <class TraitsType>
+typename PartialDS<TraitsType>::ShellHandle PartialDS<TraitsType>::MakeShell() {
+  return MakeItem<ShellHandle, ShellList>(&shells_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyShell(ShellHandle s) {
+  DestroyItem<ShellHandle, ShellList>(s, &shells_);
+}
+
+template <class TraitsType> typename PartialDS<TraitsType>::RegionHandle
+    PartialDS<TraitsType>::MakeRegion() {
+  return MakeItem<RegionHandle, RegionList>(&regions_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyRegion(RegionHandle r) {
+  DestroyItem<RegionHandle, RegionList>(r, &regions_);
+}
+
+// Validation functions.
 template <class TraitsType>
 bool PartialDS<TraitsType>::ValidateVertex(VertexConstHandle v) {
 #if defined(_DEBUG) || defined(_GEOM_TESTS)
@@ -55,6 +149,44 @@ bool PartialDS<TraitsType>::ValidatePVertex(PVertexConstHandle pv) {
     assert(!"*** ValidatePVertex: pvertex has NULL child-vertex pointer. ***");
     return false;
   }
+#endif
+  return true;
+}
+
+template <class TraitsType>
+bool PartialDS<TraitsType>::ValidateEdge(EdgeConstHandle e) {
+#if defined(_DEBUG) || defined(_GEOM_TESTS)
+  // Check that parent pedge points down to this edge.
+  PEdgeConstHandle parent_pedge = e->parent_pedge();
+  if (parent_pedge == NULL) {
+    assert(!"*** ValidateEdge: edge has NULL parent-pedge pointer. ***");
+    return false;
+  }
+  if (parent_pedge->child_edge() != e) {
+    assert(!"*** ValidateEdge: parent pedge does not point to edge. ***");
+    return false;
+  }
+  // Check that start and end pvertex point to this edge.
+  PVertexConstHandle v = start_vertex();
+  if (v == NULL || v->parent_edge() != e) {
+    assert(!"*** ValidateEdge: start vertex is null or points"
+            " to wrong edge. ***");
+    return false;
+  }
+  v = end_vertex();
+  if (v == NULL || v->parent_edge() != e) {
+    assert(!"*** ValidateEdge: end vertex is null or points"
+            " to wrong edge. ***");
+    return false;
+  }
+#endif
+  return true;
+}
+
+template <class TraitsType>
+bool PartialDS<TraitsType>::ValidatePEdge(PEdgeConstHandle pe) {
+#if defined(_DEBUG) || defined(_GEOM_TESTS)
+  // TODO(gwink): implement this.
 #endif
   return true;
 }
