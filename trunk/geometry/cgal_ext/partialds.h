@@ -221,68 +221,33 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::EdgeHandle                 EdgeHandle;
   typedef typename Types::EdgeConstHandle            EdgeConstHandle;
   typedef typename Types::PEdgeHandle                PEdgeHandle;
+  typedef typename Types::PEdgeConstHandle           PEdgeConstHandle;
   typedef typename Types::FaceHandle                 FaceHandle;
   typedef typename Types::PFaceHandle                PFaceHandle;
   typedef typename Types::LoopHandle                 LoopHandle;
   typedef typename Types::ShellHandle                ShellHandle;
   typedef typename Types::RegionHandle               RegionHandle;
 
-  // Use these function to allocate and destroy Partial DS items. The Make
-  // function both allocate an item and insert it into the corresponding list.
-  VertexHandle MakeVertex() {
-    return MakeItem<VertexHandle, VertexList>(&vertices_);
-  }
-  void DestroyVertex(VertexHandle v) {
-    DestroyItem<VertexHandle, VertexList>(v, &vertices_);
-  }
-  PVertexHandle MakePVertex() {
-    return MakeItem<PVertexHandle, PVertexList>(&pvertices_);
-  }
-  void DestroyPVertex(PVertexHandle v) {
-    DestroyItem<PVertexHandle, PVertexList>(v, &pvertices_);
-  }
-  EdgeHandle MakeEdge() {
-    return MakeItem<EdgeHandle, EdgeList>(&edges_);
-  }
-  void DestroyEdge(EdgeHandle e) {
-    DestroyItem<EdgeHandle, EdgeList>(e, &edges_);
-  }
-  PEdgeHandle MakePEdge() {
-    return MakeItem<PEdgeHandle, PEdgeList>(&pedges_);
-  }
-  void DestroyPEdge(PEdgeHandle e) {
-    DestroyItem<PEdgeHandle, PEdgeList>(e, &pedges_);
-  }
-  FaceHandle MakeFace() {
-    return MakeItem<FaceHandle, FaceList>(&faces_);
-  }
-  void DestroyFace(FaceHandle f) {
-    DestroyItem<FaceHandle, FaceList>(f, &faces_);
-  }
-  PFaceHandle MakePFace() {
-    return MakeItem<PFaceHandle, PFaceList>(&pfaces_);
-  }
-  void DestroyPFace(PFaceHandle f) {
-    DestroyItem<PFaceHandle, PFaceList>(f, &pfaces_);
-  }
-  LoopHandle MakeLoop() {
-    return MakeItem<LoopHandle, LoopList>(&loops_);
-  }
-  void DestroyLoop(LoopHandle l) {
-    DestroyItem<LoopHandle, LoopList>(l, &loops_);
-  }
-  ShellHandle MakeShell() {
-    return MakeItem<ShellHandle, ShellList>(&shells_);
-  }
-  void DestroyShell(ShellHandle s) {
-    DestroyItem<ShellHandle, ShellList>(s, &shells_);
-  }
-  RegionHandle MakeRegion() {
-    return MakeItem<RegionHandle, RegionList>(&regions_);
-  }
-  void DestroyRegion(RegionHandle r) {
-    DestroyItem<RegionHandle, RegionList>(r, &regions_);
-  }
+  // Basic Make<Item> and Destroy<Item> functions. The functions only allocate
+  // the corresponding item. They do not affect the topology.
+  VertexHandle MakeVertex();
+  void DestroyVertex(VertexHandle v);
+  PVertexHandle MakePVertex();
+  void DestroyPVertex(PVertexHandle v);
+  EdgeHandle MakeEdge();
+  void DestroyEdge(EdgeHandle e);
+  PEdgeHandle MakePEdge();
+  void DestroyPEdge(PEdgeHandle e);
+  FaceHandle MakeFace();
+  void DestroyFace(FaceHandle f);
+  PFaceHandle MakePFace();
+  void DestroyPFace(PFaceHandle f);
+  LoopHandle MakeLoop();
+  void DestroyLoop(LoopHandle l);
+  ShellHandle MakeShell();
+  void DestroyShell(ShellHandle s);
+  RegionHandle MakeRegion();
+  void DestroyRegion(RegionHandle r);
   
   // List accessors, to iterate over these vertices, edges, etc. E.g. to display
   // the geometry.
@@ -295,6 +260,8 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   // Validation functions; no-op unless either _DEBUG or _GEOM_TESTS id defined.
   static bool ValidateVertex(VertexConstHandle v);
   static bool ValidatePVertex(PVertexConstHandle pv);
+  static bool ValidateEdge(EdgeConstHandle e);
+  static bool ValidatePEdge(PEdgeConstHandle pe);
 
  private:
   // Template function for making and destroying PartialDS items.
