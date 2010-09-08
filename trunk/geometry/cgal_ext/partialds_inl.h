@@ -5,6 +5,8 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_VALIDATIONS_INL_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_VALIDATIONS_INL_H_
 
+#include "geometry/cgal_ext/partialdspedge.h"
+
 namespace ginsu {
 namespace geometry {
 
@@ -167,13 +169,13 @@ bool PartialDS<TraitsType>::ValidateEdge(EdgeConstHandle e) {
     return false;
   }
   // Check that start and end pvertex point to this edge.
-  PVertexConstHandle v = start_vertex();
+  PVertexConstHandle v = parent_pedge->start_vertex();
   if (v == NULL || v->parent_edge() != e) {
     assert(!"*** ValidateEdge: start vertex is null or points"
             " to wrong edge. ***");
     return false;
   }
-  v = end_vertex();
+  v = parent_pedge->end_vertex();
   if (v == NULL || v->parent_edge() != e) {
     assert(!"*** ValidateEdge: end vertex is null or points"
             " to wrong edge. ***");
