@@ -12,7 +12,7 @@ import sys
 
 Import('env')
 
-sel_ldr = os.path.join(env['NACL_SDK_BASE'], 'bin', 'sel_ldr')
+sel_ldr = os.path.join(env['NACL_TOOLCHAIN_ROOT'], 'bin', 'sel_ldr')
 if not os.path.exists(sel_ldr):
   sys.stderr.write('sel_ldr is not installed as part of the NaCl toolchain.\n')
   sys.exit(1)

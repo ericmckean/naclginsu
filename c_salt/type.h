@@ -13,12 +13,15 @@
 #include "boost/noncopyable.hpp"
 #include "boost/shared_ptr.hpp"
 
-// A polymorphic type container.  All the various number and string types
-// are derived from this basic class.  The value is immutable.
-
 namespace c_salt {
 
 class ScriptingBridge;
+
+// A polymorphic type container.  All the various number and string types
+// are derived from this basic class.  The value is immutable.  This class
+// is not copyable because there are ref counting problems when copying an
+// ObjectType (the internal storage of an ObjectType is managed by the
+// browser).
 
 class Type : public boost::noncopyable {
  public:
@@ -43,8 +46,11 @@ class Type : public boost::noncopyable {
   // ctors.
   static Type* CreateFromNPVariant(const NPVariant& np_var);
 
-  // Create a new Type form another Type, but change the underlying storage
-  // hint to be |type_id|.
+  // Create a new Type from another Type, but change the underlying storage
+  // hint to be |type_id|.  Note that you can use this to make a properly
+  // ref-counted (if appropriate) copy of a Type by supplying the source
+  // Type's type_id(); e.g.:
+  //   Type* copy_of_t = Type::CreateFromTypeWithTypeId(t, t.type_id());
   static Type* CreateFromTypeWithTypeId(const Type& type, TypeId type_id);
 
   // Create a new TypeArray from the contents of |np_array|.  The caller is
@@ -71,7 +77,7 @@ class Type : public boost::noncopyable {
   virtual int32_t int32_value() const;
   virtual double double_value() const;
   // Note that this returns a copy of the internal string: Use with caution!
-  // TODO(depsringer): We should probably consider handling string separately
+  // TODO(dspringer): We should probably consider handling string separately
   // from the rest of the variants.
   virtual std::string string_value() const;
   virtual NPObject* object_value() const;

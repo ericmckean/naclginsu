@@ -15,12 +15,12 @@ import shutil
 import subprocess
 
 def setup_packages():
-  if os.getenv('NACL_SDK_BASE') is None:
-    raise AssertionError, "NACL_SDK_BASE must be defined."
+  if os.getenv('NACL_TOOLCHAIN_ROOT') is None:
+    raise AssertionError, "NACL_TOOLCHAIN_ROOT must be defined."
   # get the packages from svn
   subprocess.call(["svn",
                    "checkout",
-                   "http://naclports.googlecode.com/svn/trunk@50",
+                   "http://naclports.googlecode.com/svn/trunk@106",
                    ".naclports"])
   root = os.getcwd()
   path = os.path.join(root, ".naclports", "src", "packages", "scripts")
