@@ -128,7 +128,11 @@ bool ScriptingBridge::InvokeScriptMethod(const std::string& method_name,
   MethodDictionary::iterator i;
   i = method_dictionary_.find(method_name);
   if (i != method_dictionary_.end()) {
-    return (*i->second).Execute(args, arg_count, return_value);
+    return (*i->second).Execute(args,
+                                arg_count,
+                                return_value,
+                                GetBrowserInstance(),
+                                window_object());
   }
   return false;
 }

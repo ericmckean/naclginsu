@@ -24,7 +24,9 @@ class NPAPIMethodCallbackExecutor {
 
   virtual bool Execute(const NPVariant* args,
                        uint32_t arg_count,
-                       NPVariant* return_value) = 0;
+                       NPVariant* return_value,
+                       NPP npp,
+                       NPObject* window_object) = 0;
 };
 
 // NPAPIMethodCallbackExecutorImpl is a class template that implements the
@@ -44,8 +46,10 @@ class NPAPIMethodCallbackExecutorImpl : public NPAPIMethodCallbackExecutor {
 
   virtual bool Execute(const NPVariant* args,
                        uint32_t arg_count,
-                       NPVariant* return_value) {
-    NPVariantConverter converter;
+                       NPVariant* return_value,
+                       NPP npp,
+                       NPObject* window_object) {
+    NPVariantConverter converter(npp, window_object);
     return function_invoker_.Invoke(args,
                                     args+arg_count,
                                     return_value,
