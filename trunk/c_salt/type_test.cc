@@ -9,7 +9,7 @@
 #include <limits>
 #include <string>
 
-#include "c_salt/booL_type.h"
+#include "c_salt/bool_type.h"
 #include "c_salt/double_type.h"
 #include "c_salt/int32_type.h"
 #include "c_salt/object_type.h"
