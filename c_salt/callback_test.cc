@@ -28,14 +28,7 @@ class VariantPrintVisitor : public boost::static_visitor<void> {
  public:
   explicit VariantPrintVisitor(std::ostream* stream) : stream_(stream) {}
   void operator()(void* ptr) {
-    // Save the format of the stream before setting it to print hex
-    std::ios_base::fmtflags saved_format_flags(stream_->flags());
-    *stream_ << "Pointer: "
-             << std::showbase  // Prefix integral types with their base.
-             << std::hex       // Show integral types in hex.
-             << reinterpret_cast<unsigned int>(ptr);
-    // Reset the format flags.
-    stream_->flags(saved_format_flags);
+    *stream_ << "Pointer: " << ptr;
   }
   void operator()(bool b) {
     *stream_ << "Bool: " << (b ? "true" : "false");

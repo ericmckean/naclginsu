@@ -11,6 +11,10 @@
 namespace c_salt {
 namespace npapi {
 
+NPVariantConverter::NPVariantConverter(NPP instance, NPObject* window_object)
+  : instance_(instance),
+    window_object_(window_object) {}
+
 void NPVariantConverter::operator() (NPVariant* var, const NPObject* value) {
   // Would like to use const NPObject*, but the macro doesn't support it.
   // Try to maintain const-correctness in PPAPI.
