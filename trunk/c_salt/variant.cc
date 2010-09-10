@@ -9,7 +9,6 @@
 
 namespace c_salt {
 
-// TODO(dspringer): implement this stuff.
 Variant::~Variant() {
 }
 

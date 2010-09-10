@@ -9,6 +9,7 @@
 
 #include "boost/shared_ptr.hpp"
 #include "boost/variant.hpp"
+#include "c_salt/converting_visitor.h"
 
 namespace c_salt {
 
@@ -73,7 +74,7 @@ class Variant {
   //    %g is used.
   //  Convert bool to number: true -> 1, false -> 0.
   //  Convert number to bool: non-0 -> true, 0 within epsilon -> false.
-  //  Convert bool to string: true -> "TRUE", false -> "FALSE".
+  //  Convert bool to string: true -> "true", false -> "false".
   //  Convert string to bool: if the string starts with 't', 'y' or '1' (case
   //    insensitive) -> true; if it starts with anything else -> false.
   //  Convert string to number: any format recognized by strol() or strtod()
@@ -81,7 +82,10 @@ class Variant {
   //    converted to a corresponding numeric value; strings that cannot be
   //    converted this way produce a 0.
   template <class T>
-  T GetValue() const;
+  T GetValue() const {
+    ConvertingVisitor<T> visitor;
+    return boost::apply_visitor(visitor, value_);
+  }
 
   // TODO(dspringer, dmichael): Add other more specific accessors that give
   // more information about possible conversions and conversion errors.
@@ -101,4 +105,4 @@ class Variant {
 
 }  // namespace c_salt
 
-#endif  // C_SALT_VARIANT_H_-
+#endif  // C_SALT_VARIANT_H_
