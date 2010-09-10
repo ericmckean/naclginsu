@@ -47,12 +47,14 @@ class Variant {
   // string's memory.
   explicit Variant(const std::string& string_value)
       : variant_type_(kStringVariantType), value_(string_value) {}
+  explicit Variant(const char* string_value)
+      : variant_type_(kStringVariantType), value_(string_value) {}
   // Hold a shared reference to |object_value|.
   explicit Variant(const boost::shared_ptr<ScriptingBridge>& object_value)
       : variant_type_(kObjectVariantType), value_(object_value) {}
 
   // TODO(dspringer,dmichael): It might be worthwhile to make a no-copy
-  // version of the std::string ctoo variant(), but that requires a lot more
+  // version of the std::string ctor variant(), but that requires a lot more
   // thought.  For reference, see, e.g. CFStringCreateWithCharactersNoCopy()
   // here:
   // http://developer.apple.com/library/mac/#documentation/CoreFoundation
@@ -80,12 +82,27 @@ class Variant {
   //  Convert string to number: any format recognized by strol() or strtod()
   //    (see the POSIX man mages for these functions for more details) is
   //    converted to a corresponding numeric value; strings that cannot be
-  //    converted this way produce a 0.
+  //    converted this way produce a 0 (the double value is exactly 0.0).
   template <class T>
   T GetValue() const {
     ConvertingVisitor<T> visitor;
     return boost::apply_visitor(visitor, value_);
   }
+
+  // Convenience wrappers.
+  virtual bool BoolValue() const {
+    return GetValue<bool>();
+  }
+  virtual int32_t Int32Value() const {
+    return GetValue<int32_t>();
+  }
+  virtual double DoubleValue() const {
+    return GetValue<double>();
+  }
+  virtual std::string StringValue() const {
+    return GetValue<std::string>();
+  }
+  // TODO(dspringer, dmichael): ObjectValue()?
 
   // TODO(dspringer, dmichael): Add other more specific accessors that give
   // more information about possible conversions and conversion errors.
@@ -102,6 +119,8 @@ class Variant {
                  std::string,
                  boost::shared_ptr<ScriptingBridge> > value_;
 };
+
+typedef boost::shared_ptr<Variant> SharedVariant;
 
 }  // namespace c_salt
 
