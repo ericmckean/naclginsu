@@ -10,7 +10,6 @@ Import('env')
 
 c_salt_sources = [
   'bool_type.cc',
-  'boost_variant_visitors.cc',
   'double_type.cc',
   'instance.cc',
   'int32_type.cc',
@@ -24,6 +23,7 @@ c_salt_sources = [
   'scripting_bridge.cc',
   'string_type.cc',
   'type.cc',
+  'variant.cc'
 ]
 
 env.ComponentLibrary('c_salt', c_salt_sources, COMPONENT_STATIC = True)
