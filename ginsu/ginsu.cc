@@ -10,7 +10,6 @@
 #include <cassert>
 
 #include "c_salt/instance.h"
-#include "c_salt/int32_type.h"
 #include "c_salt/scripting_bridge.h"
 #include "model/component.h"
 #include "model/model.h"
@@ -28,8 +27,6 @@ const uint32_t kQuaternionElementCount = 4;
 // Keys for properties that are exposed ot the browser.
 const char* kViewKey = "view";
 }  // namespace
-
-using c_salt::ScriptingBridge;
 
 // Helper function to return the current time in milliseconds.  If there is an
 // error getting the current time, this returns -1.
@@ -71,7 +68,7 @@ bool Ginsu::InstanceDidLoad(const NPP instance, int width, int height) {
   return true;
 }
 
-void Ginsu::InitializeMethods(ScriptingBridge* bridge) {
+void Ginsu::InitializeMethods(c_salt::ScriptingBridge* bridge) {
   bridge->AddMethodNamed("getView", this, &Ginsu::GetView);
 }
 
@@ -89,7 +86,8 @@ void Ginsu::TickCallback(void* data) {
 }
 
 NPObject* Ginsu::GetView() {
-  ScriptingBridge* view_bridge = view_->CreateScriptingBridgeWithInstance(*this);
+  c_salt::ScriptingBridge* view_bridge =
+      view_->CreateScriptingBridgeWithInstance(*this);
   return view_bridge->CopyBrowserBinding();
 }
 

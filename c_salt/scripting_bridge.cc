@@ -12,7 +12,7 @@
 #include "c_salt/callback.h"
 #include "c_salt/instance.h"
 #include "c_salt/npapi/browser_binding.h"
-#include "c_salt/type.h"
+#include "c_salt/variant.h"
 
 using c_salt::npapi::BrowserBinding;
 
@@ -146,26 +146,16 @@ bool ScriptingBridge::AddProperty(const Property& property) {
 }
 
 bool ScriptingBridge::GetValueForPropertyNamed(const std::string& name,
-                                               Type** value) const {
+                                               SharedVariant value) const {
   assert(value);
-  if (!value)
+  if (!value.get())
     return false;
-  SharedType shared_value(new Type(Type::kNullTypeId));
-  bool success = GetScriptProperty(name, shared_value);
-  // This is a little contorted because Type is a non-copyable class.
-  // Copying ObjectTypes is not straight-forward due to the ref counting in
-  // the browser.
-  *value = Type::CreateFromTypeWithTypeId(*(shared_value.get()),
-                                          shared_value->type_id());
-  return success;
+  return GetScriptProperty(name, value);
 }
 
 bool ScriptingBridge::SetValueForPropertyNamed(const std::string& name,
-                                               const Type& value) {
-  // Note that there is no copy constructor for a Type, so this method is how
-  // to create a copy of a Type.
-  SharedType shared_value(Type::CreateFromTypeWithTypeId(value,
-                                                         value.type_id()));
+                                               const Variant& value) {
+  SharedVariant shared_value(new Variant(value));
   return SetScriptProperty(name, shared_value);
 }
 
@@ -189,7 +179,7 @@ bool ScriptingBridge::HasScriptProperty(const std::string& name) {
 }
 
 bool ScriptingBridge::GetScriptProperty(const std::string& name,
-                                        SharedType return_value) const {
+                                        SharedVariant return_value) const {
   assert(return_value.get());
   if (!return_value.get())
     return false;
@@ -200,27 +190,18 @@ bool ScriptingBridge::GetScriptProperty(const std::string& name,
       return true;
     }
   }
-  return_value.reset(new Type(Type::kNullTypeId));
+  return_value.reset(new Variant());
   return false;
 }
 
 bool ScriptingBridge::SetScriptProperty(const std::string& name,
-                                        const SharedType& value) {
+                                        const SharedVariant& value) {
   if (name.empty())
     return false;
   PropertyDictionary::iterator iter = property_dictionary_.find(name);
   if (iter != property_dictionary_.end()) {
     if (iter->second.is_mutable()) {
-      if (iter->second.is_static()) {
-        // If it is static, force the type to stick.
-        SharedType retype_value(Type::CreateFromTypeWithTypeId(*(value.get()),
-            iter->second.GetValue()->type_id()));
-        iter->second.SetValue(retype_value);
-      } else {
-        // It is dynamic, set the type to whatever is passed in.
-        iter->second.SetValue(value);
-      }
-      // It is mutable, and we've successfully set it now.
+      iter->second.SetValue(value);
       return true;
     }
     // It was not mutable, so disallow assignment.

@@ -67,6 +67,12 @@ class BrowserBinding : public NPObject {
     std::string string_value_;
   };
 
+  // A couple of convenience converters.  These should go into an API-specific
+  // conversion class.
+  void ConvertVariantToNPVariant(const Variant& value, NPVariant* np_value)
+      const;
+  Variant* CreateVariantFromNPVariant(const NPVariant& np_value) const;
+
   // NPAPI support methods; the browser calls these on scriptable objects.
   bool HasMethod(NPIdentifier name) const;
   void Invalidate();

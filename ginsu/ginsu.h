@@ -18,7 +18,6 @@
 #include "boost/shared_ptr.hpp"
 #include "c_salt/instance.h"
 #include "c_salt/module.h"
-#include "c_salt/type.h"
 
 namespace ginsu {
 

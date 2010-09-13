@@ -12,13 +12,13 @@ Property::Property(const PropertyAttributes& attributes)
       value_(attributes.value_) {
 }
 
-SharedType Property::GetValue() const {
+SharedVariant Property::GetValue() const {
   // TODO(dspringer,dmichael): Add the observer calls here.  boost::signals2?
   // observers.WillGetProperty(this, value_);
   return value_;
 }
 
-void Property::SetValue(const SharedType& new_value) {
+void Property::SetValue(const SharedVariant& new_value) {
   // TODO(dspringer,dmichael): Add the observer calls here.  boost::signals2?
   // observers.WillSetProperty(this, value_, new_value);
   value_ = new_value;

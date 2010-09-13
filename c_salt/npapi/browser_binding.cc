@@ -37,23 +37,95 @@ bool BrowserBinding::HasProperty(NPIdentifier name) const {
 bool BrowserBinding::GetProperty(NPIdentifier name, NPVariant* return_value)
     const {
   ScopedNPIdToStringConverter np_str(name);
-  SharedType value(new Type(Type::kNullTypeId));
+  SharedVariant value(new Variant());
   bool success = scripting_bridge_->GetScriptProperty(np_str.string_value(),
                                                       value);
-  value->ConvertToNPVariant(return_value);
+  ConvertVariantToNPVariant(*value, return_value);
   return success;
 }
 
 bool BrowserBinding::SetProperty(NPIdentifier name,
                                  const NPVariant& np_value) {
   ScopedNPIdToStringConverter np_str(name);
-  SharedType value(Type::CreateFromNPVariant(np_value));
+  SharedVariant value(CreateVariantFromNPVariant(np_value));
   return scripting_bridge_->SetScriptProperty(np_str.string_value(), value);
 }
 
 bool BrowserBinding::RemoveProperty(NPIdentifier name) {
   ScopedNPIdToStringConverter np_str(name);
   return scripting_bridge_->RemoveScriptProperty(np_str.string_value());
+}
+
+void BrowserBinding::ConvertVariantToNPVariant(const Variant& value,
+                                               NPVariant* np_value) const {
+  switch (value.variant_type()) {
+  case Variant::kNullVariantType:
+    NULL_TO_NPVARIANT(*np_value);
+    break;
+  case Variant::kBoolVariantType:
+    BOOLEAN_TO_NPVARIANT(value.BoolValue(), *np_value);
+    break;
+  case Variant::kInt32VariantType:
+    INT32_TO_NPVARIANT(value.Int32Value(), *np_value);
+    break;
+  case Variant::kDoubleVariantType:
+    DOUBLE_TO_NPVARIANT(value.DoubleValue(), *np_value);
+    break;
+  case Variant::kStringVariantType:
+    {
+      std::string str_val = value.StringValue();
+      uint32_t length = str_val.size();
+      NPUTF8* utf8_string = reinterpret_cast<NPUTF8*>(NPN_MemAlloc(length+1));
+      memcpy(utf8_string, str_val.c_str(), length);
+      utf8_string[length] = '\0';
+      STRINGN_TO_NPVARIANT(utf8_string, length, *np_value);
+    }
+    break;
+  case Variant::kObjectVariantType:
+    // NOTIMPLEMENTED
+    NULL_TO_NPVARIANT(*np_value);
+    break;
+  default:
+    // NOTREADCHED
+    assert(false);
+    break;
+  }
+}
+
+Variant* BrowserBinding::CreateVariantFromNPVariant(
+    const NPVariant& np_value) const {
+  Variant* value = NULL;
+  switch (np_value.type) {
+  case NPVariantType_Null:
+  case NPVariantType_Void:
+    value = new Variant();
+    break;
+  case NPVariantType_Bool:
+    value = new Variant(np_value.value.boolValue);
+    break;
+  case NPVariantType_Int32:
+    value = new Variant(np_value.value.intValue);
+    break;
+  case NPVariantType_Double:
+    value = new Variant(np_value.value.doubleValue);
+    break;
+  case NPVariantType_String:
+    {
+      const NPString& np_string = np_value.value.stringValue;
+      std::string string_value(
+          static_cast<const char*>(np_string.UTF8Characters),
+                                   np_string.UTF8Length);
+      value = new Variant(string_value);
+    }
+    break;
+  case NPVariantType_Object:
+    // NOTIMPLEMENTED
+    value = NULL;
+    break;
+  default:
+    break;
+  }
+  return value;
 }
 
 // Helper functions for dereferencing the bridging object.
