@@ -7,7 +7,8 @@
 
 #include <string>
 
-#include "c_salt/type.h"
+#include "c_salt/variant.h"
+#include "c_salt/variant_ptrs.h"
 
 namespace c_salt {
 
@@ -20,7 +21,7 @@ namespace c_salt {
 
 // Support class for the Named Parameter Idiom.  To create a static,
 // immutable Property using this idiom:
-//   SharedType value(new c_salt::Int32Type(42));
+//   SharedVariant value(new c_salt::Variant(42));
 //   PropertyAttributes prop_attrib("myProp", value)
 //                                 .set_static()
 //                                 .set_immutable();
@@ -45,7 +46,7 @@ namespace c_salt {
 //       operator.
 class PropertyAttributes {
  public:
-  PropertyAttributes(const std::string& name, const SharedType& value);
+  PropertyAttributes(const std::string& name, const SharedVariant& value);
   PropertyAttributes& set_dynamic();
   PropertyAttributes& set_static();
   PropertyAttributes& set_immutable();
@@ -56,11 +57,11 @@ class PropertyAttributes {
   std::string name_;  // Must be set in the ctor.
   bool is_static_;  // Default is |true|.
   bool is_mutable_;  // Default is |true|.
-  SharedType value_;
+  SharedVariant value_;
 };
 
 inline PropertyAttributes::PropertyAttributes(const std::string& name,
-                                              const SharedType& value)
+                                              const SharedVariant& value)
     : name_(name),
       is_static_(true),
       is_mutable_(true),
@@ -94,11 +95,11 @@ class Property {
 
   // Get the value of the property.  This triggers the observer's
   // WillGetProperty and DidGetProperty protocol methods.
-  SharedType GetValue() const;
+  SharedVariant GetValue() const;
 
   // Set the value of the property.  This triggers the observer's
   // WillSetProperty and DidSetProperty protocol methods.
-  void SetValue(const SharedType& new_value);
+  void SetValue(const SharedVariant& new_value);
 
   // Accessors for various attributes.  These cannot be changed during the
   // life of the Property instance.
@@ -116,7 +117,7 @@ class Property {
   std::string name_;
   bool is_static_;
   bool is_mutable_;
-  SharedType value_;
+  SharedVariant value_;
 
   Property();  // Not implemented, do not use.
 };

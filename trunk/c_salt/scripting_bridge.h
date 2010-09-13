@@ -13,13 +13,13 @@
 #include "c_salt/callback.h"
 #include "c_salt/npapi/npapi_method_callback.h"
 #include "c_salt/property.h"
+#include "c_salt/variant.h"
 
 namespace c_salt {
 
 class Instance;
 class MethodCallbackExecutor;
 class Module;
-class Type;
 
 namespace npapi {
 class BrowserBinding;
@@ -114,18 +114,19 @@ class ScriptingBridge : public boost::noncopyable {
   // Adds |property| to the property dictionary.  These properties should all
   // be declared as static, mutable properties (the default).  See
   // c_salt/property.h for details.  Example usage:
-  //   SharedType value(new c_salt::Int32Type(42));
+  //   SharedVariant value(new c_salt::Variant(42));
   //   PropertyAttributes prop_attrib("myProp", value);
   //   bridge->AddProperty(Property(prop_attribs));
   bool AddProperty(const Property& property);
-  // Return a Property by value so this can be made thread-safe.  Note that
-  // this method creates a Type and returns that new instance, the caller is
-  // responsible for freeing it.  Sets |value| to point to a NULL Type and
-  // returns |false| if no such property exists.
-  bool GetValueForPropertyNamed(const std::string& name, Type** value) const;
+  // Return a Property by ref counting so this can be made thread-safe.  Note
+  // that this method bumps the ref count of the underlying instance to a Value,
+  // the caller is responsible for freeing it.  Sets |value| to point to a NULL
+  // Value and returns |false| if no such property exists.
+  bool GetValueForPropertyNamed(const std::string& name,
+                                SharedVariant value) const;
   // Sets the value of the property associated with |name|.  Returns |false|
   // if no such property exists.
-  bool SetValueForPropertyNamed(const std::string& name, const Type& value);
+  bool SetValueForPropertyNamed(const std::string& name, const Variant& value);
 
 
   // Make a copy of the browser binding object by asking the browser to retain
@@ -190,11 +191,11 @@ class ScriptingBridge : public boost::noncopyable {
   // property |name| doesn't exist, then set |return_value| to the null type
   // and return |false|.
   bool GetScriptProperty(const std::string& name,
-                         SharedType return_value) const;
+                         SharedVariant return_value) const;
   // If |name| is associated with a static property, return that value.  Else,
   // if there is no property associated with |name|, add it as a dynamic
   // property.  See property.h for definitions and more details.
-  bool SetScriptProperty(const std::string& name, const SharedType& value);
+  bool SetScriptProperty(const std::string& name, const SharedVariant& value);
   // This succeeds only if |name| is associated with a dynamic property.
   bool RemoveScriptProperty(const std::string& name);
 

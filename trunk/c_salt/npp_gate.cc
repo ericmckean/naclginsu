@@ -12,7 +12,6 @@
 
 using c_salt::Instance;
 using c_salt::Module;
-using c_salt::ScriptingBridge;
 
 NPError NPP_New(NPMIMEType mime_type,
                 NPP instance,

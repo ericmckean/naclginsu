@@ -47,8 +47,9 @@ class Variant {
   // string's memory.
   explicit Variant(const std::string& string_value)
       : variant_type_(kStringVariantType), value_(string_value) {}
+  // Note that this ctor will cause two copies of |string_value| to happen.
   explicit Variant(const char* string_value)
-      : variant_type_(kStringVariantType), value_(string_value) {}
+      : variant_type_(kStringVariantType), value_(std::string(string_value)) {}
   // Hold a shared reference to |object_value|.
   explicit Variant(const boost::shared_ptr<ScriptingBridge>& object_value)
       : variant_type_(kObjectVariantType), value_(object_value) {}
@@ -118,9 +119,10 @@ class Variant {
                  double,
                  std::string,
                  boost::shared_ptr<ScriptingBridge> > value_;
+  // Variants are immutable.  You can copy them, but assignment is not
+  // allowed.
+  Variant& operator=(const Variant&);  // Not implemented, do not use.
 };
-
-typedef boost::shared_ptr<Variant> SharedVariant;
 
 }  // namespace c_salt
 
