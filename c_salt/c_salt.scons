@@ -8,18 +8,27 @@ Import('env')
 
 # Build the c_salt library.
 
+c_salt_npapi_sources = [
+  'npapi/browser_binding.cc',
+  'npapi/npn_bridge.cc',
+  'npapi/npp_gate.cc',
+  'npapi/variant_converter.cc',
+]
+
 c_salt_sources = [
   'converting_visitor.cc',
   'instance.cc',
   'module.cc',
-  'npapi/browser_binding.cc',
-  'npapi/variant_converter.cc',
-  'npn_bridge.cc',
-  'npp_gate.cc',
   'property.cc',
   'scripting_bridge.cc',
   'variant.cc',
 ]
 
-env.ComponentLibrary('c_salt', c_salt_sources, COMPONENT_STATIC = True)
+all_c_salt_sources = [
+  c_salt_sources,
+  c_salt_npapi_sources,
+]
+
+
+env.ComponentLibrary('c_salt', all_c_salt_sources, COMPONENT_STATIC = True)
 env.Append(LIBS=['c_salt'])

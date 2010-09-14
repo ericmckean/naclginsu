@@ -103,10 +103,10 @@ NPError NPP_SetWindow(NPP instance, NPWindow* window) {
   // The first call to NPP_SetWindow indicates that the instance is all loaded
   // up and Pepper devices are ready for use.
   if (!module_instance->is_loaded()) {
-    module_instance->InstanceDidLoad(instance, window->width, window->height);
+    module_instance->InstanceDidLoad(window->width, window->height);
     module_instance->set_is_loaded(true);
   }
-  module_instance->WindowDidChangeSize(instance, window->width, window->height);
+  module_instance->WindowDidChangeSize(window->width, window->height);
   return NPERR_NO_ERROR;
 }
 

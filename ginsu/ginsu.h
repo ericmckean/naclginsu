@@ -35,8 +35,8 @@ class Ginsu : public c_salt::Instance {
   virtual ~Ginsu();
 
   // Specialization of c_salt::Instance informal protocol.
-  virtual bool InstanceDidLoad(const NPP instance, int width, int height);
-  virtual void WindowDidChangeSize(const NPP instance, int width, int height);
+  virtual bool InstanceDidLoad(int width, int height);
+  virtual void WindowDidChangeSize(int width, int height);
   virtual void InitializeMethods(c_salt::ScriptingBridge* bridge);
 
   // Return the ScriptingBridge that represents the View object.  Exposed to
@@ -54,8 +54,8 @@ class Ginsu : public c_salt::Instance {
   bool UpdateAnimation();
 
   // TODO(dspringer): Move this into a c_salt View3D class.
-  void CreateContext(const NPP instance);
-  void DestroyContext(const NPP instance);
+  void CreateContext();
+  void DestroyContext();
   NPDevice* device3d_;
   NPDeviceContext3D context3d_;
   PGLContext pgl_context_;
