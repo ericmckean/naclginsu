@@ -7,20 +7,38 @@
 
 #include "boost/function.hpp"
 #include "boost/bind.hpp"
-#include "boost/static_assert.hpp"
+#include "boost/shared_ptr.hpp"
 #include "boost/type_traits/remove_const.hpp"
 #include "boost/type_traits/remove_reference.hpp"
+#include "c_salt/variant_ptrs.h"
+#include "c_salt/variant.h"
 
 namespace c_salt {
+// Pure virtual class that provides the interface for invoking a method given
+// c_salt::Variant arguments.  Clients should generally not use this interface
+// directly; it simply allows c_salt code to invoke methods generically.  See
+// MethodCallbackExecutorImpl (and related classes) below for further
+// details on how this is achieved.
+class MethodCallbackExecutor {
+ public:
+  virtual ~MethodCallbackExecutor() {}
+
+  virtual bool Execute(const SharedVariant* params_begin,
+                       const SharedVariant* params_end,
+                       SharedVariant* return_value_var) = 0;
+};
+typedef boost::shared_ptr<MethodCallbackExecutor> SharedMethodCallbackExecutor;
+
 // Templates used to support method call-backs when a method or property is
 // accessed from the browser code.
 
 // FunctionInvoker is a class template which holds a boost::function and
 // provides a means for invoking that boost::function by providing a sequence
-// of variant parameters.  Its purpose is to allow turning invocations from
-// various APIs in to a more natural C++ form.  For example, it can be used to
+// of c_salt::Variant parameters.  Its purpose is to allow turning scripting
+// invocations in to a more natural C++ form.  For example, it can be used to
 // convert an NPAPI method invocation in to a conventional C++ function call,
-// or similarly for PPAPI, SRPC, etc.
+// or similarly for PPAPI, SRPC, etc, by mapping the parameters to a sequence of
+// c_salt::Variants.
 //
 // This is the default implementation of FunctionInvoker.  Its methods are not
 // implemented; it is left here for documentation purposes only.  Any real usage
@@ -34,74 +52,27 @@ class FunctionInvoker {
   template <class T>
   FunctionInvoker(T* target_object, Signature method);
 
-  // Convert the given parameters (taken as a sequence of variants) in to the
-  // C++ types required by the bound function.  Then, invoke the boost::function
-  // owned by this FunctionInvoker, passing the arguments.  Convert the return
-  // value to a variant.
-  // params_begin and params_end are forward iterators for a sequence that
-  // contains the arguments to be sent to the function.  Note that STL-style
-  // iterators or pointers to the beginning and one-past-the-end of an array
-  // are both supported.
+  // Convert the given parameters (taken as a sequence of c_salt::Variants) in
+  // to the C++ types required by the bound function.  Then, invoke the
+  // boost::function owned by this FunctionInvoker, passing the arguments.
+  // Convert the return value to a c_salt::Variant.
+  // params_begin and params_end are pointers treated as forward iterators for a
+  // sequence that contains the arguments to be sent to the function.  Note that
+  // we could just pass a vector, but this keeps STL dependencies to more of a
+  // minimum in the interface between client-compiled code (i.e., the template)
+  // and the Google-provided library (c_salt).
   // return_val is an out-parameter.  The caller must provide a valid pointer
-  // to an object of the appropriate variant type.
-  // converter is a functor which provides conversion operators from the
-  // variant type we are using to/from appropriate C++ types.  Conversion
-  // operators in VariantConverter must be of the form:
-  //   // Set var to value
-  //   void operator() (VariantType* var, cpp_type value);
-  //   // Set value based upon the contents of var.  Return true if successful,
-  //   // false if there was a problem converting.
-  //   bool operator() (cpp_type* value, VariantType var);
-  //
-  // For example, we could define a converter to/from a simple boost::variant as
-  // follows:
-  // class BoostConverter {
-  //  public:
-  //   void operator() (boost::variant<int, bool>* var, int value) {
-  //     *var = value;
-  //   }
-  //   void operator() (boost::variant<int, bool>* var, bool value) {
-  //     *var = value;
-  //   }
-  //   bool operator() (int* value, const boost::variant<int, bool>& var) {
-  //     const int* var_int = boost::get<int>(&var);
-  //     if (NULL != var_int) {
-  //       *value = *var_int;
-  //       return true;
-  //     }
-  //     return false;
-  //   }
-  //   bool operator() (bool* value, const boost::variant<int, bool>& var) {
-  //     const bool* var_bool = boost::get<bool>(&var);
-  //     if (NULL != var_bool) {
-  //       *value = *var_bool;
-  //       return true;
-  //     }
-  //     return false;
-  //   }
-  // };
-  // Note that these methods could be implemented with a template;  as long as
-  // C++ overloading rules can select a method unambigously, it should work.
-  // If conversion of any of the parameters fails (i.e., the given converter
-  // returns false for one of them), then Invoke does not invoke the bound
-  // boost::function, and instead immediately returns (without modifying
-  // return_val_variant).  Conversions to variants are assumed to always
-  // succeed.  If a client attempts to register a function with a return type
-  // that is not supported by the given converter functor, a compile error will
-  // be generated.
-  template <class VariantForwardIterator,
-            class VariantType,
-            class VariantConverter>
-  bool Invoke(VariantForwardIterator params_begin,
-              VariantForwardIterator params_end,
-              VariantType* return_val_variant,
-              VariantConverter converter);
+  // to a c_salt::Variant.
+  bool Invoke(const SharedVariant* begin,
+              const SharedVariant* end,
+              SharedVariant* return_value);
 };
 
 // Define some macros temporarily so that we can generate code succinctly for
 // our FunctionInvoker classes.  We need one specialization of FunctionInvoker
 // for each number of arguments, and they are largely the same.  The macros
-// abstract out the parts that are unique.
+// abstract out the repetive parts and allow us to only duplicate the parts that
+// are unique.
 //
 // Here is an example of what the code looks like after the preprocessor is
 // finished with it, in this case for 2 arguments:
@@ -116,28 +87,34 @@ class FunctionInvoker<RetType(T::*)(Arg1, Arg2)> {
 
   FunctionInvoker(T* target_object, MemFunSignature method)
       : function_(boost::bind(method, target_object, _1, _2)) {}
-  template <class VariantForwardIterator,
-            class VariantType,
-            class VariantConverter>
-  bool Invoke(VariantForwardIterator params_begin,
-              VariantForwardIterator params_end,
-              VariantType* return_val_variant,
-              VariantConverter converter) {
+  bool Invoke(const SharedVariant* params_begin,
+              const SharedVariant* params_end,
+              SharedVariant* return_value_var) {
     // Declare a local instance of the argument type.  If it's a const-ref
     // parameter, remove the const-ref part of the type so we can make a local
     // argument on the stack to pass.
     typedef typename boost::remove_reference<Arg1>::type NoRef1;
     typedef typename boost::remove_const<NoRef1>::type NoConstRef1;
     NoConstRef1 arg1;
-    // Attempt to convert params_begin and advance it.  If conversion fails,
-    // return false and don't invoke the function.
-    if (!converter(&arg1, *(params_begin++))) return false;
+    // See if we've run out of arguments.  If so, that's an error, so return
+    // false.
+    if (params_begin == params_end) return false;
+    // Get the value from the c_salt::Variant, which handles conversions for us.
+    NoConstRef1 arg1(params_begin->GetValue<NonConstRef1>();
+    // Advance to the next parameter.
+    ++params_begin;
     typedef typename boost::remove_reference<Arg2>::type NoRef2;
     typedef typename boost::remove_const<NoRef2>::type NoConstRef2;
+    if (params_begin == params_end) return false;
+    NoConstRef2 arg2(params_begin->GetValue<NonConstRef2>();
+    ++params_begin;
     NoConstRef2 arg2;
-    if (!converter(&arg2, *(params_begin++))) return false;
+
+    // Call the function and capture the return value (note, this does not
+    // currently support void returns).
     ReturnType retval = function_(arg1, arg2);
-    converter(return_val_variant, retval);
+    // Create a Variant using the appropriate constructor.
+    *return_value_var = SharedVariant(retval);
     return true;
   }
  private:
@@ -164,13 +141,9 @@ public:\
 
 // A macro for the beginning of the Invoke function.
 #define FUNCTIONINVOKER_INVOKE_BEGIN() \
-  template <class VariantForwardIterator, \
-            class VariantType, \
-            class VariantConverter> \
-  bool Invoke(VariantForwardIterator params_begin, \
-              VariantForwardIterator params_end, \
-              VariantType* return_val_variant, \
-              VariantConverter converter) {
+  bool Invoke(const ::c_salt::SharedVariant* params_begin, \
+              const ::c_salt::SharedVariant* params_end, \
+              ::c_salt::SharedVariant* return_value_var) {
 // end FUNCTIONINVOKER_INVOKE_BEGIN
 
 // A portion of the invoker function that converts 1 argument, returning
@@ -178,14 +151,15 @@ public:\
 #define FUNCTIONINVOKER_INVOKE_CONVERT_ARG(NUM) \
     typedef typename boost::remove_reference<Arg ## NUM>::type NoRef ## NUM; \
     typedef typename boost::remove_const<NoRef ## NUM>::type NoConstRef ## NUM;\
-    NoConstRef ## NUM arg ## NUM; \
-    if (!converter(&arg ## NUM, *(params_begin++))) return false;
+    if (params_begin == params_end) return false; \
+    NoConstRef##NUM arg##NUM((*params_begin)->GetValue<NoConstRef##NUM>()); \
+    ++params_begin;
 // end FUNCTIONINVOKER_INVOKE_CONVERT_ARG
 
 // A macro for the end of the Invoke function.
 #define FUNCTIONINVOKER_INVOKE_END(ARGLIST) \
     ReturnType retval = function_ ARGLIST; \
-    converter(return_val_variant, retval); \
+    return_value_var->reset(new ::c_salt::Variant(retval)); \
     return true;\
   }
 // end FUNCTIONINVOKER_INVOKE_END
@@ -284,6 +258,32 @@ FUNCTIONINVOKER_CLASS_DEFINITION_END()
 #undef FUNCTIONINVOKER_INVOKE_CONVERT_ARG
 #undef FUNCTIONINVOKER_INVOKE_END
 #undef FUNCTIONINVOKER_CLASS_DEFINITION_END
+
+// MethodCallbackExecutorImpl is a class template that implements the
+// MethodCallbackExecutor interface by calling an arbitrary boost::function
+// and automatically handling marshalling/unmarshalling of the arguments and
+// return type to bridge the gap between the method invocation and the
+// invocation of a real C++ method on a client-defined class.
+template <class Signature>
+class MethodCallbackExecutorImpl : public MethodCallbackExecutor {
+ public:
+  typedef typename ::c_salt::FunctionInvoker<Signature> FunctionInvokerType;
+
+  template <class T>
+  MethodCallbackExecutorImpl(T* instance, Signature method)
+      : function_invoker_(instance, method) {}
+  virtual ~MethodCallbackExecutorImpl() {}
+
+  virtual bool Execute(const SharedVariant* params_begin,
+                       const SharedVariant* params_end,
+                       SharedVariant* return_value_var) {
+    return function_invoker_.Invoke(params_begin,
+                                    params_end,
+                                    return_value_var);
+  }
+ private:
+  FunctionInvokerType function_invoker_;
+};
 
 }  // namespace c_salt
 
