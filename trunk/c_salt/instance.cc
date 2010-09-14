@@ -19,11 +19,11 @@ void Instance::InitializeMethods(ScriptingBridge* bridge) {
 void Instance::InitializeProperties(ScriptingBridge* bridge) {
 }
 
-bool Instance::InstanceDidLoad(const NPP instance, int width, int height) {
+bool Instance::InstanceDidLoad(int width, int height) {
   return true;
 }
 
-void Instance::WindowDidChangeSize(const NPP instance, int width, int height) {
+void Instance::WindowDidChangeSize(int width, int height) {
 }
 
 bool Instance::ReceiveEvent(const NPPepperEvent& event) {

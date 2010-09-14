@@ -16,18 +16,16 @@
 namespace c_salt {
 
 // The base class for the Native Client module instance.  An Instance can
-// publish a ScriptingBridge to the browser.  An Instance will create an
-// instance of a ScriptingBridge when asked via the NPP_GetScriptableInstance()
-// NPAPI.  When the Instance is deallocated, this ScriptingBridge instance is
-// also deallocated.
-
-// TODO(dspringer): This becomes a subclass of pp::Instance when Pepper v2
-// becomes available.
+// publish a ScriptingBridge to the browser, that ScriptingBridge binds to
+// methods and properties declared on this particulare Instance object.  Other
+// object are free to publish their own ScriptingBridgtes, that bind to those
+// objects.  Repeated calls to CreateScriptingBridge() will simply increment
+// a ref count of the published ScriptingBridge associated with this Instance.
 
 class Instance : public boost::noncopyable {
  public:
   explicit Instance(const NPP& npp_instance)
-      : npp_instance_(npp_instance), is_loaded_(false) {}
+      : is_loaded_(false), npp_instance_(npp_instance) {}
   virtual ~Instance();
 
   // Called during initialization to publish the module's method names that
@@ -41,11 +39,11 @@ class Instance : public boost::noncopyable {
   // Called the first time this module instance is loaded into the browser
   // document.  When this method is called, all the Pepper devices are
   // available to the module instance.
-  virtual bool InstanceDidLoad(const NPP instance, int width, int height);
+  virtual bool InstanceDidLoad(int width, int height);
 
   // Called when there is a valid browser window for rendering, or whenever the
   // in-browser view changes size.
-  virtual void WindowDidChangeSize(const NPP instance, int width, int height);
+  virtual void WindowDidChangeSize(int width, int height);
 
   // Receive an event from the browser.  Return |false| if the module does not
   // handle the event.
@@ -79,11 +77,14 @@ class Instance : public boost::noncopyable {
   }
 
  private:
-  Instance();  // Not implemented, do not use.
+  bool is_loaded_;
 
   boost::scoped_ptr<ScriptingBridge> scripting_bridge_;
+
+  // TODO(c_salt_authors): this needs to be turned into a BrowserInstanceImpl.
   NPP npp_instance_;
-  bool is_loaded_;
+
+  Instance();  // Not implemented, do not use.
 };
 
 }  // namespace c_salt

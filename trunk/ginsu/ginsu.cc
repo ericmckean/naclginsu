@@ -54,14 +54,14 @@ Ginsu::~Ginsu() {
   pglMakeCurrent(pgl_context_);
   view_->ReleaseGL();
   pglMakeCurrent(PGL_NO_CONTEXT);
-  DestroyContext(npp_instance());
+  DestroyContext();
 }
 
-bool Ginsu::InstanceDidLoad(const NPP instance, int width, int height) {
+bool Ginsu::InstanceDidLoad(int width, int height) {
   device3d_ = NPN_AcquireDevice(npp_instance(), NPPepper3DDevice);
   assert(device3d_);
   if (!pgl_context_) {
-    CreateContext(npp_instance());
+    CreateContext();
     // Schedule first call to Tick.
     NPN_PluginThreadAsyncCall(npp_instance(), TickCallback, this);
   }
@@ -72,7 +72,7 @@ void Ginsu::InitializeMethods(c_salt::ScriptingBridge* bridge) {
   bridge->AddMethodNamed("getView", this, &Ginsu::GetView);
 }
 
-void Ginsu::WindowDidChangeSize(const NPP instance, int width, int height) {
+void Ginsu::WindowDidChangeSize(int width, int height) {
   view_->SetWindowSize(width, height);
 }
 
@@ -100,8 +100,8 @@ void Ginsu::Tick() {
 
 void Ginsu::Paint() {
   if (!pglMakeCurrent(pgl_context_) && pglGetError() == PGL_CONTEXT_LOST) {
-    DestroyContext(npp_instance());
-    CreateContext(npp_instance());
+    DestroyContext();
+    CreateContext();
     pglMakeCurrent(pgl_context_);
   }
 
@@ -110,17 +110,17 @@ void Ginsu::Paint() {
   pglMakeCurrent(PGL_NO_CONTEXT);
 }
 
-void Ginsu::CreateContext(const NPP instance) {
+void Ginsu::CreateContext() {
   assert(pgl_context_ == PGL_NO_CONTEXT);
 
   // Initialize a 3D context.
   NPDeviceContext3DConfig config;
   config.commandBufferSize = kCommandBufferSize;
-  device3d_->initializeContext(instance, &config, &context3d_);
+  device3d_->initializeContext(npp_instance(), &config, &context3d_);
   context3d_.repaintCallback = RepaintCallback;
 
   // Create a PGL context.
-  pgl_context_ = pglCreateContext(instance, device3d_, &context3d_);
+  pgl_context_ = pglCreateContext(npp_instance(), device3d_, &context3d_);
 
   // Initialize GL resources.
   pglMakeCurrent(pgl_context_);
@@ -128,13 +128,13 @@ void Ginsu::CreateContext(const NPP instance) {
   pglMakeCurrent(PGL_NO_CONTEXT);
 }
 
-void Ginsu::DestroyContext(const NPP instance) {
+void Ginsu::DestroyContext() {
   assert(pgl_context_ != PGL_NO_CONTEXT);
 
   pglDestroyContext(pgl_context_);
   pgl_context_ = PGL_NO_CONTEXT;
 
-  device3d_->destroyContext(instance, &context3d_);
+  device3d_->destroyContext(npp_instance(), &context3d_);
 }
 
 bool Ginsu::UpdateAnimation() {
