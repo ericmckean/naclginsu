@@ -121,18 +121,17 @@ bool ScriptingBridge::HasScriptMethod(const std::string& name) {
   return i != method_dictionary_.end();
 }
 
-bool ScriptingBridge::InvokeScriptMethod(const std::string& method_name,
-                                         const NPVariant* args,
-                                         uint32_t arg_count,
-                                         NPVariant* return_value) {
+bool
+ScriptingBridge::InvokeScriptMethod(const std::string& method_name,
+                                    const SharedVariant* params_begin,
+                                    const SharedVariant* params_end,
+                                    ::c_salt::SharedVariant* return_value) {
   MethodDictionary::iterator i;
   i = method_dictionary_.find(method_name);
   if (i != method_dictionary_.end()) {
-    return (*i->second).Execute(args,
-                                arg_count,
-                                return_value,
-                                GetBrowserInstance(),
-                                window_object());
+    return (*i->second).Execute(params_begin,
+                                params_end,
+                                return_value);
   }
   return false;
 }

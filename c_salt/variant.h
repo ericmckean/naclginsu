@@ -19,7 +19,7 @@ class ScriptingBridge;
 // intrisic types, no matter what the underlying storage actually is.  For
 // example, if you create a Variant using the string "3.14159", you can get
 // its double_value(), which will be 3.14159.  The value is immutable.  Note:
-// making copies of Varaint instances using the copy constructor might cause a
+// making copies of Variant instances using the copy constructor might cause a
 // round trip to the browser in order to perform reference counting.
 
 class Variant {
@@ -111,6 +111,8 @@ class Variant {
   template <class T>
   T GetValue(bool* did_convert) const;
   */
+
+  friend bool operator==(const Variant&, const Variant&);
 
  private:
   VariantType variant_type_;

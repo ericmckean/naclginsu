@@ -4,7 +4,11 @@
 
 #include "c_salt/npapi/browser_binding.h"
 
+#include <vector>
+
 #include "c_salt/instance.h"
+#include "c_salt/npapi/variant_converter.h"
+#include "c_salt/variant.h"
 
 namespace c_salt {
 namespace npapi {
@@ -23,10 +27,27 @@ bool BrowserBinding::Invoke(NPIdentifier name,
                             uint32_t arg_count,
                             NPVariant* return_value) {
   ScopedNPIdToStringConverter np_str(name);
-  return scripting_bridge_->InvokeScriptMethod(np_str.string_value(),
-                                               args,
-                                               arg_count,
-                                               return_value);
+  // Make a vector of c_salt::Variants that's the same size as |args|
+  // and fill it in.  This will take care of cleaning up when we're done,
+  // and vectors are guaranteed to be stored contiguously, so we can pass it
+  // like an array.
+  std::vector< SharedVariant > c_salt_var_vec;
+  c_salt_var_vec.reserve(arg_count);
+  for (uint32_t i = 0; i < arg_count; ++i) {
+    c_salt_var_vec.push_back(
+        variant_converter_.CreateVariantFromNPVariant(args[i]));
+  }
+  SharedVariant c_salt_return_var;
+  bool success = scripting_bridge_->
+    InvokeScriptMethod(np_str.string_value(),
+                       &(*c_salt_var_vec.begin()),
+                       &(*c_salt_var_vec.end()),
+                       &c_salt_return_var);
+  if (success) {
+    variant_converter_.ConvertVariantToNPVariant(*c_salt_return_var,
+                                                 return_value);
+  }
+  return success;
 }
 
 bool BrowserBinding::HasProperty(NPIdentifier name) const {
@@ -40,92 +61,20 @@ bool BrowserBinding::GetProperty(NPIdentifier name, NPVariant* return_value)
   SharedVariant value(new Variant());
   bool success = scripting_bridge_->GetScriptProperty(np_str.string_value(),
                                                       value);
-  ConvertVariantToNPVariant(*value, return_value);
+  variant_converter_.ConvertVariantToNPVariant(*value, return_value);
   return success;
 }
 
 bool BrowserBinding::SetProperty(NPIdentifier name,
                                  const NPVariant& np_value) {
   ScopedNPIdToStringConverter np_str(name);
-  SharedVariant value(CreateVariantFromNPVariant(np_value));
+  SharedVariant value(variant_converter_.CreateVariantFromNPVariant(np_value));
   return scripting_bridge_->SetScriptProperty(np_str.string_value(), value);
 }
 
 bool BrowserBinding::RemoveProperty(NPIdentifier name) {
   ScopedNPIdToStringConverter np_str(name);
   return scripting_bridge_->RemoveScriptProperty(np_str.string_value());
-}
-
-void BrowserBinding::ConvertVariantToNPVariant(const Variant& value,
-                                               NPVariant* np_value) const {
-  switch (value.variant_type()) {
-  case Variant::kNullVariantType:
-    NULL_TO_NPVARIANT(*np_value);
-    break;
-  case Variant::kBoolVariantType:
-    BOOLEAN_TO_NPVARIANT(value.BoolValue(), *np_value);
-    break;
-  case Variant::kInt32VariantType:
-    INT32_TO_NPVARIANT(value.Int32Value(), *np_value);
-    break;
-  case Variant::kDoubleVariantType:
-    DOUBLE_TO_NPVARIANT(value.DoubleValue(), *np_value);
-    break;
-  case Variant::kStringVariantType:
-    {
-      std::string str_val = value.StringValue();
-      uint32_t length = str_val.size();
-      NPUTF8* utf8_string = reinterpret_cast<NPUTF8*>(NPN_MemAlloc(length+1));
-      memcpy(utf8_string, str_val.c_str(), length);
-      utf8_string[length] = '\0';
-      STRINGN_TO_NPVARIANT(utf8_string, length, *np_value);
-    }
-    break;
-  case Variant::kObjectVariantType:
-    // NOTIMPLEMENTED
-    NULL_TO_NPVARIANT(*np_value);
-    break;
-  default:
-    // NOTREADCHED
-    assert(false);
-    break;
-  }
-}
-
-Variant* BrowserBinding::CreateVariantFromNPVariant(
-    const NPVariant& np_value) const {
-  Variant* value = NULL;
-  switch (np_value.type) {
-  case NPVariantType_Null:
-  case NPVariantType_Void:
-    value = new Variant();
-    break;
-  case NPVariantType_Bool:
-    value = new Variant(np_value.value.boolValue);
-    break;
-  case NPVariantType_Int32:
-    value = new Variant(np_value.value.intValue);
-    break;
-  case NPVariantType_Double:
-    value = new Variant(np_value.value.doubleValue);
-    break;
-  case NPVariantType_String:
-    {
-      const NPString& np_string = np_value.value.stringValue;
-      std::string string_value(
-          static_cast<const char*>(np_string.UTF8Characters),
-                                   np_string.UTF8Length);
-      value = new Variant(string_value);
-    }
-    break;
-  case NPVariantType_Object:
-    // NOTIMPLEMENTED
-    value = NULL;
-    break;
-  default:
-    break;
-  }
-  return value;
 }
 
 // Helper functions for dereferencing the bridging object.

@@ -5,20 +5,21 @@
 #ifndef C_SALT_SCRIPTING_BRIDGE_H_
 #define C_SALT_SCRIPTING_BRIDGE_H_
 
+// TODO(dspringer, dmichael): Remove this:
+#include <nacl/npruntime.h>
+
 #include <map>
 #include <string>
 
 #include "boost/noncopyable.hpp"
 #include "boost/shared_ptr.hpp"
 #include "c_salt/callback.h"
-#include "c_salt/npapi/npapi_method_callback.h"
 #include "c_salt/property.h"
 #include "c_salt/variant.h"
 
 namespace c_salt {
 
 class Instance;
-class MethodCallbackExecutor;
 class Module;
 
 namespace npapi {
@@ -36,10 +37,6 @@ class BrowserBinding;
 
 class ScriptingBridge : public boost::noncopyable {
  public:
-  // Shared pointer types used in the method and property maps.
-  typedef boost::shared_ptr<npapi::NPAPIMethodCallbackExecutor>
-      SharedNPAPIMethodCallbackExecutor;
-
   // Creates an instance of the scripting bridge object in the browser, with
   // a corresponding ScriptingBridge object instance.
   static ScriptingBridge* CreateScriptingBridgeWithInstance(
@@ -69,43 +66,19 @@ class ScriptingBridge : public boost::noncopyable {
   //      bridge->AddMethodNamed("myFunc", this, MyClass::MyFunc);
   //   }
   //
-  // Note that you may also accept a ScriptingBridge* as an argument, and
-  // c_salt will dutifully pass you the ScriptingBridge with which the method
-  // was registered.  Any ScriptingBridge* argument is not part of the
-  // interface which is exposed to JavaScript.
-  //
-  // For example:
-  //   class MyClass {
-  //     void InitializeMethods(ScriptingBridge*);
-  //     bool MyFunc(int32_t, double, std::string, ScriptingBridge*);
-  //   };
-  //
-  //   MyClass::InitializeMethods(ScriptingBridge* bridge) {
-  //      bridge->AddMethodNamed("myFunc", this, MyClass::MyFunc);
-  //   }
-  // In this example, the interface looks identical to the previous example
-  // from the perspective of any JavaScript which tries to invoke it.  But in
-  // this 2nd example, "bridge" will be passed to MyFunc as the last argument.
-  // (We could put the ScriptingBridge* argument anywhere in our argument
-  // list, if desired).
-  //
   // Caveats:
   //   - Currently, only up to 6 arguments are supported.
   //   - void return types are currently not supported.
-  //   - Only double, int32_t, bool, and std::string are supported currently.
-  //   - Type safety is the goal in this prototype.  If JavaScript passes a
-  //     float and the native code accepts a string, the method will not be
-  //     invoked, and a false return will be given to NPAPI.  Future versions
-  //     may allow for reasonable automatic type conversions, if that is
-  //     desired.
+  //   - Supported parameter types are currently limited to:
+  //     std::string, int32_t, bool, double, and shared_ptr<ScriptingBridge>
   template <class T, class Signature>
   bool AddMethodNamed(const std::string& method_name,
                       T* handler,
                       Signature method) {
     if (method_name.empty() || method == NULL)
       return false;
-    SharedNPAPIMethodCallbackExecutor method_ptr(
-      new npapi::NPAPIMethodCallbackExecutorImpl<Signature>(handler, method));
+    SharedMethodCallbackExecutor method_ptr(
+      new MethodCallbackExecutorImpl<Signature>(handler, method));
     method_dictionary_.insert(MethodDictionary::value_type(method_name,
                                                            method_ptr));
     return true;
@@ -161,7 +134,7 @@ class ScriptingBridge : public boost::noncopyable {
 
  private:
   typedef std::map<std::string,
-                   SharedNPAPIMethodCallbackExecutor> MethodDictionary;
+                   SharedMethodCallbackExecutor> MethodDictionary;
   typedef std::map<std::string, Property> PropertyDictionary;
 
   ScriptingBridge();  // Not implemented, do not use.
@@ -178,9 +151,9 @@ class ScriptingBridge : public boost::noncopyable {
   // stuff in it.  This is kind of a really huge refactoring job, which touches
   // the callback machinery and method invoking stuff and all kinds of things.
   bool InvokeScriptMethod(const std::string& method_name,
-                          const NPVariant* args,
-                          uint32_t arg_count,
-                          NPVariant* return_value);
+                          const ::c_salt::SharedVariant* params_begin,
+                          const ::c_salt::SharedVariant* params_end,
+                          ::c_salt::SharedVariant* return_value_var);
 
   // Support for browser-exposed properties.  The browser proxy (which is
   // platform-specific) first calls HasProperty() before getting or setting;

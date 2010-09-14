@@ -12,4 +12,9 @@ namespace c_salt {
 Variant::~Variant() {
 }
 
+bool operator==(const Variant& left, const Variant& right) {
+  return ((left.variant_type() == right.variant_type()) &&
+          (left.value_ == right.value_));
+}
+
 }  // namespace c_salt

@@ -13,7 +13,7 @@ c_salt_sources = [
   'instance.cc',
   'module.cc',
   'npapi/browser_binding.cc',
-  'npapi/npvariant_converter.cc',
+  'npapi/variant_converter.cc',
   'npn_bridge.cc',
   'npp_gate.cc',
   'property.cc',

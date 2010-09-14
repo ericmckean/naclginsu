@@ -13,6 +13,8 @@
 
 namespace c_salt {
 
+class ScriptingBridge;
+
 // The following set of ConvertingVisitor template specializations implement the
 // Visitor concept, as described here:
 // http://live.boost.org/doc/libs/1_41_0/doc/html/variant/reference.html
