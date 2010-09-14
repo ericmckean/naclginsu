@@ -8,10 +8,14 @@
 #include <nacl/nacl_npapi.h>
 #include <nacl/npruntime.h>
 
+#include <string>
+
 #include "boost/scoped_ptr.hpp"
+#include "c_salt/npapi/variant_converter.h"
 #include "c_salt/scripting_bridge.h"
 
 namespace c_salt {
+
 namespace npapi {
 
 class Instance;
@@ -67,12 +71,6 @@ class BrowserBinding : public NPObject {
     std::string string_value_;
   };
 
-  // A couple of convenience converters.  These should go into an API-specific
-  // conversion class.
-  void ConvertVariantToNPVariant(const Variant& value, NPVariant* np_value)
-      const;
-  Variant* CreateVariantFromNPVariant(const NPVariant& np_value) const;
-
   // NPAPI support methods; the browser calls these on scriptable objects.
   bool HasMethod(NPIdentifier name) const;
   void Invalidate();
@@ -104,6 +102,7 @@ class BrowserBinding : public NPObject {
 
   NPP npp_;
   boost::scoped_ptr<ScriptingBridge> scripting_bridge_;
+  VariantConverter variant_converter_;
 };
 
 }  // namespace npapi
