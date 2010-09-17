@@ -4,7 +4,6 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_EDGE_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_EDGE_H_
 
-#include <assert.h>
 #include <CGAL/basic.h>
 #include "geometry/cgal_ext/partialdsentity.h"
 
@@ -31,20 +30,20 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
 
   PartialDSEdge()
-    : parent_pedge_(NULL), start_vertex_(NULL), end_vertex_(NULL) { }
+    : parent_pedge_(NULL), start_pvertex_(NULL), end_pvertex_(NULL) { }
 
   PEdgeConstHandle parent_pedge() const { return parent_pedge_; }
   void set_parent_pedge(PEdgeHandle pedge) { parent_pedge_ = pedge; }
 
-  PVertexConstHandle start_vertex() const { return start_vertex_; }
-  void set_start_vertex(PVertexHandle v) { start_vertex_ = v; }
-  PVertexConstHandle end_vertex() const { return end_vertex_; }
-  void set_end_vertex(PVertexHandle v) { end_vertex_ = v; }
+  PVertexConstHandle start_pvertex() const { return start_pvertex_; }
+  void set_start_pvertex(PVertexHandle pv) { start_pvertex_ = pv; }
+  PVertexConstHandle end_pvertex() const { return end_pvertex_; }
+  void set_end_pvertex(PVertexHandle pv) { end_pvertex_ = pv; }
 
  private:
   PEdgeHandle parent_pedge_;
-  PVertexHandle start_vertex_;
-  PVertexHandle end_vertex_;
+  PVertexHandle start_pvertex_;
+  PVertexHandle end_pvertex_;
 };
 
 }  // namespace geometry

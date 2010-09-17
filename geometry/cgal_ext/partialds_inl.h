@@ -11,6 +11,95 @@ namespace ginsu {
 namespace geometry {
 
 // Euler operators
+template <class TraitsType> typename PartialDS<TraitsType>::RegionHandle
+    PartialDS<TraitsType>::CreateEmptyRegion() {
+  return MakeRegion();
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DeleteEmptyRegion(RegionHandle region) {
+  if (region == NULL) return;
+
+  assert(region->outer_shell() == NULL && "Must empty the region first.");
+  if (region->outer_shell() == NULL) {
+    DestroyRegion(region);
+  }
+}
+
+template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
+    PartialDS<TraitsType>::CreateIsolatedVertex(RegionHandle region) {
+  // Must have a region.
+  assert(region != NULL);
+  if (region == NULL) return NULL;
+
+  // Build the entire chain of entities, up to a shell to host the isolated
+  // vertex, starting with a vertex:
+  VertexHandle vertex = MakeVertex();
+  PVertexHandle pvertex = MakePVertex();
+  vertex->set_parent_pvertex(pvertex);
+  pvertex->set_vertex(vertex);
+  pvertex->set_next_pvertex(pvertex);
+
+  // The edge simply points to the same start and end vertex.
+  EdgeHandle edge = MakeEdge();
+  pvertex->set_parent_edge(edge);
+  edge->set_start_pvertex(pvertex);
+  edge->set_end_pvertex(pvertex);
+
+  // The p-edge links to itself, both radially and along the loop.
+  PEdgeHandle pedge = MakePEdge();
+  edge->set_parent_pedge(pedge);
+  pedge->set_orientation(Entity::kPEdgeUnoriented);
+  pedge->set_child_edge(edge);
+  pedge->set_start_pvertex(pvertex);
+  pedge->set_loop_previous(pedge);
+  pedge->set_loop_next(pedge);
+  pedge->set_radial_previous(pedge);
+  pedge->set_radial_next(pedge);
+
+  // The loop and face are degenerate.
+  LoopHandle loop = MakeLoop();
+  FaceHandle face = MakeFace();
+  pedge->set_parent_loop(loop);
+  loop->set_boundary_pedge(pedge);
+  loop->set_next_hole(NULL);
+  loop->set_parent_face(face);
+  face->set_outer_loop(loop);
+
+  // The p-face is unoriented, links to itself and has no mate.
+  PFaceHandle pface = MakePFace();
+  face->set_parent_pface(pface);
+  pface->set_orientation(Entity::kPFaceUnoriented);
+  pface->set_child_face(face);
+  pface->set_next_pface(pface);
+  pface->set_mate_pface(NULL);
+
+  // A shell to host it all.
+  ShellHandle shell = MakeShell();
+  pface->set_parent_shell(shell);
+  shell->set_pface(pface);
+  shell->set_next_void_shell(NULL);
+
+  // Lastly, insert the shell in the region. If the region is empty, then create
+  // an outer shell - the half-open shell that surrounds the outer region - and
+  // make the vertex shell a void shell within that shell. Otherwise, add the
+  // vertex shell to existing shell's list of void shells.
+  shell->set_parent_region(region);
+  if (region->outer_shell() == NULL) {
+    ShellHandle outer_shell = MakeShell();
+    region->set_outer_shell(outer_shell);
+    outer_shell->set_parent_region(region);
+    outer_shell->set_next_void_shell(shell);
+  } else {
+    region->AddVoidShell(shell);
+  }
+
+  return vertex;
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DeleteIsolatedVertex(VertexHandle vertex) {
+}
 
 // Basic (non-topological) make<Item> and Destroy<Item> functions.
 template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle

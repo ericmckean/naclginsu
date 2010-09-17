@@ -19,6 +19,7 @@ if not os.path.exists(sel_ldr):
 
 env.Append(
   CPPDEFINES = [
+    '_GEOM_TESTS',
   ],
   CPPPATH = [
     '$MAIN_DIR/third_party/cgal/trunk/include',
