@@ -34,6 +34,12 @@ class PartialDSRegion : public PartialDSEntity<TypeRefs> {
   ShellConstHandle outer_shell() const { return outer_shell_; }
   void set_outer_shell(ShellHandle shell) { outer_shell_ = shell; }
 
+  // Add a void shell to the region's outer shell.
+  void AddVoidShell(ShellHandle void_shell) {
+    assert(outer_shell_ != NULL);
+    if (outer_shell_ != NULL) outer_shell_->AddVoidShell(void_shell);
+  }
+
  private:
   RegionFlavor flavor_;
   ShellHandle outer_shell_;  // The shell that encloses this region.

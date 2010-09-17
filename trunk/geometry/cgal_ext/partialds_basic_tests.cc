@@ -34,13 +34,28 @@ TEST_F(PartialDSTest, SimpleModelTest) {
   ASSERT_TRUE(mesh_ != NULL);
 }
 
-TEST_F(PartialDSTest, TestMakeVertex) {
+TEST_F(PartialDSTest, TestMakeRegion) {
+  PartialDSTest::PEMesh::RegionHandle r;
+  r = mesh_->CreateEmptyRegion();
+  ASSERT_TRUE(r != NULL);
+  ASSERT_EQ(mesh_->regions().size(), 1);
+  mesh_->DeleteEmptyRegion(r);
+  ASSERT_EQ(mesh_->regions().size(), 0);
+}
+
+TEST_F(PartialDSTest, MakeIsolatedVertex) {
+  PartialDSTest::PEMesh::RegionHandle r;
+  r = mesh_->CreateEmptyRegion();
+  ASSERT_TRUE(r != NULL);
+
   PartialDSTest::PEMesh::VertexHandle v;
-  v = mesh_->MakeVertex();
+  v = mesh_->CreateIsolatedVertex(r);
   ASSERT_TRUE(v != NULL);
-  ASSERT_EQ(mesh_->vertices().size(), 1);
-  mesh_->DestroyVertex(v);
-  ASSERT_EQ(mesh_->vertices().size(), 0);
+  mesh_->DeleteIsolatedVertex(v);
+  ASSERT_TRUE(mesh_->ValidateVertex(v));
+
+  // TODO(gwink): this will fail since the mesh is not empty.
+  mesh_->DeleteEmptyRegion(r);
 }
 
 }  // namespace

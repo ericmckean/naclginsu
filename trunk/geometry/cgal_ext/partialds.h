@@ -77,6 +77,11 @@ class PartialDSTypes {
   typedef TraitsType                            Traits;
   typedef ItemsType                             Items;
 
+  // Make the Entity class conveniently accessible.
+  typedef typename Items::template
+      EntityWrapper<Self>                       EntityWrapper;
+  typedef typename EntityWrapper::Entity        Entity;
+
   // We keep all vertices in a list to easily iterate over them. A vertex
   // handle is also an iterator into that list.
   typedef typename Items::template
@@ -227,6 +232,14 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::LoopHandle                 LoopHandle;
   typedef typename Types::ShellHandle                ShellHandle;
   typedef typename Types::RegionHandle               RegionHandle;
+  typedef typename Types::Entity                     Entity;
+
+  // Euler operator.
+  RegionHandle CreateEmptyRegion();
+  void DeleteEmptyRegion(RegionHandle region);
+
+  VertexHandle CreateIsolatedVertex(RegionHandle region);
+  void DeleteIsolatedVertex(VertexHandle vertex);
 
   // Basic Make<Item> and Destroy<Item> functions. The functions only allocate
   // the corresponding item. They do not affect the topology.

@@ -39,6 +39,12 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
   RegionConstHandle parent_region() const { return parent_region_; }
   void set_parent_region(RegionHandle region) { parent_region_ = region; }
 
+  // Add a shell to the list of void shells.
+  void AddVoidShell(ShellHandle void_shell) {
+    void_shell->set_next_void_shell(next_void_shell_);
+    next_void_shell_ = void_shell;
+  }
+
  private:
   RegionHandle parent_region_;  // Parent region.
   ShellHandle next_void_shell_;  // Next void shell.

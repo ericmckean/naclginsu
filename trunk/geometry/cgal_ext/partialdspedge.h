@@ -50,17 +50,17 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
   void set_child_edge(EdgeHandle edge) { child_edge_ = edge; }
 
   PVertexConstHandle start_pvertex() const { return start_pvertex_; }
-  void set_start_pvertex(PVertexHandle* pvertex) { start_pvertex_ = pvertex; }
+  void set_start_pvertex(PVertexHandle pvertex) { start_pvertex_ = pvertex; }
 
   PEdgeConstHandle loop_previous() const { return loop_previous_; }
-  void set_loop_previous(PEdgeHandle* pedge) { loop_previous_ = pedge; }
+  void set_loop_previous(PEdgeHandle pedge) { loop_previous_ = pedge; }
   PEdgeConstHandle loop_next() const { return loop_next_; }
-  void set_loop_next(PEdgeHandle* pedge) { loop_next_ = pedge; }
+  void set_loop_next(PEdgeHandle pedge) { loop_next_ = pedge; }
 
   PEdgeConstHandle radial_previous() const { return radial_previous_; }
-  void set_radial_previous(PEdgeHandle* pedge) { radial_previous_ = pedge; }
+  void set_radial_previous(PEdgeHandle pedge) { radial_previous_ = pedge; }
   PEdgeConstHandle radial_next() const { return radial_next_; }
-  void set_radial_next(PEdgeHandle* pedge) { radial_next_ = pedge; }
+  void set_radial_next(PEdgeHandle pedge) { radial_next_ = pedge; }
 
  private:
   PEdgeOrientation orientation_;
