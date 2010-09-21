@@ -2,10 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can
 // be found in the LICENSE file.
 
-// TODO(dspringer): This file will disappear when we migrate to Pepper v2 API.
-// It gets replaced by pp::Instance.
+// TODO(c_salt authors):  Make this API agnostic.  Also maybe don't force it to
+// be a ScriptableNativeObjectInterface.
 
 #include "c_salt/instance.h"
+
+#include "c_salt/npapi/browser_binding.h"
 
 namespace c_salt {
 
@@ -30,15 +32,20 @@ bool Instance::ReceiveEvent(const NPPepperEvent& event) {
   return false;
 }
 
-NPObject* Instance::CreateScriptingBridge() {
-  if (!scripting_bridge_.get()) {
-    // This is a synchronous call.
-    scripting_bridge_.reset(
-        ScriptingBridge::CreateScriptingBridgeWithInstance(*this));
-    InitializeMethods(scripting_bridge_.get());
-    InitializeProperties(scripting_bridge_.get());
+void Instance::CreateScriptingBridgeForObject(
+    SharedScriptableNativeObject native_object) {
+  // Create the browser_binding.  This is a synchronous call to the Browser.
+  c_salt::npapi::BrowserBinding* browser_binding =
+      c_salt::npapi::BrowserBinding::CreateBrowserBinding(*this);
+  if (browser_binding) {
+    SharedScriptingBridge bridge(browser_binding->scripting_bridge());
+    // Tell the ScriptingBridge the object for which it is the bridge.
+    bridge->set_native_object(native_object);
+    // And initialize the native object with the bridge.  This initializes
+    // methods and properties and sets the ScriptableNativeObject up with a weak
+    // reference back to the ScriptingBridge.
+    native_object->Initialize(bridge);
   }
-  return scripting_bridge_->CopyBrowserBinding();
 }
 
 }  // namespace c_salt

@@ -39,9 +39,8 @@ class Ginsu : public c_salt::Instance {
   virtual void WindowDidChangeSize(int width, int height);
   virtual void InitializeMethods(c_salt::ScriptingBridge* bridge);
 
-  // Return the ScriptingBridge that represents the View object.  Exposed to
-  // the browser via the ScriptingBridge.
-  NPObject* GetView();
+  // Return the view to JavaScript.
+  boost::shared_ptr<view::View> GetView();
 
  private:
   Ginsu();  // Not implemented, do not use.
@@ -61,7 +60,7 @@ class Ginsu : public c_salt::Instance {
   PGLContext pgl_context_;
 
   boost::scoped_ptr<model::Model> model_;
-  boost::scoped_ptr<view::View> view_;
+  boost::shared_ptr<view::View> view_;
 
   double last_update_;  // Time measured in milliseconds.
 };

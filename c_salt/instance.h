@@ -11,18 +11,25 @@
 
 #include "boost/noncopyable.hpp"
 #include "boost/scoped_ptr.hpp"
+#include "c_salt/scriptable_native_object.h"
 #include "c_salt/scripting_bridge.h"
+#include "c_salt/scripting_bridge_ptrs.h"
 
 namespace c_salt {
 
 // The base class for the Native Client module instance.  An Instance can
 // publish a ScriptingBridge to the browser, that ScriptingBridge binds to
-// methods and properties declared on this particulare Instance object.  Other
-// object are free to publish their own ScriptingBridgtes, that bind to those
-// objects.  Repeated calls to CreateScriptingBridge() will simply increment
+// methods and properties declared on this particulare Instance object.  The
+// Instance is also responsible for creating new ScriptingBridges as needed.
+// Other objects are free to publish their own ScriptingBridges, that bind to
+// those objects.
+// Repeated calls to GetScriptingBridge() will simply increment
 // a ref count of the published ScriptingBridge associated with this Instance.
 
-class Instance : public boost::noncopyable {
+// TODO(c_salt authors):  Make this API agnostic.  Also maybe don't force it to
+// be a ScriptableNativeObject?
+class Instance : public boost::noncopyable,
+                 public ScriptableNativeObject {
  public:
   explicit Instance(const NPP& npp_instance)
       : is_loaded_(false), npp_instance_(npp_instance) {}
@@ -49,12 +56,12 @@ class Instance : public boost::noncopyable {
   // handle the event.
   virtual bool ReceiveEvent(const NPPepperEvent& event);
 
-  // Called when the browser wants an object that conforms to the scripting
-  // protocol.  Creates a new ScriptingBridge instance if needed, otherwise,
-  // increments the ref count of the existing instance.  When a new
+  // Create a ScriptingBridge that will expose the object to the browser.  The
+  // ScriptingBridge takes ownership of the object.  When a new
   // ScriptingBridge instance is created, both InitializeMethods() and
-  // InitializeProperties() are called with the new instance.
-  virtual NPObject* CreateScriptingBridge();
+  // InitializeProperties() are called on the ScriptableNativeObject.
+  void CreateScriptingBridgeForObject(
+    SharedScriptableNativeObject native_object);
 
   // Accessor for the in-browser NPAPI instance associated with this Instance.
   const NPP npp_instance() const {
@@ -70,7 +77,7 @@ class Instance : public boost::noncopyable {
     is_loaded_ = flag;
   }
 
-  // Access to window object if the scripting bridge is necessary for now in
+  // Access to window object in the scripting bridge is necessary for now in
   // order to support NPAPI coding for subclasses.
   NPObject* WindowObject() const {
     return scripting_bridge_->window_object();

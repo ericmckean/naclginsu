@@ -7,13 +7,15 @@
 
 #include <string>
 
-#include "c_salt/scripting_bridge_ptrs.h"
 #include "boost/shared_ptr.hpp"
 #include "boost/variant/static_visitor.hpp"
+#include "c_salt/scriptable_native_object_ptrs.h"
+#include "c_salt/scriptable_native_object.h"
+#include "c_salt/scripting_interface_ptrs.h"
 
 namespace c_salt {
 
-class ScriptingBridge;
+class ScriptingInterface;
 
 // The following set of ConvertingVisitor template specializations implement the
 // Visitor concept, as described here:
@@ -40,22 +42,48 @@ class ConvertingVisitor<std::string>
   // exists in the variant.  In all other cases, we have to copy because we are
   // creating a std::string on the stack.
   const std::string& operator()(const std::string& value) const;
-  std::string operator()(const SharedScriptingBridge& value) const;
+  std::string operator()(const SharedScriptingInterface& value) const;
 };
 
 template <>
-class ConvertingVisitor<SharedScriptingBridge >
-  : public boost::static_visitor<SharedScriptingBridge > {
+class ConvertingVisitor<SharedScriptingInterface >
+  : public boost::static_visitor<SharedScriptingInterface > {
  public:
   template <class T>
-  SharedScriptingBridge operator()(T value) const {
-    // This is a catch all for types other than shared_ptr to ScriptingBridge,
-    // none of which can be converted to shared_ptr<ScriptingBridge>, so we
-    // just return a default-initialized shared_ptr.
-    return SharedScriptingBridge();
+  SharedScriptingInterface operator()(T value) const {
+    // This is a catch all for types other than shared_ptr to
+    // ScriptingInterface, none of which can be converted to
+    // shared_ptr<ScriptingInterface>, so we just return a default-initialized
+    // shared_ptr.
+    return SharedScriptingInterface();
   }
-  SharedScriptingBridge operator()(
-      const SharedScriptingBridge& value) const;
+  SharedScriptingInterface operator()(
+      const SharedScriptingInterface& value) const;
+};
+
+// This specialization handles getting a ScriptableNativeObject.  Currently, we
+// do NOT support converting to boost::shared_ptr<T> where T is a class which
+// inherits from ScriptableNativeObject.  To support it safely, we would require
+// a dynamic_cast to verify the type is correct, which would violate the Google
+// style guide by requiring RTTI.  To support it unsafely, we could static_cast,
+// but that would make strange failures happen if the user got it even slightly
+// wrong.  This forces them to get a SharedScriptableNativeObject and then do
+// the cast themselves, which at least puts any failures at the right place
+// (user code).
+template <>
+class ConvertingVisitor<SharedScriptableNativeObject>
+  : public boost::static_visitor<SharedScriptableNativeObject> {
+ public:
+  template <class T>
+  SharedScriptableNativeObject operator()(T value) const {
+    // This is a catch all for types other than shared_ptr to
+    // ScriptingInterface, none of which can be converted to
+    // shared_ptr<ScriptingInterface>, so we just return a default-initialized
+    // shared_ptr.
+    return SharedScriptableNativeObject();
+  }
+  SharedScriptableNativeObject operator()(
+      const SharedScriptingInterface& value) const;
 };
 
 template <>
@@ -65,7 +93,7 @@ class ConvertingVisitor<bool> : public boost::static_visitor<bool> {
   bool operator()(int32_t value) const;
   bool operator()(double value) const;
   bool operator()(const std::string& value) const;
-  bool operator()(const SharedScriptingBridge& value) const;
+  bool operator()(const SharedScriptingInterface& value) const;
 };
 
 template <>
@@ -75,7 +103,7 @@ class ConvertingVisitor<int32_t> : public boost::static_visitor<int32_t> {
   int32_t operator()(int32_t value) const;
   int32_t operator()(double value) const;
   int32_t operator()(const std::string& value) const;
-  int32_t operator()(const SharedScriptingBridge& value) const;
+  int32_t operator()(const SharedScriptingInterface& value) const;
 };
 
 template <>
@@ -85,7 +113,7 @@ class ConvertingVisitor<double> : public boost::static_visitor<double> {
   double operator()(int32_t value) const;
   double operator()(double value) const;
   double operator()(const std::string& value) const;
-  double operator()(const SharedScriptingBridge& value) const;
+  double operator()(const SharedScriptingInterface& value) const;
 };
 
 }  // namespace c_salt

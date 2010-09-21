@@ -10,11 +10,13 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "boost/noncopyable.hpp"
 #include "boost/shared_ptr.hpp"
 #include "c_salt/callback.h"
 #include "c_salt/property.h"
+#include "c_salt/scriptable_native_object_ptrs.h"
 #include "c_salt/variant.h"
 
 namespace c_salt {
@@ -35,12 +37,9 @@ class BrowserBinding;
 // TODO(dspringer): |browser_binding_| gets replaced by pp::ScriptableObject
 // when Pepper v2 becomes available.
 
-class ScriptingBridge : public boost::noncopyable {
+class ScriptingBridge : public c_salt::ScriptingInterface,
+                        public boost::noncopyable {
  public:
-  // Creates an instance of the scripting bridge object in the browser, with
-  // a corresponding ScriptingBridge object instance.
-  static ScriptingBridge* CreateScriptingBridgeWithInstance(
-      const Instance& instance);
   virtual ~ScriptingBridge();
 
   // Causes |method_name| to be published as a method that can be called by
@@ -96,7 +95,7 @@ class ScriptingBridge : public boost::noncopyable {
   // the caller is responsible for freeing it.  Sets |value| to point to a NULL
   // Value and returns |false| if no such property exists.
   bool GetValueForPropertyNamed(const std::string& name,
-                                SharedVariant value) const;
+                                SharedVariant* value) const;
   // Sets the value of the property associated with |name|.  Returns |false|
   // if no such property exists.
   bool SetValueForPropertyNamed(const std::string& name, const Variant& value);
@@ -118,9 +117,16 @@ class ScriptingBridge : public boost::noncopyable {
   // Return the browser instance associated with this ScriptingBridge.
   const NPP& GetBrowserInstance() const;
 
+  void set_native_object(SharedScriptableNativeObject native_object) {
+    native_object_ = native_object;
+  }
+
   // Accessors.
   const npapi::BrowserBinding* browser_binding() const {
     return browser_binding_;
+  }
+  SharedScriptableNativeObject native_object() {
+    return native_object_;
   }
 
   // This does not return a const NPObject* because none of the NPAPI that uses
@@ -146,36 +152,39 @@ class ScriptingBridge : public boost::noncopyable {
   // The browser proxy is responsible for all the variant marshaling from
   // platform-specific types (for example NPVariant or pp::Var) into c_salt
   // Types.
-  bool HasScriptMethod(const std::string& name);
-  // TODO(dspringer,dmichael): Migrate this code so it doesn't have NPAPI
-  // stuff in it.  This is kind of a really huge refactoring job, which touches
-  // the callback machinery and method invoking stuff and all kinds of things.
-  bool InvokeScriptMethod(const std::string& method_name,
-                          const ::c_salt::SharedVariant* params_begin,
-                          const ::c_salt::SharedVariant* params_end,
-                          ::c_salt::SharedVariant* return_value_var);
+  virtual bool HasScriptMethod(const std::string& name);
+  virtual bool InvokeScriptMethod(const std::string& method_name,
+                                  const ::c_salt::SharedVariant* params_begin,
+                                  const ::c_salt::SharedVariant* params_end,
+                                  ::c_salt::SharedVariant* return_value_var);
 
   // Support for browser-exposed properties.  The browser proxy (which is
   // platform-specific) first calls HasProperty() before getting or setting;
   // the Get or Set is performed only if HasProperty() returns |true|.  The
   // brwoser proxy is responsible for all the variant marshaling.
-  bool HasScriptProperty(const std::string& name);
+  virtual bool HasScriptProperty(const std::string& name);
   // Set |return_value| to the value associated with property |name|.  If
   // property |name| doesn't exist, then set |return_value| to the null type
   // and return |false|.
-  bool GetScriptProperty(const std::string& name,
-                         SharedVariant return_value) const;
+  virtual bool GetScriptProperty(const std::string& name,
+                                 SharedVariant* return_value) const;
   // If |name| is associated with a static property, return that value.  Else,
   // if there is no property associated with |name|, add it as a dynamic
   // property.  See property.h for definitions and more details.
-  bool SetScriptProperty(const std::string& name, const SharedVariant& value);
+  virtual bool SetScriptProperty(const std::string& name,
+                                 const SharedVariant& value);
   // This succeeds only if |name| is associated with a dynamic property.
-  bool RemoveScriptProperty(const std::string& name);
+  virtual bool RemoveScriptProperty(const std::string& name);
+
+  // Return the names of all enumerable properties in to the provided vector.
+  virtual void GetAllPropertyNames(std::vector<std::string>* prop_names) const;
 
   // This is called by some browser proxies when all references to a proxy
   // object have been deallocated, but the proxy's ref count has not gone to 0.
   // It's kind of an anti-leak clean-up mechanism.
-  void Invalidate();
+  virtual void Invalidate();
+
+  virtual bool IsNative() const { return true; }
 
   // This is a weak reference.  Some kind of smart_ptr would be useful here,
   // but the |browser_binding_| instance is actually a proxy object that is
@@ -190,6 +199,11 @@ class ScriptingBridge : public boost::noncopyable {
 
   MethodDictionary method_dictionary_;
   PropertyDictionary property_dictionary_;
+  // ScriptingBridge owns the native object to ensure it stays alive as long as
+  // the browser needs it, and it goes away as soon as all clients are done with
+  // it.  I.e., ScriptingBridge is ref-counted using the appropriate browser
+  // mechanism, and makes sure the target object has the same lifespan.
+  SharedScriptableNativeObject native_object_;
 };
 
 }  // namespace c_salt

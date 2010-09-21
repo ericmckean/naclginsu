@@ -47,6 +47,7 @@ Ginsu::Ginsu(const NPP& npp_instance)
   model_.reset(new model::Model);
   model_->InitDemo();
   view_.reset(new view::View(model_.get()));
+  this->CreateScriptingBridgeForObject(view_);
   last_update_ = TimeNow();
 }
 
@@ -85,10 +86,8 @@ void Ginsu::TickCallback(void* data) {
   static_cast<ginsu::Ginsu*>(data)->Tick();
 }
 
-NPObject* Ginsu::GetView() {
-  c_salt::ScriptingBridge* view_bridge =
-      view_->CreateScriptingBridgeWithInstance(*this);
-  return view_bridge->CopyBrowserBinding();
+boost::shared_ptr<ginsu::view::View> Ginsu::GetView() {
+  return view_;
 }
 
 void Ginsu::Tick() {
@@ -156,4 +155,3 @@ bool Ginsu::UpdateAnimation() {
 }
 
 }  // namespace ginsu
-

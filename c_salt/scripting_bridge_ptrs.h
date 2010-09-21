@@ -9,12 +9,14 @@
 // smart pointer types are needed, add them here.
 
 #include "boost/shared_ptr.hpp"
+#include "boost/weak_ptr.hpp"
 
 namespace c_salt {
 
 class ScriptingBridge;
 
 typedef boost::shared_ptr<ScriptingBridge> SharedScriptingBridge;
+typedef boost::weak_ptr<ScriptingBridge> WeakScriptingBridge;
 
 }  // namespace c_salt
 

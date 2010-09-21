@@ -15,7 +15,13 @@ namespace ginsu {
 class GinsuModule : public c_salt::Module {
  public:
   virtual c_salt::Instance* CreateInstance(const NPP& npp_instance) {
-    return new Ginsu(npp_instance);
+    boost::shared_ptr<Ginsu> ginsu_ptr(new Ginsu(npp_instance));
+    // This is slightly wacky;  Ginsu is both the instance and a
+    // ScriptableNativeObject.  So we use it (as the instance) to create a
+    // scripting bridge for itself.  The ScriptingBridge then takes ownership of
+    // the new Ginsu instance.
+    ginsu_ptr->CreateScriptingBridgeForObject(ginsu_ptr);
+    return ginsu_ptr.get();
   }
 };
 }  // namespace ginsu

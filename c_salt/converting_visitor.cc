@@ -9,6 +9,9 @@
 #include <limits>
 #include <sstream>
 
+#include "c_salt/scripting_bridge.h"
+#include "c_salt/scripting_interface.h"
+
 namespace c_salt {
 
 std::string ConvertingVisitor<std::string>::operator()(bool value) const {
@@ -44,16 +47,31 @@ ConvertingVisitor<std::string>::operator()(const std::string& value) const {
 }
 
 std::string ConvertingVisitor<std::string>::operator()(
-    const SharedScriptingBridge& value) const {
+    const SharedScriptingInterface& value) const {
   // TODO(dspringer, dmichael):  Should we bother converting it to a string,
   //                             a-la JSON?
   return std::string();
 }
 
-SharedScriptingBridge
-ConvertingVisitor<SharedScriptingBridge >::operator()(
-      const SharedScriptingBridge& value) const {
+SharedScriptingInterface
+ConvertingVisitor<SharedScriptingInterface>::operator()(
+      const SharedScriptingInterface& value) const {
     return value;
+}
+
+SharedScriptableNativeObject
+ConvertingVisitor<SharedScriptableNativeObject>::operator()(
+      const SharedScriptingInterface& value) const {
+  // We can only convert it to a native object if it is in fact implemented on
+  // the Native side.
+  if (value->IsNative()) {
+    SharedScriptingBridge bridge =
+        boost::static_pointer_cast<ScriptingBridge>(value);
+    SharedScriptableNativeObject sno = bridge->native_object();
+    return sno;
+  }
+  // If it's not native, we can't support this conversion.  Return a NULL.
+  return SharedScriptableNativeObject();
 }
 
 bool ConvertingVisitor<bool>::operator()(bool value) const {
@@ -76,7 +94,7 @@ bool ConvertingVisitor<bool>::operator()(const std::string& value) const {
 }
 
 bool ConvertingVisitor<bool>::operator()(
-    const SharedScriptingBridge& value) const {
+    const SharedScriptingInterface& value) const {
   return static_cast<bool>(value);  // Return true if value is not null.
 }
 
@@ -101,7 +119,7 @@ int32_t ConvertingVisitor<int32_t>::operator()(const std::string& value) const {
 }
 
 int32_t ConvertingVisitor<int32_t>::operator()(
-    const SharedScriptingBridge& value) const {
+    const SharedScriptingInterface& value) const {
   return 0;
 }
 
@@ -130,7 +148,7 @@ double ConvertingVisitor<double>::operator()(const std::string& value) const {
 }
 
 double ConvertingVisitor<double>::operator()(
-    const SharedScriptingBridge& value) const {
+    const SharedScriptingInterface& value) const {
   return 0.0;
 }
 

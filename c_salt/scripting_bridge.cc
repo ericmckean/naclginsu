@@ -18,13 +18,6 @@ using c_salt::npapi::BrowserBinding;
 
 namespace c_salt {
 
-ScriptingBridge* ScriptingBridge::CreateScriptingBridgeWithInstance(
-    const Instance& instance) {
-  BrowserBinding* browser_binding =
-      BrowserBinding::CreateBrowserBinding(instance);
-  return browser_binding ? browser_binding->scripting_bridge() : NULL;
-}
-
 ScriptingBridge::ScriptingBridge(BrowserBinding* browser_binding)
     : browser_binding_(browser_binding),
       window_object_(NULL) {
@@ -136,6 +129,22 @@ ScriptingBridge::InvokeScriptMethod(const std::string& method_name,
   return false;
 }
 
+void ScriptingBridge::GetAllPropertyNames(std::vector<std::string>* prop_names)
+  const {
+  if (prop_names) {
+    // Use the copy-and-swap idiom to ensure prop_names is only modified if
+    // everything succeeds.
+    std::vector<std::string> keys;
+    keys.reserve(method_dictionary_.size());
+    MethodDictionary::const_iterator iter(method_dictionary_.begin()),
+                                     the_end(method_dictionary_.end());
+    for (; iter != the_end; ++iter) {
+      keys.push_back(iter->first);
+    }
+    prop_names->swap(keys);
+  }
+}
+
 bool ScriptingBridge::AddProperty(const Property& property) {
   if (property.name().empty())
     return false;
@@ -145,10 +154,11 @@ bool ScriptingBridge::AddProperty(const Property& property) {
 }
 
 bool ScriptingBridge::GetValueForPropertyNamed(const std::string& name,
-                                               SharedVariant value) const {
+                                               SharedVariant* value) const {
   assert(value);
-  if (!value.get())
+  if (NULL == value) {
     return false;
+  }
   return GetScriptProperty(name, value);
 }
 
@@ -178,18 +188,19 @@ bool ScriptingBridge::HasScriptProperty(const std::string& name) {
 }
 
 bool ScriptingBridge::GetScriptProperty(const std::string& name,
-                                        SharedVariant return_value) const {
-  assert(return_value.get());
-  if (!return_value.get())
+                                        SharedVariant* return_value) const {
+  assert(return_value);
+  if (NULL == return_value) {
     return false;
+  }
   if (!name.empty()) {
     PropertyDictionary::const_iterator iter = property_dictionary_.find(name);
     if (iter != property_dictionary_.end()) {
-      return_value = iter->second.GetValue();
+      *return_value = (iter->second.GetValue());
       return true;
     }
   }
-  return_value.reset(new Variant());
+  return_value->reset(new Variant());
   return false;
 }
 

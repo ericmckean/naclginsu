@@ -9,6 +9,8 @@
 
 #include "c_salt/instance.h"
 #include "c_salt/module.h"
+#include "c_salt/scripting_bridge.h"
+#include "c_salt/scripting_bridge_ptrs.h"
 
 using c_salt::Instance;
 using c_salt::Module;
@@ -65,7 +67,16 @@ NPObject* NPP_GetScriptableInstance(NPP instance) {
   if (!module_instance) {
     return NULL;
   }
-  return module_instance->CreateScriptingBridge();
+  c_salt::SharedScriptingBridge bridge
+      = module_instance->GetScriptingBridge().lock();
+  if (bridge) {
+    return bridge->CopyBrowserBinding();
+  } else {
+    // The shared pointer expired, which means the browser was done with it.
+    // This shouldn't really happen, but we can just return NULL.
+    return NULL;
+  }
+  return NULL;
 }
 
 NPError NPP_GetValue(NPP instance, NPPVariable variable, void *value) {

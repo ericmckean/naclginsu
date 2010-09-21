@@ -9,12 +9,16 @@
 #include <sstream>
 #include <string>
 
+#include "c_salt/npapi/browser_binding.h"
+#include "c_salt/npapi/javascript_object_proxy.h"
+#include "c_salt/scripting_interface.h"
+#include "c_salt/scripting_interface_ptrs.h"
 #include "c_salt/variant.h"
 
 namespace c_salt {
 namespace npapi {
 
-VariantConverter::VariantConverter() {}
+VariantConverter::VariantConverter(NPP instance) : instance_(instance) {}
 
 SharedVariant
 VariantConverter::CreateVariantFromNPVariant(const NPVariant& np_var) const {
@@ -26,14 +30,17 @@ VariantConverter::CreateVariantFromNPVariant(const NPVariant& np_var) const {
       break;
     }
     case NPVariantType_Object: {
-      // TODO(dmichael,dspringer):
-      // Not currently supported.  We need a way to map from an NPObject* to a
-      // ScriptableObject.  I.e., determine if the NPObject is implemented in
-      // native code, and get the appropriate ScriptingBridge.  Otherwise, make
-      // a ppapi/npapi::ObjectProxy that implements ScriptableObject, and pass
-      // that along instead.
-      // *c_salt_var =
-      //  NPObjectToSharedScriptableObject(NPVARIANT_TO_OBJECT(np_var));
+      // TODO(c_salt authors):  Currently, this will always turn NPObject in to
+      // a Proxy object, treating it like a JavaScript object as far as c_salt
+      // is concerned.  This should work even for native objects, just adding
+      // some work by doing extra conversions to/from NPAPI types.  Is there
+      // any nice way to see if an NPObject* represents a native-side object?
+      // Nothing is apparent in NPObject or NPClass.  We could hold a set of all
+      // NPObjects that are native-side (i.e., all BrowserBindings) per
+      // Instance, but it would have to be shared across threads and would
+      // therefore need synchronization.  D'oh!
+      retval.reset(new c_salt::Variant(
+          new JavaScriptObjectProxy(NPVARIANT_TO_OBJECT(np_var), instance_)));
       break;
     }
     case NPVariantType_String: {
@@ -100,10 +107,25 @@ VariantConverter::ConvertVariantToNPVariant(const c_salt::Variant& c_salt_var,
       break;
     }
     case c_salt::Variant::kObjectVariantType: {
-      // Not currently supported.  We need a way to get at the NPObject* that's
-      // associated with the SharedScriptableObject.
-      // OBJECT_TO_NPVARIANT(GetNPObject(c_salt_var->object_value()), *var);
-      NULL_TO_NPVARIANT(*np_var);
+      SharedScriptingInterface scriptable = c_salt_var.ObjectValue();
+      if (scriptable->IsNative()) {
+        // This must be implemented with ScriptingBridge;  we support no other
+        // form of native-backed scripting object.
+        ScriptingBridge* bridge =
+            static_cast<ScriptingBridge*>(scriptable.get());
+        const NPObject* const_np_obj = bridge->browser_binding();
+        NPObject* np_obj = const_cast<NPObject*>(const_np_obj);
+        // TODO(c_salt authors): Should we bump ref count?  This doesn't.
+        OBJECT_TO_NPVARIANT(np_obj, *np_var);
+      } else {
+        // It's a JavaScript object, and we're using NPAPI, so it must be a
+        // npapi::JavaScriptObjectProxy.
+        npapi::JavaScriptObjectProxy* proxy =
+            static_cast<JavaScriptObjectProxy*>(scriptable.get());
+        // TODO(c_salt authors): Same question...  bump ref count?  I think not;
+        // the browser should take over, but we should check.
+        OBJECT_TO_NPVARIANT(proxy->np_object(), *np_var);
+      }
       break;
     }
     default: {
