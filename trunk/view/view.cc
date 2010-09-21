@@ -4,6 +4,7 @@
 
 #include "view/view.h"
 
+#include "c_salt/scripting_bridge.h"
 #include "osg/Matrix"
 #include "osg/Vec3"
 #include "view/scene.h"
@@ -67,22 +68,17 @@ bool View::SetCameraOrientation(double orientation) {
   return true;
 }
 
-c_salt::ScriptingBridge* View::CreateScriptingBridgeWithInstance(
-      const c_salt::Instance& instance) {
-  if (!scripting_bridge_.get()) {
-    // Note that CreateScriptingBridgeWithInstance() performs a synchronous
-    // rendezvous with the browser. If it returns non-NULL, |scripting_bridge_|
-    // is all hooked up to the browser and is ready to use.
-    scripting_bridge_.reset(
-        c_salt::ScriptingBridge::CreateScriptingBridgeWithInstance(instance));
-    scripting_bridge_->AddMethodNamed("getCameraOrientation",
-                                      this,
-                                      &View::GetCameraOrientation);
-    scripting_bridge_->AddMethodNamed("setCameraOrientation",
-                                      this,
-                                      &View::SetCameraOrientation);
-  }
-  return scripting_bridge_.get();
+void View::InitializeMethods(c_salt::ScriptingBridge* bridge) {
+  bridge->AddMethodNamed("getCameraOrientation",
+                         this,
+                         &View::GetCameraOrientation);
+  bridge->AddMethodNamed("setCameraOrientation",
+                         this,
+                         &View::SetCameraOrientation);
+}
+
+void View::InitializeProperties(c_salt::ScriptingBridge* bridge) {
+  // No properties in View.
 }
 
 }  // namespace view

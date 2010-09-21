@@ -60,7 +60,7 @@ bool BrowserBinding::GetProperty(NPIdentifier name, NPVariant* return_value)
   ScopedNPIdToStringConverter np_str(name);
   SharedVariant value(new Variant());
   bool success = scripting_bridge_->GetScriptProperty(np_str.string_value(),
-                                                      value);
+                                                      &value);
   variant_converter_.ConvertVariantToNPVariant(*value, return_value);
   return success;
 }

@@ -10,8 +10,10 @@ Import('env')
 
 c_salt_npapi_sources = [
   'npapi/browser_binding.cc',
+  'npapi/javascript_object_proxy.cc',
   'npapi/npn_bridge.cc',
   'npapi/npp_gate.cc',
+  'npapi/scoped_npid_to_string_converter.cc',
   'npapi/variant_converter.cc',
 ]
 
@@ -20,6 +22,7 @@ c_salt_sources = [
   'instance.cc',
   'module.cc',
   'property.cc',
+  'scriptable_native_object.cc',
   'scripting_bridge.cc',
   'variant.cc',
 ]

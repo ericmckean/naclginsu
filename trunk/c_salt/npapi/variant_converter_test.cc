@@ -39,7 +39,7 @@ void CheckConversion(T value) {
   c_salt::SharedVariant c_salt_var(new c_salt::Variant(value));
   NPVariant np_var;
   c_salt::SharedVariant dest_c_salt_var;
-  c_salt::npapi::VariantConverter converter;
+  c_salt::npapi::VariantConverter converter(NULL);
   converter.ConvertVariantToNPVariant(*c_salt_var, &np_var);
   dest_c_salt_var = converter.CreateVariantFromNPVariant(np_var);
   EXPECT_EQ(c_salt_var->variant_type(), dest_c_salt_var->variant_type());

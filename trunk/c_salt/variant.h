@@ -7,9 +7,14 @@
 
 #include <string>
 
-#include "boost/shared_ptr.hpp"
+#include "boost/static_assert.hpp"
+#include "boost/type_traits/is_base_and_derived.hpp"
 #include "boost/variant.hpp"
 #include "c_salt/converting_visitor.h"
+#include "c_salt/scriptable_native_object_ptrs.h"
+#include "c_salt/scriptable_native_object.h"
+#include "c_salt/scripting_interface.h"
+#include "c_salt/scripting_interface_ptrs.h"
 
 namespace c_salt {
 
@@ -51,8 +56,42 @@ class Variant {
   explicit Variant(const char* string_value)
       : variant_type_(kStringVariantType), value_(std::string(string_value)) {}
   // Hold a shared reference to |object_value|.
-  explicit Variant(const boost::shared_ptr<ScriptingBridge>& object_value)
+  explicit Variant(SharedScriptingInterface object_value)
       : variant_type_(kObjectVariantType), value_(object_value) {}
+
+  // This constructor handles creating a Variant from a pointer to
+  // ScriptableNativeObject.  This is done by getting a shared pointer to the
+  // ScriptingBridge associated with the ScriptableNativeObject.
+  //
+  // If the ScriptingBridge associated with the given native object has gone
+  // away, then we can't represent that object in a c_salt Variant, and
+  // therefore the constructed Variant will be of Null type.
+  template <class T>
+  explicit Variant(boost::shared_ptr<T> native_object)
+      : variant_type_(kObjectVariantType) {
+    // This constructor only works if T inherits from ScriptableNativeObject.
+    BOOST_STATIC_ASSERT((boost::is_base_and_derived<ScriptableNativeObject,
+                                                    T>::value));
+    // Cast to the base.  This is probably not necessary, but it protects us
+    // from users inheriting from ScriptableNativeObject but then hiding the
+    // GetScriptingBridge function that we want.
+    SharedScriptableNativeObject sno =
+        boost::static_pointer_cast<ScriptableNativeObject>(native_object);
+    WeakScriptingBridge weak_bridge = native_object->GetScriptingBridge();
+    // Try to lock the weak pointer to a shared pointer.  If this succeeds, then
+    // the scripting bridge still exists, and we can set this variant to point
+    // at it.
+    SharedScriptingInterface shared_scripting_if(weak_bridge.lock());
+    if (shared_scripting_if) {
+      // We were able to lock the pointer, so set our internal variant to it.
+      value_ = shared_scripting_if;
+    } else {
+      // We failed to lock a shared_ptr, which means the ScriptingBridge for
+      // this object has gone away.  This must be because the browser is done
+      // with it.  Set the Variant to kNullVariantType to indicate failure.
+      variant_type_ = kNullVariantType;
+    }
+  }
 
   // TODO(dspringer,dmichael): It might be worthwhile to make a no-copy
   // version of the std::string ctor variant(), but that requires a lot more
@@ -91,19 +130,21 @@ class Variant {
   }
 
   // Convenience wrappers.
-  virtual bool BoolValue() const {
+  bool BoolValue() const {
     return GetValue<bool>();
   }
-  virtual int32_t Int32Value() const {
+  int32_t Int32Value() const {
     return GetValue<int32_t>();
   }
-  virtual double DoubleValue() const {
+  double DoubleValue() const {
     return GetValue<double>();
   }
-  virtual std::string StringValue() const {
+  std::string StringValue() const {
     return GetValue<std::string>();
   }
-  // TODO(dspringer, dmichael): ObjectValue()?
+  SharedScriptingInterface ObjectValue() const {
+    return GetValue<SharedScriptingInterface>();
+  }
 
   // TODO(dspringer, dmichael): Add other more specific accessors that give
   // more information about possible conversions and conversion errors.
@@ -120,7 +161,7 @@ class Variant {
                  int32_t,
                  double,
                  std::string,
-                 boost::shared_ptr<ScriptingBridge> > value_;
+                 SharedScriptingInterface> value_;
   // Variants are immutable.  You can copy them, but assignment is not
   // allowed.
   Variant& operator=(const Variant&);  // Not implemented, do not use.

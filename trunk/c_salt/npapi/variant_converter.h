@@ -9,9 +9,6 @@
 
 #include "c_salt/variant_ptrs.h"
 
-// TODO(dmichael):  Add support for converting NPObject* to ScriptableObject
-// #include "c_salt/npapi/browser_binding.h"
-
 namespace c_salt {
 
 namespace npapi {
@@ -20,14 +17,13 @@ namespace npapi {
 // from c_salt::Variants.
 class VariantConverter {
  public:
-  VariantConverter();
+  explicit VariantConverter(NPP instance);
 
   SharedVariant CreateVariantFromNPVariant(const NPVariant& np_var) const;
   void ConvertVariantToNPVariant(const c_salt::Variant& c_salt_var,
                                  NPVariant* np_var) const;
  private:
-  // Note there is no state right now, but I expect that we will need to have
-  // the BrowserBinding to support converting NPObject* to ScriptableObject
+  NPP instance_;
 };
 
 }  // namespace npapi

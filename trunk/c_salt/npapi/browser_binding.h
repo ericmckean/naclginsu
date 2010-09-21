@@ -10,23 +10,26 @@
 
 #include <string>
 
-#include "boost/scoped_ptr.hpp"
+#include "boost/shared_ptr.hpp"
+#include "c_salt/instance.h"
+#include "c_salt/npapi/scoped_npid_to_string_converter.h"
 #include "c_salt/npapi/variant_converter.h"
+#include "c_salt/scripting_bridge_ptrs.h"
 #include "c_salt/scripting_bridge.h"
 
 namespace c_salt {
 
 namespace npapi {
 
-class Instance;
-
 // A thin wrapper that owns the ScriptingBridge class.  This is necessary
 // because the NPObject layout has to be preserved, and it cannot have things
 // like a vtable inserted into it.
 class BrowserBinding : public NPObject {
  public:
-  explicit BrowserBinding(const NPP& npp)
-      : npp_(npp), scripting_bridge_(new ScriptingBridge(this)) {}
+  explicit BrowserBinding(NPP npp)
+      : npp_(npp),
+        scripting_bridge_(new ScriptingBridge(this)),
+        variant_converter_(npp) {}
   // The dtor *cannot* be virtual because this object must preserve NPObject's
   // POD memory layout.
   ~BrowserBinding() {}
@@ -46,31 +49,11 @@ class BrowserBinding : public NPObject {
     return npp_;
   }
 
-  ScriptingBridge* scripting_bridge() {
-    return scripting_bridge_.get();
+  SharedScriptingBridge scripting_bridge() {
+    return scripting_bridge_;
   }
 
  private:
-  // A small helper class that converts an NPIdentifier into a std::string.
-  // It follows the RAII pattern: when the class goes out of scope, the memory
-  // used to get the string is freed with NPN_MemFree().
-  class ScopedNPIdToStringConverter {
-   public:
-    explicit ScopedNPIdToStringConverter(const NPIdentifier& np_id)
-        : np_string_(NPN_UTF8FromIdentifier(np_id)) {
-      string_value_ = static_cast<const char*>(np_string_);
-    }
-    ~ScopedNPIdToStringConverter() {
-      NPN_MemFree(np_string_);
-    }
-    const std::string& string_value() const {
-      return string_value_;
-    }
-   private:
-    NPUTF8* np_string_;
-    std::string string_value_;
-  };
-
   // NPAPI support methods; the browser calls these on scriptable objects.
   bool HasMethod(NPIdentifier name) const;
   void Invalidate();
@@ -101,7 +84,7 @@ class BrowserBinding : public NPObject {
   friend bool RemoveProperty(NPObject* object, NPIdentifier name);
 
   NPP npp_;
-  boost::scoped_ptr<ScriptingBridge> scripting_bridge_;
+  SharedScriptingBridge scripting_bridge_;
   VariantConverter variant_converter_;
 };
 
