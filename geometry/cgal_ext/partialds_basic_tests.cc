@@ -53,6 +53,14 @@ TEST_F(PartialDSTest, MakeIsolatedVertex) {
   ASSERT_TRUE(v != NULL);
   mesh_->DeleteIsolatedVertex(v);
   ASSERT_TRUE(mesh_->ValidateVertex(v));
+  PartialDSTest::PEMesh::PVertexConstHandle pv = v->parent_pvertex();
+  ASSERT_TRUE(mesh_->ValidatePVertex(pv));
+  PartialDSTest::PEMesh::EdgeConstHandle e = pv->parent_edge();
+  ASSERT_TRUE(mesh_->ValidateEdge(e));
+  PartialDSTest::PEMesh::PEdgeConstHandle pe = e->parent_pedge();
+  ASSERT_TRUE(mesh_->ValidatePEdge(pe));
+  PartialDSTest::PEMesh::LoopConstHandle loop = pe->parent_loop();
+  ASSERT_TRUE(mesh_->ValidateLoop(loop));
 
   // TODO(gwink): this will fail since the mesh is not empty.
   mesh_->DeleteEmptyRegion(r);

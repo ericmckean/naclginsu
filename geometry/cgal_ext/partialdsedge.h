@@ -5,6 +5,7 @@
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_EDGE_H_
 
 #include <CGAL/basic.h>
+#include "geometry/cgal_ext/partialdscirculators.h"
 #include "geometry/cgal_ext/partialdsentity.h"
 
 namespace ginsu {
@@ -29,6 +30,9 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::PVertexHandle      PVertexHandle;
   typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
 
+  typedef PEdgeRadialCirculator<PEdgeConstHandle>
+                                         PEdgeRadialConstCirculator;
+
   PartialDSEdge()
     : parent_pedge_(NULL), start_pvertex_(NULL), end_pvertex_(NULL) { }
 
@@ -39,6 +43,23 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   void set_start_pvertex(PVertexHandle pv) { start_pvertex_ = pv; }
   PVertexConstHandle end_pvertex() const { return end_pvertex_; }
   void set_end_pvertex(PVertexHandle pv) { end_pvertex_ = pv; }
+
+  // Iterate over p-edges that have this edge as child.
+  PEdgeRadialConstCirculator begin() const {
+    return PEdgeRadialConstCirculator(parent_pedge_);
+  }
+
+  // Return true if pe is a radial edge about this edge, and false otherwise.
+  bool FindRadialPEdge(PEdgeConstHandle pe) const {
+    if (pe == NULL) return false;
+
+    PEdgeRadialConstCirculator i = begin();
+    PEdgeRadialConstCirculator start = i;
+    do {
+      if (i++ == PEdgeRadialConstCirculator(pe)) return true;
+    } while(i != start);
+    return false;
+  }
 
  private:
   PEdgeHandle parent_pedge_;

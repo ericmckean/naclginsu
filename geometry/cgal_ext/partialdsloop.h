@@ -5,6 +5,7 @@
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_LOOP_H_
 
 #include <CGAL/basic.h>
+#include "geometry/cgal_ext/partialdscirculators.h"
 #include "geometry/cgal_ext/partialdsentity.h"
 
 namespace ginsu {
@@ -27,6 +28,9 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::LoopHandle       LoopHandle;
   typedef typename PartialDS::LoopConstHandle  LoopConstHandle;
 
+  typedef PEdgeLoopCirculator<PEdgeConstHandle>
+                                         PEdgeAroundLoopConstCirculator;
+
   PartialDSLoop()
     : parent_face_(NULL), boundary_pedge_(NULL), next_hole_(NULL) { }
 
@@ -38,6 +42,23 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
 
   LoopConstHandle next_hole() const { return next_hole_; }
   void set_next_hole(LoopHandle loop) { next_hole_ = loop; }
+
+  // Iterate over p-edges that form the loop.
+  PEdgeAroundLoopConstCirculator begin() const {
+    return PEdgeAroundLoopConstCirculator(boundary_pedge_);
+  }
+
+  // Return true if p-edge pe is found along this loop and false otherwise.
+  bool FindPEdge(PEdgeConstHandle pe) const {
+    if (pe == NULL) return false;
+
+    PEdgeAroundLoopConstCirculator i = begin();
+    PEdgeAroundLoopConstCirculator start = i;
+    do {
+      if (i++ == PEdgeAroundLoopConstCirculator(pe)) return true;
+    } while(i != start);
+    return false;
+  }
 
  private:
   FaceHandle parent_face_;  // Parent face.

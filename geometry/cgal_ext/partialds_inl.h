@@ -230,8 +230,8 @@ bool PartialDS<TraitsType>::ValidatePVertex(PVertexConstHandle pv) {
     assert(!"*** ValidatePVertex: pvertex has NULL parent-edge pointer. ***");
     return false;
   }
-  if (pv->parent_edge->start_vertex() != pv &&
-      pv->parent_edge->end_vertex() != pv) {
+  if (pv->parent_edge()->start_pvertex() != pv &&
+      pv->parent_edge()->end_pvertex() != pv) {
     assert(!"*** ValidatePVertex: parent edge does not point to pvertex. ***");
     return false;
   }
@@ -258,13 +258,13 @@ bool PartialDS<TraitsType>::ValidateEdge(EdgeConstHandle e) {
     return false;
   }
   // Check that start and end pvertex point to this edge.
-  PVertexConstHandle v = parent_pedge->start_vertex();
+  PVertexConstHandle v = e->start_pvertex();
   if (v == NULL || v->parent_edge() != e) {
     assert(!"*** ValidateEdge: start vertex is null or points"
             " to wrong edge. ***");
     return false;
   }
-  v = parent_pedge->end_vertex();
+  v = e->end_pvertex();
   if (v == NULL || v->parent_edge() != e) {
     assert(!"*** ValidateEdge: end vertex is null or points"
             " to wrong edge. ***");
@@ -277,7 +277,71 @@ bool PartialDS<TraitsType>::ValidateEdge(EdgeConstHandle e) {
 template <class TraitsType>
 bool PartialDS<TraitsType>::ValidatePEdge(PEdgeConstHandle pe) {
 #if defined(_DEBUG) || defined(_GEOM_TESTS)
-  // TODO(gwink): implement this.
+  // Check that parent loop links to this pedge.
+  LoopConstHandle loop = pe->parent_loop();
+  if (loop == NULL || loop->boundary_pedge() == NULL || !loop->FindPEdge(pe)) {
+    assert(!"*** ValidatePEdge: parent loop is null or does not link to"
+            " p-edge ***");
+    return false;
+  }
+  // Check that child edge links to this edge.
+  EdgeConstHandle edge = pe->child_edge();
+  if (edge == NULL || edge->parent_pedge() == NULL ||
+      !edge->FindRadialPEdge(pe)) {
+    assert(!"*** ValidatePEdge: child edge is null or does not link to"
+            " p-edge ***");
+    return false;
+  }
+  // Check the radial next and previous.
+  PEdgeConstHandle scan_pedge = pe;
+  PEdgeConstHandle start_pedge = scan_pedge;
+  while(1) {
+    if (scan_pedge->radial_next() == NULL) {
+      assert(!"*** ValidatePEdge: radial_next p-edge is NULL. ***");
+      return false;
+    }
+    if (scan_pedge->radial_next()->radial_previous() != scan_pedge) {
+      assert(!"*** ValidatePEdge: radial_next p-edge does not point back to "
+              "to same p-edge with radial_previous pointer. ***");
+      return false;
+    }
+    scan_pedge = scan_pedge->radial_next();
+    if (scan_pedge == start_pedge) break;
+  }
+#endif
+  return true;
+}
+
+template <class TraitsType>
+bool PartialDS<TraitsType>::ValidateLoop(LoopConstHandle loop) {
+#if defined(_DEBUG) || defined(_GEOM_TESTS)
+  // Ensure the loop points to a valid p-edge.
+  PEdgeConstHandle scan_pedge = loop->boundary_pedge();
+  if (scan_pedge == NULL) {
+    assert(!"*** ValidateLoop: loop does not point to a valid p-edge. ***");
+    return false;
+  }
+  // Check the chain of p-edges that form the loop.
+  PEdgeConstHandle start_pedge = scan_pedge;
+  while(1) {
+    if (scan_pedge->loop_next() == NULL) {
+      assert(!"*** ValidateLoop: loop_next p-edge is NULL. ***");
+      return false;
+    }
+    if (scan_pedge->loop_next()->loop_previous() != scan_pedge) {
+      assert(!"*** ValidateLoop: loop_next p-edge does not point back to "
+              "to same p-edge with loop_previous pointer. ***");
+      return false;
+    }
+    if (scan_pedge->parent_loop() != loop) {
+      assert(!"*** ValidateLoop: an edge around the loop does not point "
+              "to the correct parent loop. ***");
+      return false;
+    }
+
+    scan_pedge = scan_pedge->loop_next();
+    if (scan_pedge == start_pedge) break;
+  }
 #endif
   return true;
 }
