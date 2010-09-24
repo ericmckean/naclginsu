@@ -230,6 +230,7 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::FaceHandle                 FaceHandle;
   typedef typename Types::PFaceHandle                PFaceHandle;
   typedef typename Types::LoopHandle                 LoopHandle;
+  typedef typename Types::LoopConstHandle            LoopConstHandle;
   typedef typename Types::ShellHandle                ShellHandle;
   typedef typename Types::RegionHandle               RegionHandle;
   typedef typename Types::Entity                     Entity;
@@ -275,6 +276,7 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   static bool ValidatePVertex(PVertexConstHandle pv);
   static bool ValidateEdge(EdgeConstHandle e);
   static bool ValidatePEdge(PEdgeConstHandle pe);
+  static bool ValidateLoop(LoopConstHandle loop);
 
  private:
   // Template function for making and destroying PartialDS items.
