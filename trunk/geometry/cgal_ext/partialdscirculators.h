@@ -115,6 +115,25 @@ class PEdgeRadialCirculator : public It {
   }
 };
 
+// Find element value in a sequence starting at |start|. Returns NULL if value
+// is not found.
+template <class Circulator>
+typename Circulator::Iterator find(Circulator start,
+                                   const typename Circulator::Iterator value) {
+  assert(start != NULL);
+  if (start == NULL) return NULL;
+
+  Circulator end = start;
+  do {
+    if (start == Circulator(value)) {
+      return start;
+    }
+    ++start;
+  } while(start != end);
+
+  return NULL;
+}
+
 }  // namespace geometry
 }  // namespace ginsu
 
