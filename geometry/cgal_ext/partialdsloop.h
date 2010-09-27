@@ -29,7 +29,7 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::LoopConstHandle  LoopConstHandle;
 
   typedef PEdgeLoopCirculator<PEdgeConstHandle>
-                                         PEdgeAroundLoopConstCirculator;
+                                               PEdgeLoopConstCirculator;
 
   PartialDSLoop()
     : parent_face_(NULL), boundary_pedge_(NULL), next_hole_(NULL) { }
@@ -44,20 +44,13 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   void set_next_hole(LoopHandle loop) { next_hole_ = loop; }
 
   // Iterate over p-edges that form the loop.
-  PEdgeAroundLoopConstCirculator begin() const {
-    return PEdgeAroundLoopConstCirculator(boundary_pedge_);
+  PEdgeLoopConstCirculator begin() const {
+    return PEdgeLoopConstCirculator(boundary_pedge_);
   }
 
   // Return true if p-edge pe is found along this loop and false otherwise.
   bool FindPEdge(PEdgeConstHandle pe) const {
-    if (pe == NULL) return false;
-
-    PEdgeAroundLoopConstCirculator i = begin();
-    PEdgeAroundLoopConstCirculator start = i;
-    do {
-      if (i++ == PEdgeAroundLoopConstCirculator(pe)) return true;
-    } while(i != start);
-    return false;
+    return find<PEdgeLoopConstCirculator>(begin(), pe) != NULL;
   }
 
  private:

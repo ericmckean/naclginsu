@@ -28,6 +28,7 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDS::VertexConstHandle  VertexConstHandle;
   typedef typename PartialDS::PVertexHandle      PVertexHandle;
   typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
+  typedef typename PartialDS::EdgeConstHandle    EdgeConstHandle;
 
   PartialDSVertex() : parent_pvertex_(NULL) { }
 
@@ -36,6 +37,15 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
 
   const Point& point() const { return p_; }
   void set_point(const Point& p) { p_ = p; }
+
+  // Return true if the vertex is an isolated vertex, and false otherwise.
+  bool IsIsolated() const {
+    // Follow the parent chain edge up to the edge and check if it has
+    // the same p-vertex as start and end verttices.
+    PVertexConstHandle pv = parent_pvertex();
+    EdgeConstHandle e = pv->parent_edge();
+    return (e->start_pvertex() == pv) && (e->end_pvertex() == pv);
+  }
   
  private:
   PVertexHandle parent_pvertex_; 

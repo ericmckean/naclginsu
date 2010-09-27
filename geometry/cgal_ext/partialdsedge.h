@@ -51,14 +51,7 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
 
   // Return true if pe is a radial edge about this edge, and false otherwise.
   bool FindRadialPEdge(PEdgeConstHandle pe) const {
-    if (pe == NULL) return false;
-
-    PEdgeRadialConstCirculator i = begin();
-    PEdgeRadialConstCirculator start = i;
-    do {
-      if (i++ == PEdgeRadialConstCirculator(pe)) return true;
-    } while(i != start);
-    return false;
+    return find<PEdgeRadialConstCirculator>(begin(), pe) != NULL;
   }
 
  private:
