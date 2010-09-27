@@ -283,11 +283,11 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   template <class ItemHandle, class ItemList>
   ItemHandle MakeItem (ItemList* item_list) {
     typedef typename ItemList::pointer Pointer;
-    typedef typename ItemList::value_type Vertex;
+    typedef typename ItemList::value_type Entity;
     
     Pointer pv = item_list->get_allocator().allocate(1);
-    new (pv) Vertex();
-    item_list->push_back(*pv);
+    new (pv) Entity();
+    item_list->push_front(*pv);
     return item_list->begin();
   }
   
