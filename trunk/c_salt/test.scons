@@ -19,6 +19,7 @@ if not os.path.exists(sel_ldr):
 
 small_test_inputs = ['c_salt_test_module.cc',
                      'callback_test.cc',
+                     'notification_center_test.cc',
                      'npapi/variant_converter_test.cc',
                      'variant_test.cc',
                     ]
