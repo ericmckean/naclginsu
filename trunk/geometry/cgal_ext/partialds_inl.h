@@ -20,8 +20,12 @@ template <class TraitsType>
 void PartialDS<TraitsType>::DeleteEmptyRegion(RegionHandle region) {
   if (region == NULL) return;
 
-  assert(region->outer_shell() == NULL && "Must empty the region first.");
-  if (region->outer_shell() == NULL) {
+  assert(region->IsEmpty() && "Must empty the region first.");
+  if (region->IsEmpty()) {
+    if (region->outer_shell() != NULL) {
+      DestroyShell(region->outer_shell());
+      region->set_outer_shell(NULL);
+    }
     DestroyRegion(region);
   }
 }
@@ -82,23 +86,54 @@ template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
 
   // Lastly, insert the shell in the region. If the region is empty, then create
   // an outer shell - the half-open shell that surrounds the outer region - and
-  // make the vertex shell a void shell within that shell. Otherwise, add the
-  // vertex shell to existing shell's list of void shells.
+  // then add the vertex shell to existing shell's list of void shells.
   shell->set_parent_region(region);
-  if (region->outer_shell() == NULL) {
-    ShellHandle outer_shell = MakeShell();
+  ShellHandle outer_shell = region->outer_shell();
+  if (outer_shell == NULL) {
+    outer_shell = MakeShell();
     region->set_outer_shell(outer_shell);
     outer_shell->set_parent_region(region);
-    outer_shell->set_next_void_shell(shell);
-  } else {
-    region->AddVoidShell(shell);
   }
+  outer_shell->AddVoidShell(shell);
 
   return vertex;
 }
 
 template <class TraitsType>
 void PartialDS<TraitsType>::DeleteIsolatedVertex(VertexHandle vertex) {
+  assert(vertex->IsIsolated());
+  if (vertex->IsIsolated()) {
+    PVertexHandle pv = vertex->parent_pvertex();
+    DestroyVertex(vertex);
+    assert(pv->next_pvertex() == pv);
+    EdgeHandle e = pv->parent_edge();
+    DestroyPVertex(pv);
+
+    PEdgeHandle pe = e->parent_pedge();
+    DestroyEdge(e);
+    assert(pe->loop_next() == pe && pe->radial_next() == pe);
+    LoopHandle loop = pe->parent_loop();
+    assert(loop->boundary_pedge() == pe);
+    DestroyPEdge(pe);
+
+    assert(loop->next_hole() == NULL);
+    FaceHandle f = loop->parent_face();
+    assert(f->outer_loop() == loop);
+    DestroyLoop(loop);
+    PFaceHandle pf = f->parent_pface();
+    assert(pf->child_face() == f);
+    DestroyFace(f);
+
+    assert(pf->next_pface() == pf && pf->mate_pface() == NULL);
+    ShellHandle shell = pf->parent_shell();
+    assert(shell->pface() == pf);
+    DestroyPFace(pf);
+
+    RegionHandle region = shell->parent_region();
+    assert(region->outer_shell() != NULL && region->outer_shell() != shell);
+    region->outer_shell()->RemoveVoidShell(shell);
+    DestroyShell(shell);
+  }
 }
 
 // Basic (non-topological) make<Item> and Destroy<Item> functions.

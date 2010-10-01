@@ -10,6 +10,8 @@
 namespace ginsu {
 namespace geometry {
 
+template <class T> class PartialDS;
+
 // PartialDSFace: template class for face entity in the partial-entity
 // data structure. The template parameters are:
 //   TypeRefs: gives access to the types declared and used within the PartialDS
@@ -19,20 +21,26 @@ template <class TypeRefs>
 class PartialDSFace : public PartialDSEntity<TypeRefs> {
  public:
   typedef PartialDSFace<TypeRefs>              Self;
-  typedef TypeRefs                             PartialDS;
+  typedef TypeRefs                             PartialDSTypes;
 
-  typedef typename PartialDS::PFaceHandle      PFaceHandle;
-  typedef typename PartialDS::PFaceConstHandle PFaceConstHandle;
-  typedef typename PartialDS::LoopHandle       LoopHandle;
-  typedef typename PartialDS::LoopConstHandle  LoopConstHandle;
+  typedef typename PartialDSTypes::PFaceHandle      PFaceHandle;
+  typedef typename PartialDSTypes::PFaceConstHandle PFaceConstHandle;
+  typedef typename PartialDSTypes::LoopHandle       LoopHandle;
+  typedef typename PartialDSTypes::LoopConstHandle  LoopConstHandle;
 
   PartialDSFace()
     : parent_pface_(NULL), outer_loop_(NULL) { }
 
+  // Accessors
   PFaceConstHandle parent_pface() const { return parent_pface_; }
-  void set_parent_pface(PFaceHandle pface) { parent_pface_ = pface; }
-
+  PFaceHandle parent_pface() { return parent_pface_; }
   LoopConstHandle outer_loop() const { return outer_loop_; }
+
+ protected:
+  friend class PartialDS<typename PartialDSTypes::Traits>;
+
+  // Mutators
+  void set_parent_pface(PFaceHandle pface) { parent_pface_ = pface; }
   void set_outer_loop(LoopHandle loop) { outer_loop_ = loop; }
 
  private:

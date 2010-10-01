@@ -11,6 +11,8 @@
 namespace ginsu {
 namespace geometry {
 
+template <class T> class PartialDS;
+
 // PartialDSEdge: template class for edge entity in the partial-entity
 // data structure. The template parameters are:
 //   TypeRefs: gives access to the types declared and used within the PartialDS
@@ -21,17 +23,17 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
  public:
   typedef PartialDSPEdge<TypeRefs>             Self;
   typedef PartialDSEntity<TypeRefs>            Base;
-  typedef TypeRefs                             PartialDS;
+  typedef TypeRefs                             PartialDSTypes;
 
-  typedef typename Base::PEdgeOrientation        PEdgeOrientation;
-  typedef typename PartialDS::PVertexHandle      PVertexHandle;
-  typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
-  typedef typename PartialDS::EdgeHandle         EdgeHandle;
-  typedef typename PartialDS::EdgeConstHandle    EdgeConstHandle;
-  typedef typename PartialDS::PEdgeHandle        PEdgeHandle;
-  typedef typename PartialDS::PEdgeConstHandle   PEdgeConstHandle;
-  typedef typename PartialDS::LoopHandle         LoopHandle;
-  typedef typename PartialDS::LoopConstHandle    LoopConstHandle;
+  typedef typename Base::PEdgeOrientation             PEdgeOrientation;
+  typedef typename PartialDSTypes::PVertexHandle      PVertexHandle;
+  typedef typename PartialDSTypes::PVertexConstHandle PVertexConstHandle;
+  typedef typename PartialDSTypes::EdgeHandle         EdgeHandle;
+  typedef typename PartialDSTypes::EdgeConstHandle    EdgeConstHandle;
+  typedef typename PartialDSTypes::PEdgeHandle        PEdgeHandle;
+  typedef typename PartialDSTypes::PEdgeConstHandle   PEdgeConstHandle;
+  typedef typename PartialDSTypes::LoopHandle         LoopHandle;
+  typedef typename PartialDSTypes::LoopConstHandle    LoopConstHandle;
 
   PartialDSPEdge()
     : orientation_(Base::kPEdgeUnoriented), child_edge_(NULL),
@@ -43,23 +45,26 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
     orientation_ = orientation;
   }
 
+  // Accessors
   LoopConstHandle parent_loop() const { return parent_loop_; }
-  void set_parent_loop(LoopHandle loop) { parent_loop_ = loop; }
-
+  LoopHandle parent_loop() { return parent_loop_; }
   EdgeConstHandle child_edge() const { return child_edge_; }
-  void set_child_edge(EdgeHandle edge) { child_edge_ = edge; }
-
   PVertexConstHandle start_pvertex() const { return start_pvertex_; }
-  void set_start_pvertex(PVertexHandle pvertex) { start_pvertex_ = pvertex; }
-
   PEdgeConstHandle loop_previous() const { return loop_previous_; }
-  void set_loop_previous(PEdgeHandle pedge) { loop_previous_ = pedge; }
   PEdgeConstHandle loop_next() const { return loop_next_; }
-  void set_loop_next(PEdgeHandle pedge) { loop_next_ = pedge; }
-
   PEdgeConstHandle radial_previous() const { return radial_previous_; }
-  void set_radial_previous(PEdgeHandle pedge) { radial_previous_ = pedge; }
   PEdgeConstHandle radial_next() const { return radial_next_; }
+
+ protected:
+  friend class PartialDS<typename PartialDSTypes::Traits>;
+
+  // Mutators
+  void set_parent_loop(LoopHandle loop) { parent_loop_ = loop; }
+  void set_child_edge(EdgeHandle edge) { child_edge_ = edge; }
+  void set_start_pvertex(PVertexHandle pvertex) { start_pvertex_ = pvertex; }
+  void set_loop_previous(PEdgeHandle pedge) { loop_previous_ = pedge; }
+  void set_loop_next(PEdgeHandle pedge) { loop_next_ = pedge; }
+  void set_radial_previous(PEdgeHandle pedge) { radial_previous_ = pedge; }
   void set_radial_next(PEdgeHandle pedge) { radial_next_ = pedge; }
 
  private:

@@ -11,6 +11,8 @@
 namespace ginsu {
 namespace geometry {
 
+template <class T> class PartialDS;
+
 // PartialDSFace: template class for face entity in the partial-entity
 // data structure. The template parameters are:
 //   TypeRefs: gives access to the types declared and used within the PartialDS
@@ -21,15 +23,15 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
  public:
   typedef PartialDSPFace<TypeRefs>              Self;
   typedef PartialDSEntity<TypeRefs>             Base;
-  typedef TypeRefs                              PartialDS;
+  typedef TypeRefs                              PartialDSTypes;
 
-  typedef typename Base::PFaceOrientation       PFaceOrientation;
-  typedef typename PartialDS::FaceHandle        FaceHandle;
-  typedef typename PartialDS::FaceConstHandle   FaceConstHandle;
-  typedef typename PartialDS::PFaceHandle       PFaceHandle;
-  typedef typename PartialDS::PFaceConstHandle  PFaceConstHandle;
-  typedef typename PartialDS::ShellHandle       ShellHandle;
-  typedef typename PartialDS::ShellConstHandle  ShellConstHandle;
+  typedef typename Base::PFaceOrientation            PFaceOrientation;
+  typedef typename PartialDSTypes::FaceHandle        FaceHandle;
+  typedef typename PartialDSTypes::FaceConstHandle   FaceConstHandle;
+  typedef typename PartialDSTypes::PFaceHandle       PFaceHandle;
+  typedef typename PartialDSTypes::PFaceConstHandle  PFaceConstHandle;
+  typedef typename PartialDSTypes::ShellHandle       ShellHandle;
+  typedef typename PartialDSTypes::ShellConstHandle  ShellConstHandle;
 
   PartialDSPFace()
     : parent_shell_(NULL), child_face_(NULL), next_pface_(NULL),
@@ -40,16 +42,20 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
     orientation_ = orientation;
   }
 
+  // Accessors
   ShellConstHandle parent_shell() const { return parent_shell_; }
-  void set_parent_shell(ShellHandle shell) { parent_shell_ = shell; }
-
+  ShellHandle parent_shell() { return parent_shell_; }
   FaceConstHandle child_face() const { return child_face_; }
-  void set_child_face(FaceHandle face) { child_face_ = face; }
-
   PFaceConstHandle next_pface() const { return next_pface_; }
-  void set_next_pface(PFaceHandle pface) { next_pface_ = pface; }
-
   PFaceConstHandle mate_pface() const { return mate_pface_; }
+
+ protected:
+  friend class PartialDS<typename PartialDSTypes::Traits>;
+
+  // Mutators
+  void set_parent_shell(ShellHandle shell) { parent_shell_ = shell; }
+  void set_child_face(FaceHandle face) { child_face_ = face; }
+  void set_next_pface(PFaceHandle pface) { next_pface_ = pface; }
   void set_mate_pface(PFaceHandle pface) { mate_pface_ = pface; }
 
  private:

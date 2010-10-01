@@ -120,8 +120,10 @@ class PEdgeRadialCirculator : public It {
 template <class Circulator>
 typename Circulator::Iterator find(Circulator start,
                                    const typename Circulator::Iterator value) {
+  const static typename Circulator::Iterator kNullIterator;
+  
   assert(start != NULL);
-  if (start == NULL) return NULL;
+  if (start == NULL) return kNullIterator;
 
   Circulator end = start;
   do {
@@ -131,7 +133,7 @@ typename Circulator::Iterator find(Circulator start,
     ++start;
   } while(start != end);
 
-  return NULL;
+  return kNullIterator;
 }
 
 }  // namespace geometry

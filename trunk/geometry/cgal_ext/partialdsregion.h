@@ -10,6 +10,8 @@
 namespace ginsu {
 namespace geometry {
 
+template <class T> class PartialDS;
+
 // PartialDSRegion: template class for region entity in the partial-entity
 // data structure. The template parameters are:
 //   TypeRefs: gives access to the types declared and used within the PartialDS
@@ -19,26 +21,32 @@ class PartialDSRegion : public PartialDSEntity<TypeRefs> {
  public:
   typedef PartialDSRegion<TypeRefs>            Self;
   typedef PartialDSEntity<TypeRefs>            Base;
-  typedef TypeRefs                             PartialDS;
+  typedef TypeRefs                             PartialDSTypes;
 
-  typedef typename Base::RegionFlavor          RegionFlavor;
-  typedef typename PartialDS::ShellHandle      ShellHandle;
-  typedef typename PartialDS::ShellConstHandle ShellConstHandle;
+  typedef typename Base::RegionFlavor               RegionFlavor;
+  typedef typename PartialDSTypes::ShellHandle      ShellHandle;
+  typedef typename PartialDSTypes::ShellConstHandle ShellConstHandle;
 
   PartialDSRegion()
     : flavor_(Base::kEmptyRegion), outer_shell_(NULL) { }
 
+  // Accessors
   RegionFlavor flavor() const { return flavor_; }
-  void set_falvor(RegionFlavor flavor) { flavor_ = flavor; }
-
   ShellConstHandle outer_shell() const { return outer_shell_; }
-  void set_outer_shell(ShellHandle shell) { outer_shell_ = shell; }
+  ShellHandle outer_shell() { return outer_shell_; }
 
-  // Add a void shell to the region's outer shell.
-  void AddVoidShell(ShellHandle void_shell) {
-    assert(outer_shell_ != NULL);
-    if (outer_shell_ != NULL) outer_shell_->AddVoidShell(void_shell);
+  // Return true if the region is empty and false otherwise.
+  bool IsEmpty() {
+    // The region is empty either if it has no shell or only an outer shell.
+    return (outer_shell_ == NULL || outer_shell()->next_void_shell() == NULL);
   }
+
+ protected:
+  friend class PartialDS<typename PartialDSTypes::Traits>;
+
+  // Mutators
+  void set_flavor(RegionFlavor flavor) { flavor_ = flavor; }
+  void set_outer_shell(ShellHandle shell) { outer_shell_ = shell; }
 
  private:
   RegionFlavor flavor_;

@@ -51,7 +51,6 @@ TEST_F(PartialDSTest, MakeIsolatedVertex) {
   PartialDSTest::PEMesh::VertexHandle v;
   v = mesh_->CreateIsolatedVertex(r);
   ASSERT_TRUE(v != NULL);
-  mesh_->DeleteIsolatedVertex(v);
   ASSERT_TRUE(mesh_->ValidateVertex(v));
   PartialDSTest::PEMesh::PVertexConstHandle pv = v->parent_pvertex();
   ASSERT_TRUE(mesh_->ValidatePVertex(pv));
@@ -62,7 +61,7 @@ TEST_F(PartialDSTest, MakeIsolatedVertex) {
   PartialDSTest::PEMesh::LoopConstHandle loop = pe->parent_loop();
   ASSERT_TRUE(mesh_->ValidateLoop(loop));
 
-  // TODO(gwink): this will fail since the mesh is not empty.
+  mesh_->DeleteIsolatedVertex(v);
   mesh_->DeleteEmptyRegion(r);
 }
 
