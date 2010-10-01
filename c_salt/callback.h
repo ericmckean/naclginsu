@@ -14,6 +14,36 @@
 #include "c_salt/variant.h"
 
 namespace c_salt {
+namespace c_salt_private {
+// VariantToArgConverter is a small helper class for converting c_salt Variants
+// in to a given type, to allow them to be used as parameters.
+// For most types, just call Variant::GetValue<> function, and let it do the
+// work.
+// TODO(dmichael):  Is there a nicer way to support passing c_salt::Variant as
+// a parameter?  Or is this a good way...  it is certainly extensible.  It also
+// allows us to pass the Variant through without copying.
+template <class T>
+struct VariantToArgConverter {
+  static T Get(const c_salt::SharedVariant& var) {
+    return var->GetValue<T>();
+  }
+};
+// If the argument is a c_salt::SharedVariant, just pass it through.
+template <>
+struct VariantToArgConverter<c_salt::SharedVariant> {
+  static const c_salt::SharedVariant& Get(const c_salt::SharedVariant& var) {
+    return var;
+  }
+};
+// If the argument is a c_salt::Variant, just dereference the shared_ptr.
+template <>
+struct VariantToArgConverter<c_salt::Variant> {
+  static const c_salt::Variant& Get(const c_salt::SharedVariant& var) {
+    return *var;
+  }
+};
+}  // namespace c_salt_private
+
 // Pure virtual class that provides the interface for invoking a method given
 // c_salt::Variant arguments.  Clients should generally not use this interface
 // directly; it simply allows c_salt code to invoke methods generically.  See
@@ -100,13 +130,15 @@ class FunctionInvoker<RetType(T::*)(Arg1, Arg2)> {
     // false.
     if (params_begin == params_end) return false;
     // Get the value from the c_salt::Variant, which handles conversions for us.
-    NoConstRef1 arg1(params_begin->GetValue<NonConstRef1>();
+    NoConstRef1 arg1(::c_salt::c_salt_private::
+        VariantToArgConverter<NoConstRef1>::Get(*params_begin));
     // Advance to the next parameter.
     ++params_begin;
     typedef typename boost::remove_reference<Arg2>::type NoRef2;
     typedef typename boost::remove_const<NoRef2>::type NoConstRef2;
     if (params_begin == params_end) return false;
-    NoConstRef2 arg2(params_begin->GetValue<NonConstRef2>();
+    NoConstRef2 arg2(::c_salt::c_salt_private::
+        VariantToArgConverter<NoConstRef2>::Get(*params_begin));
     ++params_begin;
     NoConstRef2 arg2;
 
@@ -152,7 +184,8 @@ public:\
     typedef typename boost::remove_reference<Arg ## NUM>::type NoRef ## NUM; \
     typedef typename boost::remove_const<NoRef ## NUM>::type NoConstRef ## NUM;\
     if (params_begin == params_end) return false; \
-    NoConstRef##NUM arg##NUM((*params_begin)->GetValue<NoConstRef##NUM>()); \
+    NoConstRef##NUM arg##NUM(::c_salt::c_salt_private:: \
+        VariantToArgConverter<NoConstRef##NUM>::Get(*params_begin)); \
     ++params_begin;
 // end FUNCTIONINVOKER_INVOKE_CONVERT_ARG
 
