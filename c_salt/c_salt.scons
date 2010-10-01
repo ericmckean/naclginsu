@@ -22,8 +22,6 @@ c_salt_sources = [
   'instance.cc',
   'module.cc',
   'notification_center.cc',
-  'opengl_context.cc',
-  'opengl_view.cc',
   'property.cc',
   'scriptable_native_object.cc',
   'scripting_bridge.cc',
