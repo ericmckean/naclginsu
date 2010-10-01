@@ -11,6 +11,8 @@
 namespace ginsu {
 namespace geometry {
 
+template <class T> class PartialDS;
+
 // PartialDSLoop: template class for loop entity in the partial-entity
 // data structure. The template parameter is:
 //   TypeRefs: gives access to the types declared and used within the PartialDS
@@ -19,14 +21,14 @@ template <class TypeRefs>
 class PartialDSLoop : public PartialDSEntity<TypeRefs> {
  public:
   typedef PartialDSLoop<TypeRefs>              Self;
-  typedef TypeRefs                             PartialDS;
+  typedef TypeRefs                             PartialDSTypes;
 
-  typedef typename PartialDS::PEdgeHandle      PEdgeHandle;
-  typedef typename PartialDS::PEdgeConstHandle PEdgeConstHandle;
-  typedef typename PartialDS::FaceHandle       FaceHandle;
-  typedef typename PartialDS::FaceConstHandle  FaceConstHandle;
-  typedef typename PartialDS::LoopHandle       LoopHandle;
-  typedef typename PartialDS::LoopConstHandle  LoopConstHandle;
+  typedef typename PartialDSTypes::PEdgeHandle      PEdgeHandle;
+  typedef typename PartialDSTypes::PEdgeConstHandle PEdgeConstHandle;
+  typedef typename PartialDSTypes::FaceHandle       FaceHandle;
+  typedef typename PartialDSTypes::FaceConstHandle  FaceConstHandle;
+  typedef typename PartialDSTypes::LoopHandle       LoopHandle;
+  typedef typename PartialDSTypes::LoopConstHandle  LoopConstHandle;
 
   typedef PEdgeLoopCirculator<PEdgeConstHandle>
                                                PEdgeLoopConstCirculator;
@@ -34,14 +36,11 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   PartialDSLoop()
     : parent_face_(NULL), boundary_pedge_(NULL), next_hole_(NULL) { }
 
+  // Accessors
   FaceConstHandle parent_face() const { return parent_face_; }
-  void set_parent_face(FaceHandle face) { parent_face_ = face; }
-
+  FaceHandle parent_face() { return parent_face_; }
   PEdgeConstHandle boundary_pedge() const { return boundary_pedge_; }
-  void set_boundary_pedge(PEdgeHandle pedge) { boundary_pedge_ = pedge; }
-
   LoopConstHandle next_hole() const { return next_hole_; }
-  void set_next_hole(LoopHandle loop) { next_hole_ = loop; }
 
   // Iterate over p-edges that form the loop.
   PEdgeLoopConstCirculator begin() const {
@@ -50,8 +49,16 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
 
   // Return true if p-edge pe is found along this loop and false otherwise.
   bool FindPEdge(PEdgeConstHandle pe) const {
-    return find<PEdgeLoopConstCirculator>(begin(), pe) != NULL;
+    return ginsu::geometry::find(begin(), pe) != NULL;
   }
+
+ protected:
+  friend class PartialDS<typename PartialDSTypes::Traits>;
+
+  // Mutators
+  void set_parent_face(FaceHandle face) { parent_face_ = face; }
+  void set_boundary_pedge(PEdgeHandle pedge) { boundary_pedge_ = pedge; }
+  void set_next_hole(LoopHandle loop) { next_hole_ = loop; }
 
  private:
   FaceHandle parent_face_;  // Parent face.

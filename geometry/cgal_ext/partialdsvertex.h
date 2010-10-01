@@ -10,6 +10,8 @@
 namespace ginsu {
 namespace geometry {
 
+template <class T> class PartialDS;
+
 // PartialDSVertex: template class for vertex entity in the partial-entity
 // data structure.
 // The template parameters are:
@@ -19,34 +21,40 @@ namespace geometry {
 template <class TypeRefs, class PointType>
 class PartialDSVertex : public PartialDSEntity<TypeRefs> {
  public:
-  typedef TypeRefs                               PartialDS;
+  typedef TypeRefs                               PartialDSTypes;
   typedef PointType                              Point;
   typedef PartialDSVertex<TypeRefs, Point>       Self;
   typedef PartialDSEntity<TypeRefs>              Base;
 
-  typedef typename PartialDS::VertexHandle       VertexHandle;
-  typedef typename PartialDS::VertexConstHandle  VertexConstHandle;
-  typedef typename PartialDS::PVertexHandle      PVertexHandle;
-  typedef typename PartialDS::PVertexConstHandle PVertexConstHandle;
-  typedef typename PartialDS::EdgeConstHandle    EdgeConstHandle;
+  typedef typename PartialDSTypes::VertexHandle       VertexHandle;
+  typedef typename PartialDSTypes::VertexConstHandle  VertexConstHandle;
+  typedef typename PartialDSTypes::PVertexHandle      PVertexHandle;
+  typedef typename PartialDSTypes::PVertexConstHandle PVertexConstHandle;
+  typedef typename PartialDSTypes::EdgeConstHandle    EdgeConstHandle;
 
   PartialDSVertex() : parent_pvertex_(NULL) { }
 
+  // Accessors
   PVertexConstHandle parent_pvertex() const { return parent_pvertex_; }
-  void set_parent_pvertex(PVertexHandle pvertex) { parent_pvertex_ = pvertex; }
-
+  PVertexHandle parent_pvertex() { return parent_pvertex_; }
   const Point& point() const { return p_; }
-  void set_point(const Point& p) { p_ = p; }
 
   // Return true if the vertex is an isolated vertex, and false otherwise.
   bool IsIsolated() const {
     // Follow the parent chain edge up to the edge and check if it has
-    // the same p-vertex as start and end verttices.
+    // the same p-vertex as start and end vertices.
     PVertexConstHandle pv = parent_pvertex();
     EdgeConstHandle e = pv->parent_edge();
     return (e->start_pvertex() == pv) && (e->end_pvertex() == pv);
   }
-  
+
+ protected:
+  friend class PartialDS<typename PartialDSTypes::Traits>;
+
+  // Mutators
+  void set_parent_pvertex(PVertexHandle pvertex) { parent_pvertex_ = pvertex; }
+  void set_point(const Point& p) { p_ = p; }
+
  private:
   PVertexHandle parent_pvertex_; 
   Point p_;
