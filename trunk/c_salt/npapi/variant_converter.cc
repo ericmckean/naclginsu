@@ -39,8 +39,10 @@ VariantConverter::CreateVariantFromNPVariant(const NPVariant& np_var) const {
       // NPObjects that are native-side (i.e., all BrowserBindings) per
       // Instance, but it would have to be shared across threads and would
       // therefore need synchronization.  D'oh!
-      retval.reset(new c_salt::Variant(
-          new JavaScriptObjectProxy(NPVARIANT_TO_OBJECT(np_var), instance_)));
+      SharedScriptingInterface scripting_if_ptr(
+          new JavaScriptObjectProxy(NPVARIANT_TO_OBJECT(np_var), instance_));
+      retval.reset(new c_salt::Variant(scripting_if_ptr));
+      assert(Variant::kObjectVariantType == retval->variant_type());
       break;
     }
     case NPVariantType_String: {

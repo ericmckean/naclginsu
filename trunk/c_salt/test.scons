@@ -30,3 +30,32 @@ env.ComponentTestProgram(
     COMPONENT_TEST_CMDLINE = '%s $PROGRAM_NAME' % sel_ldr,
     COMPONENT_TEST_SIZE = 'small'
 )
+
+# Note, we can't use the default test environment libraries, because gtest
+# injects a main() function that makes the nexe not work as a plugin module.
+integration_test_input_libs = [
+  'google_nacl_imc',
+  'google_nacl_npruntime',
+  'pthread',
+  'srpc',
+  'c_salt',
+  'google_nacl_pgl',
+  'google_nacl_gpu',
+]
+#env.Append(LIBS = integration_test_input_libs)
+integration_test_inputs = ['integration_tests/method_tester.cc',
+                           'integration_tests/fake_instance.cc',
+                           'integration_tests/test_module.cc',
+]
+integration_test_app = [
+    'integration_tests/c_salt_tests.html',
+]
+
+env.Install('$STAGING_DIR', integration_test_app)
+# TODO(dmichael):  Is there an appropriate test type for this, instead of
+#                  making the target a ComponentProgram?
+env.ComponentProgram(
+    'c_salt_integration_test_x86_32.nexe',
+    integration_test_inputs,
+    LIBS = integration_test_input_libs,
+)

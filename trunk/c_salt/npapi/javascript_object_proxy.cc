@@ -104,6 +104,10 @@ JavaScriptObjectProxy::InvokeScriptMethod(const std::string& method_name,
                             &(*np_var_vector.begin()),
                             np_var_vector.size(),
                             &return_var.np_variant());
+  if (success) {
+    (*return_value) =
+        variant_converter_.CreateVariantFromNPVariant(return_var.np_variant());
+  }
   return success;
 }
 
