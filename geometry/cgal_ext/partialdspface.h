@@ -52,6 +52,16 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
 
+  void Init(PFaceOrientation orientation, ShellHandle parent_shell,
+            FaceHandle child_face, PFaceHandle next_pface,
+            PFaceHandle mate_pface) {
+    orientation_ = orientation;
+    parent_shell_ = parent_shell;
+    child_face_ = child_face;
+    next_pface_ = next_pface;
+    mate_pface_ = mate_pface;
+  }
+
   // Mutators
   void set_parent_shell(ShellHandle shell) { parent_shell_ = shell; }
   void set_child_face(FaceHandle face) { child_face_ = face; }

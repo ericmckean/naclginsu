@@ -65,4 +65,36 @@ TEST_F(PartialDSTest, MakeIsolatedVertex) {
   mesh_->DeleteEmptyRegion(r);
 }
 
+TEST_F(PartialDSTest, MakeWireEdge) {
+  PartialDSTest::PEMesh::RegionHandle r;
+  r = mesh_->CreateEmptyRegion();
+  ASSERT_TRUE(r != NULL);
+
+  PartialDSTest::PEMesh::VertexHandle v;
+  v = mesh_->CreateIsolatedVertex(r);
+  ASSERT_TRUE(v != NULL);
+  PartialDSTest::PEMesh::EdgeHandle e1;
+  e1 = mesh_->CreateWireEdgeInShell(r->outer_shell(), v);
+  ASSERT_TRUE(e1 != NULL);
+  ASSERT_TRUE(mesh_->ValidateEdge(e1));
+  PartialDSTest::PEMesh::PEdgeConstHandle pe1 = e1->parent_pedge();
+  ASSERT_TRUE(mesh_->ValidatePEdge(pe1));
+  PartialDSTest::PEMesh::LoopConstHandle loop1 = pe1->parent_loop();
+  ASSERT_TRUE(mesh_->ValidateLoop(loop1));
+  
+  PartialDSTest::PEMesh::EdgeHandle e2;
+  e2 = mesh_->CreateWireEdgeInShell(r->outer_shell(), v);
+  ASSERT_TRUE(e2 != NULL);
+  ASSERT_TRUE(mesh_->ValidateEdge(e2));
+  PartialDSTest::PEMesh::PEdgeConstHandle pe2 = e2->parent_pedge();
+  ASSERT_TRUE(mesh_->ValidatePEdge(pe2));
+  PartialDSTest::PEMesh::LoopConstHandle loop2 = pe2->parent_loop();
+  ASSERT_TRUE(mesh_->ValidateLoop(loop2));
+
+  mesh_->DeleteWireEdge(e1);
+  mesh_->DeleteWireEdge(e2);
+  mesh_->DeleteIsolatedVertex(v);
+  mesh_->DeleteEmptyRegion(r);
+}
+
 }  // namespace

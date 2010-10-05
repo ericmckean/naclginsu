@@ -6,6 +6,7 @@
 
 #include <CGAL/basic.h>
 #include "geometry/cgal_ext/partialdsentity.h"
+#include "geometry/cgal_ext/partialdsiterators.h"
 
 namespace ginsu {
 namespace geometry {
@@ -27,6 +28,8 @@ class PartialDSRegion : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDSTypes::ShellHandle      ShellHandle;
   typedef typename PartialDSTypes::ShellConstHandle ShellConstHandle;
 
+  typedef VoidShellIterator<ShellConstHandle> VoidShellConstIterator;
+
   PartialDSRegion()
     : flavor_(Base::kEmptyRegion), outer_shell_(NULL) { }
 
@@ -39,6 +42,22 @@ class PartialDSRegion : public PartialDSEntity<TypeRefs> {
   bool IsEmpty() {
     // The region is empty either if it has no shell or only an outer shell.
     return (outer_shell_ == NULL || outer_shell()->next_void_shell() == NULL);
+  }
+
+  // Iterating over the void shells attached to this region.
+  VoidShellConstIterator void_shell_begin() const { 
+    return VoidShellConstIterator(outer_shell()->next_void_shell());
+  }
+  VoidShellConstIterator void_shell_end() const { return VoidShellConstIterator(); }
+
+  // Find whether void_shell is found in the list of void shells attached to
+  // this region's outer shell.
+  bool FindVoidShell(ShellConstHandle void_shell) const {
+    VoidShellConstIterator i;
+    for (i = void_shell_begin(); i != void_shell_end(); ++i) {
+      if (i.IsEqual(void_shell)) return true;
+    }
+    return false;
   }
 
  protected:

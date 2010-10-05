@@ -136,6 +136,86 @@ void PartialDS<TraitsType>::DeleteIsolatedVertex(VertexHandle vertex) {
   }
 }
 
+template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
+    PartialDS<TraitsType>::CreateWireEdgeInShell(ShellHandle shell,
+                                                 VertexHandle v1) {
+  assert(shell != NULL && v1 != NULL);
+  if (v1->IsIsolated()) {
+    assert(shell->parent_region()->FindVoidShell(
+        v1->parent_pvertex()->parent_edge()->parent_pedge()->parent_loop()->
+        parent_face()->parent_pface()->parent_shell()));
+
+    // The isolated vertex already has a degenerate edge, p-edge, loop, etc.
+    // We unwrap those to connect them with the new vertex. We also add a new
+    // p-edge to form a void loop around the existing edge.
+    VertexHandle v2 = MakeVertex();
+    PVertexHandle pv2 = MakePVertex();
+    PVertexHandle pv1 = v1->parent_pvertex();
+    EdgeHandle edge = pv1->parent_edge();
+    PEdgeHandle pe1 = edge->parent_pedge();
+    PEdgeHandle pe2 = MakePEdge();
+    LoopHandle loop = pe1->parent_loop();
+
+    v2->set_parent_pvertex(pv2);
+    
+    pv2->Init(edge, v2, pv1);
+    pv1->set_parent_edge(edge);
+    edge->set_end_pvertex(pv2);
+
+    pe1->Init(Entity::kPEdgeForward, loop, edge, pv1, pe2, pe2, pe2, pe2);
+    pe2->Init(Entity::kPEdgeReversed, loop, edge, pv2, pe1, pe1, pe1, pe1);
+
+    // We're done. The degenerate face associated with v1 become the degenerate
+    // face for the wire edge. Likewise for the p-face and void shell.
+    return edge;
+  } else {
+    // We're adding a wire edge to a vertex that is already attached to other
+    // edges. In this case we're creating a new manifold component with a new
+    // p-vertex, etc. attached to v1.
+    VertexHandle v2 = MakeVertex();
+    PVertexHandle pv2 = MakePVertex();
+    EdgeHandle edge = MakeEdge();
+    PVertexHandle pv1_a = v1->parent_pvertex();
+    PVertexHandle pv1_b = MakePVertex();
+    PEdgeHandle pe_f = MakePEdge();
+    PEdgeHandle pe_r = MakePEdge();
+    LoopHandle loop = MakeLoop();
+    FaceHandle face = MakeFace();
+    PFaceHandle pface = MakePFace();
+    ShellHandle void_shell = MakeShell();
+
+    // Setup the new vertex and p-vertex. Existing vertex v1 also gets a new
+    // p-vertex pv1_b, in addition to a least one existing p-vertex pv1_a.
+    v2->set_parent_pvertex(pv2);
+    pv2->Init(edge, v2, pv2);
+    pv1_b->Init(edge, v1, pv1_a->next_pvertex());
+    pv1_a->set_next_pvertex(pv1_b);
+
+    // Setup a new edge and two new p-edges, one forward and one reversed.
+    edge->Init(pe_f, pv1_b, pv2);
+    pe_f->Init(Entity::kPEdgeForward, loop, edge, pv1_b,
+               pe_r, pe_r, pe_r, pe_r);
+    pe_r->Init(Entity::kPEdgeReversed, loop, edge, pv2, pe_f, pe_f, pe_f, pe_f);
+
+    // Setup a void loop and degenerate face and p-face.
+    loop->Init(face, pe_f, NULL);
+    face->Init(pface, loop);
+    pface->Init(Entity::kPFaceUnoriented, void_shell, face, pface, NULL);
+
+    // Finally, we need a new void shell within the p-edges.
+    void_shell->Init(shell->parent_region(), NULL, pface);
+    shell->AddVoidShell(void_shell);
+
+    return edge;
+  }
+  return NULL;
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DeleteWireEdge(EdgeHandle edge) {
+  // TODO(gwink)
+}
+
 // Basic (non-topological) make<Item> and Destroy<Item> functions.
 template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
     PartialDS<TraitsType>::MakeVertex() {
