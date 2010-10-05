@@ -242,6 +242,25 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   VertexHandle CreateIsolatedVertex(RegionHandle region);
   void DeleteIsolatedVertex(VertexHandle vertex);
 
+  EdgeHandle CreateWireEdgeInShell(ShellHandle shell, VertexHandle vertex);
+  void DeleteWireEdge(EdgeHandle edge);
+
+  // List accessors, to iterate over these vertices, edges, etc. E.g. to display
+  // the geometry.
+  const VertexList& vertices() const { return vertices_; }
+  const EdgeList& edges() const { return edges_;}
+  const FaceList& faces() const { return faces_; }
+  const ShellList& shells() const { return shells_; }
+  const RegionList& regions() const { return regions_; }
+
+  // Validation functions; no-op unless either _DEBUG or _GEOM_TESTS id defined.
+  static bool ValidateVertex(VertexConstHandle v);
+  static bool ValidatePVertex(PVertexConstHandle pv);
+  static bool ValidateEdge(EdgeConstHandle e);
+  static bool ValidatePEdge(PEdgeConstHandle pe);
+  static bool ValidateLoop(LoopConstHandle loop);
+
+ protected:
   // Basic Make<Item> and Destroy<Item> functions. The functions only allocate
   // the corresponding item. They do not affect the topology.
   VertexHandle MakeVertex();
@@ -263,21 +282,6 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   RegionHandle MakeRegion();
   void DestroyRegion(RegionHandle r);
   
-  // List accessors, to iterate over these vertices, edges, etc. E.g. to display
-  // the geometry.
-  const VertexList& vertices() const { return vertices_; }
-  const EdgeList& edges() const { return edges_;}
-  const FaceList& faces() const { return faces_; }
-  const ShellList& shells() const { return shells_; }
-  const RegionList& regions() const { return regions_; }
-
-  // Validation functions; no-op unless either _DEBUG or _GEOM_TESTS id defined.
-  static bool ValidateVertex(VertexConstHandle v);
-  static bool ValidatePVertex(PVertexConstHandle pv);
-  static bool ValidateEdge(EdgeConstHandle e);
-  static bool ValidatePEdge(PEdgeConstHandle pe);
-  static bool ValidateLoop(LoopConstHandle loop);
-
  private:
   // Template function for making and destroying PartialDS items.
   template <class ItemHandle, class ItemList>

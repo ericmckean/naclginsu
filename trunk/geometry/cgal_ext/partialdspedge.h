@@ -58,6 +58,20 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
 
+  void Init(PEdgeOrientation orientation, LoopHandle parent_loop,
+            EdgeHandle child_edge, PVertexHandle start_pvertex,
+            PEdgeHandle loop_previous, PEdgeHandle loop_next,
+            PEdgeHandle radial_previous, PEdgeHandle radial_next) {
+    orientation_ = orientation;
+    parent_loop_ = parent_loop;
+    child_edge_ = child_edge;
+    start_pvertex_ = start_pvertex;
+    loop_previous_ = loop_previous;
+    loop_next_ = loop_next;
+    radial_previous_ = radial_previous;
+    radial_next_ = radial_next;
+  }
+
   // Mutators
   void set_parent_loop(LoopHandle loop) { parent_loop_ = loop; }
   void set_child_edge(EdgeHandle edge) { child_edge_ = edge; }

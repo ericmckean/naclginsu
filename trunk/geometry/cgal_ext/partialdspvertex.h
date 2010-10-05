@@ -37,10 +37,19 @@ class PartialDSPVertex : public PartialDSEntity<TypeRefs> {
   EdgeConstHandle parent_edge() const { return parent_edge_; }
   EdgeHandle parent_edge() { return parent_edge_; }
   VertexConstHandle vertex() const { return vertex_; }
+  VertexHandle vertex() { return vertex_; }
   PVertexConstHandle next_pvertex() const { return next_pvertex_; }
+  PVertexHandle next_pvertex() { return next_pvertex_; }
   
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
+
+  void Init(EdgeHandle parent_edge, VertexHandle vertex,
+            PVertexHandle next_pvertex) {
+    parent_edge_ = parent_edge;
+    vertex_ = vertex;
+    next_pvertex_ = next_pvertex;
+  }
 
   // Mutators
   void set_parent_edge(EdgeHandle edge) { parent_edge_ = edge; }

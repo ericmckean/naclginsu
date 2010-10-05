@@ -42,6 +42,13 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
 
+  void Init(RegionHandle parent_region, ShellHandle next_void_shell,
+            PFaceHandle pface) {
+    parent_region_ = parent_region;
+    next_void_shell_ = next_void_shell;
+    pface = pface_;
+  }
+
   // Mutators
   void set_next_void_shell(ShellHandle shell) { next_void_shell_ = shell; }
   void set_pface(PFaceHandle pface) { pface_ = pface; }
@@ -63,7 +70,7 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
       }
     }
   }
-
+  
  private:
   RegionHandle parent_region_;  // Parent region.
   ShellHandle next_void_shell_;  // Next void shell.

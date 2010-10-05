@@ -55,6 +55,13 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
 
+  void Init(FaceHandle parent_face, PEdgeHandle boundary_pedge,
+            LoopHandle next_hole) {
+    parent_face_ = parent_face;
+    boundary_pedge_ = boundary_pedge;
+    next_hole_ = next_hole;
+  }
+
   // Mutators
   void set_parent_face(FaceHandle face) { parent_face_ = face; }
   void set_boundary_pedge(PEdgeHandle pedge) { boundary_pedge_ = pedge; }
