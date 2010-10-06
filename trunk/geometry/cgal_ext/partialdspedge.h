@@ -50,10 +50,15 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
   LoopHandle parent_loop() { return parent_loop_; }
   EdgeConstHandle child_edge() const { return child_edge_; }
   PVertexConstHandle start_pvertex() const { return start_pvertex_; }
+  PVertexHandle start_pvertex() { return start_pvertex_; }
   PEdgeConstHandle loop_previous() const { return loop_previous_; }
+  PEdgeHandle loop_previous() { return loop_previous_; }
   PEdgeConstHandle loop_next() const { return loop_next_; }
+  PEdgeHandle loop_next() { return loop_next_; }
   PEdgeConstHandle radial_previous() const { return radial_previous_; }
+  PEdgeHandle radial_previous() { return radial_previous_; }
   PEdgeConstHandle radial_next() const { return radial_next_; }
+  PEdgeHandle radial_next() { return radial_next_; }
 
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;

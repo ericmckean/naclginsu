@@ -115,11 +115,9 @@ class PEdgeRadialCirculator : public It {
   }
 };
 
-// Find element value in a sequence starting at |start|. Returns NULL if value
-// is not found.
-template <class Circulator>
-typename Circulator::Iterator find(Circulator start,
-                                   const typename Circulator::Iterator value) {
+// Stl-style find_if function for circulators.
+template <class Circulator, class Predicate>
+typename Circulator::Iterator find_if(Circulator start, Predicate pred) {
   const static typename Circulator::Iterator kNullIterator;
   
   assert(start != NULL);
@@ -127,7 +125,7 @@ typename Circulator::Iterator find(Circulator start,
 
   Circulator end = start;
   do {
-    if (start == Circulator(value)) {
+    if (pred(start)) {
       return start;
     }
     ++start;
