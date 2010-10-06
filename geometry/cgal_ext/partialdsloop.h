@@ -23,15 +23,16 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   typedef PartialDSLoop<TypeRefs>              Self;
   typedef TypeRefs                             PartialDSTypes;
 
-  typedef typename PartialDSTypes::PEdgeHandle      PEdgeHandle;
-  typedef typename PartialDSTypes::PEdgeConstHandle PEdgeConstHandle;
-  typedef typename PartialDSTypes::FaceHandle       FaceHandle;
-  typedef typename PartialDSTypes::FaceConstHandle  FaceConstHandle;
-  typedef typename PartialDSTypes::LoopHandle       LoopHandle;
-  typedef typename PartialDSTypes::LoopConstHandle  LoopConstHandle;
+  typedef typename PartialDSTypes::PVertexConstHandle PVertexConstHandle;
+  typedef typename PartialDSTypes::PEdgeHandle        PEdgeHandle;
+  typedef typename PartialDSTypes::PEdgeConstHandle   PEdgeConstHandle;
+  typedef typename PartialDSTypes::FaceHandle         FaceHandle;
+  typedef typename PartialDSTypes::FaceConstHandle    FaceConstHandle;
+  typedef typename PartialDSTypes::LoopHandle         LoopHandle;
+  typedef typename PartialDSTypes::LoopConstHandle    LoopConstHandle;
 
-  typedef PEdgeLoopCirculator<PEdgeConstHandle>
-                                               PEdgeLoopConstCirculator;
+  typedef PEdgeLoopCirculator<PEdgeHandle>      PEdgeCirculator;
+  typedef PEdgeLoopCirculator<PEdgeConstHandle> PEdgeConstCirculator;
 
   PartialDSLoop()
     : parent_face_(NULL), boundary_pedge_(NULL), next_hole_(NULL) { }
@@ -43,13 +44,29 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   LoopConstHandle next_hole() const { return next_hole_; }
 
   // Iterate over p-edges that form the loop.
-  PEdgeLoopConstCirculator begin() const {
-    return PEdgeLoopConstCirculator(boundary_pedge_);
+  PEdgeConstCirculator begin() const {
+    return PEdgeConstCirculator(boundary_pedge_);
+  }
+  PEdgeCirculator begin() {
+    return PEdgeCirculator(boundary_pedge_);
   }
 
   // Return true if p-edge pe is found along this loop and false otherwise.
   bool FindPEdge(PEdgeConstHandle pe) const {
-    return ginsu::geometry::find(begin(), pe) != NULL;
+    return ginsu::geometry::find_if(
+        begin(), std::bind2nd(std::equal_to<PEdgeConstHandle>(), pe)) != NULL;
+  }
+
+  // Return the p-edge that starts at pv or NULL.
+  struct equal_to_start_pvertex {
+    PVertexConstHandle pv_;
+    equal_to_start_pvertex(PVertexConstHandle pv) : pv_(pv) {}
+    bool operator() (PEdgeConstHandle pe) {
+      return pe->start_pvertex() == pv_;
+    }
+  };
+  PEdgeHandle FindStartPVertex(PVertexConstHandle pv) {
+    return ginsu::geometry::find_if(begin(), equal_to_start_pvertex(pv));
   }
 
  protected:
