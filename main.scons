@@ -82,6 +82,7 @@ nacl_test_env = nacl_env.Clone(
       '$MAIN_DIR/c_salt/c_salt.scons',
       '$MAIN_DIR/c_salt/test.scons',
       '$MAIN_DIR/geometry/test.scons',
+      '$MAIN_DIR/scripts/scripts.scons',
     ],
     BUILD_TYPE_DESCRIPTION = 'Tests',
     COMPONENT_TEST_CMDLINE = '$NACL_TOOLCHAIN_ROOT/bin/sel_ldr $PROGRAM_NAME',
