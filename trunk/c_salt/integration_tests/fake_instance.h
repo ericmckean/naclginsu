@@ -8,6 +8,7 @@
 #include "boost/shared_ptr.hpp"
 #include "c_salt/instance.h"
 #include "c_salt/integration_tests/method_tester.h"
+#include "c_salt/integration_tests/property_tester.h"
 
 class FakeInstance : public c_salt::Instance {
  public:
@@ -21,13 +22,13 @@ class FakeInstance : public c_salt::Instance {
  private:
   FakeInstance();  // Not implemented, do not use.
 
-  // A ScriptableNativeObject that provides methods to test.
-  // TODO(c_salt authors):  Create more Tester objects for other c_salt
-  // features.
+  // ScriptableNativeObjects for testing c_salt features.
   boost::shared_ptr<MethodTester> method_tester_;
+  boost::shared_ptr<PropertyTester> property_tester_;
 
-  // Get the method tester.  This is exposed via the ScriptingBridge.
+  // Getters for tester objects.  These are exposed via the ScriptingBridge.
   boost::shared_ptr<MethodTester> GetMethodTester();
+  boost::shared_ptr<PropertyTester> GetPropertyTester();
 };
 
 #endif  // C_SALT_INTEGRATION_TESTS_FAKE_INSTANCE_H_

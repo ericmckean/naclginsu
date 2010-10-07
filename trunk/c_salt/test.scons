@@ -43,8 +43,9 @@ integration_test_input_libs = [
   'google_nacl_gpu',
 ]
 #env.Append(LIBS = integration_test_input_libs)
-integration_test_inputs = ['integration_tests/method_tester.cc',
-                           'integration_tests/fake_instance.cc',
+integration_test_inputs = ['integration_tests/fake_instance.cc',
+                           'integration_tests/method_tester.cc',
+                           'integration_tests/property_tester.cc',
                            'integration_tests/test_module.cc',
 ]
 integration_test_app = [
