@@ -36,6 +36,13 @@ class PartialDSFace : public PartialDSEntity<TypeRefs> {
   PFaceHandle parent_pface() { return parent_pface_; }
   LoopConstHandle outer_loop() const { return outer_loop_; }
 
+  // Return true if this face is degenerate, i.e. associated with a wire edge or
+  // isolated vertex.
+  bool IsDegenerate() const {
+    // Degenerate faces have a p-face with no mate.
+    return parent_pface()->mate_pface() == NULL;
+  }
+
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
 

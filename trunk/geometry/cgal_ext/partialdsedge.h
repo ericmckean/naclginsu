@@ -44,6 +44,14 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   PVertexConstHandle start_pvertex() const { return start_pvertex_; }
   PVertexConstHandle end_pvertex() const { return end_pvertex_; }
 
+  // Return true if this is a wire edge and false otherwise.
+  bool IsWireEdge() const {
+    // Walk up to the pface and verify that it is degenerate (i.e. has no mate)
+    // and verify that the vertex is not isolated.
+    return parent_pedge()->parent_loop()->parent_face()->IsDegenerate() &&
+           !start_pvertex()->vertex()->IsIsolated();
+  }
+
   // Iterate over p-edges that have this edge as child.
   PEdgeRadialConstCirculator begin() const {
     return PEdgeRadialConstCirculator(parent_pedge_);
@@ -51,7 +59,8 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
 
   // Return true if pe is a radial edge about this edge, and false otherwise.
   bool FindRadialPEdge(PEdgeConstHandle pe) const {
-    return ginsu::geometry::find(begin(), pe) != NULL;
+    return ginsu::geometry::find_if(
+        begin(), std::bind2nd(std::equal_to<PEdgeConstHandle>(), pe)) != NULL;
   }
 
  protected:
