@@ -86,13 +86,19 @@ TEST_F(PartialDSTest, MakeWireEdge) {
   e2 = mesh_->CreateWireEdgeInShell(r->outer_shell(), v);
   ASSERT_TRUE(e2 != NULL);
   ASSERT_TRUE(mesh_->ValidateEdge(e2));
-  PartialDSTest::PEMesh::PEdgeConstHandle pe2 = e2->parent_pedge();
+  PartialDSTest::PEMesh::PEdgeHandle pe2 = e2->parent_pedge();
   ASSERT_TRUE(mesh_->ValidatePEdge(pe2));
-  PartialDSTest::PEMesh::LoopConstHandle loop2 = pe2->parent_loop();
+  PartialDSTest::PEMesh::LoopHandle loop2 = pe2->parent_loop();
   ASSERT_TRUE(mesh_->ValidateLoop(loop2));
 
-  mesh_->DeleteWireEdge(e1);
+  // This fails because we can't add a vertex to a degenerate loop.
+  // TODO(gwink): unit-test CreateWireEdgeInLoop when we can create real faces.
+  // PartialDSTest::PEMesh::EdgeHandle e3;
+  // e3 = mesh_->CreateWireEdgeInLoop(loop2, pe2->start_pvertex());
+  // ASSERT_TRUE(e3 != NULL);
+
   mesh_->DeleteWireEdge(e2);
+  mesh_->DeleteWireEdge(e1);
   mesh_->DeleteIsolatedVertex(v);
   mesh_->DeleteEmptyRegion(r);
 }
