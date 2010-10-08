@@ -43,7 +43,6 @@ integration_test_input_libs = [
   'google_nacl_pgl',
   'google_nacl_gpu',
 ]
-#env.Append(LIBS = integration_test_input_libs)
 integration_test_inputs = ['integration_tests/fake_instance.cc',
                            'integration_tests/method_tester.cc',
                            'integration_tests/property_tester.cc',
@@ -53,11 +52,13 @@ integration_test_app = [
     'integration_tests/c_salt_tests.html',
 ]
 
-env.Install('$STAGING_DIR', integration_test_app)
+install_integration_test_app  = env.Install('$STAGING_DIR',
+    integration_test_app)
 # TODO(dmichael):  Is there an appropriate test type for this, instead of
 #                  making the target a ComponentProgram?
-env.ComponentProgram(
+integration_test = env.ComponentProgram(
     'c_salt_integration_test_x86_32.nexe',
     integration_test_inputs,
     LIBS = integration_test_input_libs,
 )
+env.Depends(integration_test, install_integration_test_app)
