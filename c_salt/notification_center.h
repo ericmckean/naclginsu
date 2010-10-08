@@ -12,107 +12,145 @@
 #include <string>
 
 #include "boost/noncopyable.hpp"
+#include "boost/function.hpp"
 #include "boost/signals2.hpp"
+#include "c_salt/instance.h"
 #include "c_salt/notification_ptrs.h"
 
 namespace c_salt {
 // NotificationCenter is a simple mechanism for broadcasting notifications
 // within a process.
-// Objects register with the NotificationCenter as observers of notifications
-// using string identifiers to specify the notification of interest.  Observers
-// must subsequently remove themselves as observers if they go out of scope
-// before the NotificationCenter.
+// Objects register with the NotificationCenter as subscribers of notifications
+// using string identifiers to specify the notification of interest.
+// Subscribers must subsequently remove themselves if they go out of scope
+// before the NotificationCenter is deleted, or there will be dangling
+// references.
 class NotificationCenter : public boost::noncopyable {
  public:
-  // Return a singleton used by the whole app.  This call is mutex locked.
-  static NotificationCenter* DefaultCenter();
+  static const char* const kAnonymousPublisherName;
+
+  // Return the common NotificationCenter used by |instance|.  c_salt objects
+  // that post notifications all post to the DefaultCenter.  This call is
+  // mutex locked.
+  static NotificationCenter* DefaultCenter(const c_salt::Instance& instance);
 
   NotificationCenter();
-  ~NotificationCenter();
+  virtual ~NotificationCenter();
 
-  // Add an observer with it's method to invoke.
-  // The observer must be created in the same thread as the NotificationCenter.
-  // TODO(c_salt_authors):  Allow for a nicer observer function type (details
-  // TBD).
-  template <typename T>
-  void AddObserver(const std::string& notification_name,
-                   T* observer,
-                   void (T::*mem_func)(void*));
+  // Add a subscriber with its method to invoke.  The subscriber doesn't have
+  // to be created in the same thread as the NotificationCenter.  When a
+  // notification gets published, however, the handler for the notification is
+  // called from the publisher's thread.  The |subscriber| gets a copy of the
+  // Notification data when |handler| is called, which can in turn be copied
+  // to another thread.  If |publisher_name| is the enpty string, then
+  // |subscriber| will receive notifications named |notification_name| from
+  // any publisher.  Otherwise, it will only receive notifications from
+  // calls to PublishNotification() when |publisher_name| matches.
+  // Returns |true| on success.
+  template <typename SubscriberType>
+  bool AddSubscriber(const std::string& notification_name,
+                     SubscriberType* subscriber,
+                     void (SubscriberType::*handler)(const Notification&),
+                     const std::string& publisher_name) {
+    AddSubscriberImpl(notification_name,
+                      CreateSubscriberId(subscriber),
+                      boost::bind(handler, subscriber, _1),
+                      publisher_name);
+  }
 
-  // Remove an observer from all its notifications in the dispatch table.
-  template <typename T>
-  void RemoveObserver(T* observer,
-                      void (T::*mem_func)(void*));
-  // Remove an observer from the specified notification.
-  template <typename T>
-  void RemoveObserverFromNotification(T* observer,
-                                      void (T::*mem_func)(void*),
-                                      const std::string& notification_name);
-  // Remove all observers from a specified notification and then remove the
+  // Remove a subscriber from all notifications in the dispatch table.
+  // Returns |true| on success.
+  template <typename SubscriberType>
+  bool RemoveSubscriber(SubscriberType* subscriber) {
+    RemoveSubscriberImpl(CreateSubscriberId(subscriber));
+  }
+
+  // Remove a subscriber from the specified notification.  Returns |true| on
+  // success.
+  template <typename SubscriberType>
+  bool RemoveSubscriberFromNotification(
+      SubscriberType* subscriber,
+      const std::string& notification_name) {
+    RemoveSubscriberFromNotificationImpl(CreateSubscriberId(subscriber),
+                                         notification_name);
+  }
+  // Remove all subscribers from a specified notification and then remove the
   // notification.  Future calls to PostNotification() to |notification_name|
-  // will fail.
-  void RemoveNotification(const std::string& notification_name);
+  // will have no effect.  Returns |true| on success.
+  bool RemoveNotification(const std::string& notification_name);
 
-  // Post a notification to be dispatched, specifying notification-specific
-  // data.
-  void PostNotification(const std::string& notification_name,
-                        void* notification_data);
+  // Publish a notification to be dispatched, specifying notification-specific
+  // data.  Publishing all happens on a single thread, all subscribers are
+  // signaled on the calling thread.  To further process a notification on
+  // another thread you have to do the inter-thread communication yourself.
+  // Returns |true| on success.
+  bool PublishNotification(const std::string& notification_name,
+                           const Notification& notification,
+                           const std::string& publisher_name);
 
  private:
-  typedef boost::signals2::connection Connection;
-  typedef std::map<std::string, SharedNotification> NotificationDict;
+  typedef boost::signals2::signal<void(const Notification&)> NotificationSignal;
+  typedef boost::shared_ptr<NotificationSignal> SharedNotificationSignal;
+  // Map publisher ids to a set of boost::signals.  This map is used when
+  // publishing a notification.  Note that boost::signals2::signal<> has no
+  // copy ctor, so this dictionary has to use shared_ptrs.
+  typedef std::map<std::string, SharedNotificationSignal> PublisherSignalDict;
+  typedef std::map<uint64_t, std::vector<boost::signals2::connection> >
+      ConnectionDict;
+
+  // A small helper class that holds the signal and the function which gets
+  // fired during PublishNotification().  A notification is published by firing
+  // a signal; there are two possible signals, one that is always fired which
+  // publishes a notification to subscribers of any publisher, and then another
+  // signal which is fired only if the publisher's id exists in the publisher
+  // ==> signal dictionary.  In this way, every subscriber that wants
+  // notifications from either any publisher or from a specific publisher will
+  // get notified.  Each NotificationSlot also holds a dictionary which maps
+  // subscriber_id ==> vector<connections>.  This is done to support the
+  // RemoveSubscriber(SubscriberType) and to support disconnection of a
+  // boost::signals2::signal without relying on the peculiar equality semantics
+  // of boost::function in boost::signals.
+  struct NotificationSlot {
+    // Dtor disconnects all the signals in |connections_|.  Assumes that any
+    // necessary mutex locking has been done by the caller.
+    ~NotificationSlot();
+
+    // Disconnect all the signals connected to the subscriber represented by
+    // this NotificationSlot.  Assumes that any necessary mutex locking has
+    // been done by the caller.
+    void DisconnectSubscriber(uint64_t subscriber_id);
+    void DisconnectAll(const ConnectionDict::iterator& conn_iter);
+
+    // This signal set is fired every time PublishNotification() is called,
+    // and will notify all subscribers to any publisher.
+    NotificationSignal any_publisher_signal_;
+    // Fire the signal set from this dictionary that matches |publisher_id_|.
+    PublisherSignalDict publisher_signals_;
+    ConnectionDict connections_;
+  };
+  typedef boost::shared_ptr<NotificationSlot> SharedNotificationSlot;
+  typedef std::map<std::string, SharedNotificationSlot> NotificationDict;
+
+  // Return a unique hash id for |subscriber|.  This function has to return a
+  // unique id for each subscriber.
+  template <typename SubscriberType>
+  uint64_t CreateSubscriberId(SubscriberType* subscriber) const {
+    return reinterpret_cast<uint64_t>(subscriber);
+  }
+
+  // The implementation behind the template methods.
+  bool AddSubscriberImpl(
+      const std::string& notification_name,
+      uint64_t subscriber_id,
+      boost::function<void(const Notification&)> subscriber_functor,
+      const std::string& publisher_name);
+  bool RemoveSubscriberImpl(uint64_t subscriber_id);
+  bool RemoveSubscriberFromNotificationImpl(
+      uint64_t subscriber_id,
+      const std::string& notification_name);
 
   mutable pthread_mutex_t mutex_;
   NotificationDict notifications_;
 };
-
-template <typename T>
-void NotificationCenter::AddObserver(const std::string& notification_name,
-                                     T* observer,
-                                     void (T::*mem_func)(void*)) {
-  pthread_mutex_lock(&mutex_);
-  SharedNotification notification_signal;
-  std::pair<NotificationDict::iterator, bool> inserted =
-    notifications_.insert(NotificationDict::value_type(notification_name,
-                                                       notification_signal));
-  // If this is a newly inserted notification signal, then reset the
-  // value with a new signal object.
-  if (inserted.second) {
-    inserted.first->second.reset(new Notification());
-  }
-  // In all cases, copy the shared_ptr value to a local variable so that
-  // other threads cannot invalidate it.
-  notification_signal = inserted.first->second;
-  // Boost handles all the thread safety for connecting, so unlock our mutex.
-  pthread_mutex_unlock(&mutex_);
-  notification_signal->connect(boost::bind(mem_func, observer, _1));
-}
-
-template <typename T>
-void NotificationCenter::RemoveObserver(T* observer,
-                                        void (T::*mem_func)(void*)) {
-  pthread_mutex_lock(&mutex_);
-  NotificationDict::iterator it = notifications_.begin();
-  const NotificationDict::const_iterator end = notifications_.end();
-  for (; it != end; ++it) {
-    (it->second)->disconnect(boost::bind(mem_func, observer, _1));
-  }
-  pthread_mutex_unlock(&mutex_);
-}
-
-template <typename T>
-void NotificationCenter::RemoveObserverFromNotification(
-    T* observer,
-    void (T::*mem_func)(void*),
-    const std::string& notification_name) {
-  pthread_mutex_lock(&mutex_);
-  const NotificationDict::iterator it =
-      notifications_.find(notification_name);
-  if (it != notifications_.end()) {
-    (it->second)->disconnect(boost::bind(mem_func, observer, _1));
-  }
-  pthread_mutex_unlock(&mutex_);
-}
-
-}  // namespace ginsu
+}  // namespace c_salt
 #endif  // C_SALT_NOTIFICATION_CENTER_H_
