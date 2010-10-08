@@ -239,10 +239,19 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   RegionHandle CreateEmptyRegion();
   void DeleteEmptyRegion(RegionHandle region);
 
+  // Create an isolated vertex within the given region.
   VertexHandle CreateIsolatedVertex(RegionHandle region);
   void DeleteIsolatedVertex(VertexHandle vertex);
 
+  // Create a wire edge either within a shell or along an existing loop.
+  // CreateWireEdgeInShell: connect the wire edge to an existing vertex. Fails
+  //   if the vertex doesn't belong to the shell.
+  // CreateWireEdgeInLoop: connect the wire edge to the given p-vertex in a
+  //   loop. Fails if the p-vertex is not along the loop or the loop is
+  //   degenerate - i.e. belongs to a wire edge or isolated vertex.
+  // Both functions return NULL when they fail.
   EdgeHandle CreateWireEdgeInShell(ShellHandle shell, VertexHandle vertex);
+  EdgeHandle CreateWireEdgeInLoop(LoopHandle loop, PVertexHandle pvertex);
   void DeleteWireEdge(EdgeHandle edge);
 
   // List accessors, to iterate over these vertices, edges, etc. E.g. to display

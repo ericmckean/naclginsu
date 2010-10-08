@@ -198,7 +198,7 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
     pe_r->Init(Entity::kPEdgeReversed, loop, edge, pv2, pe_f, pe_f, pe_f, pe_f);
 
     // Setup a void loop and degenerate face and p-face.
-    loop->Init(face, pe_f, NULL);
+    loop->Init(face, pe_f, NULL /* no mate */);
     face->Init(pface, loop);
     pface->Init(Entity::kPFaceUnoriented, void_shell, face, pface, NULL);
 
@@ -209,6 +209,43 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
     return edge;
   }
   return NULL;
+}
+
+template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
+    PartialDS<TraitsType>::CreateWireEdgeInLoop(LoopHandle loop,
+                                                PVertexHandle pvertex) {
+  // Before anything else, let's make sure that the loop is not associated with
+  // with a wire edge or isolated vertex. We can do that by checking if the face
+  // is degenerate.
+  assert(!loop->parent_face()->IsDegenerate());
+  if (loop->parent_face()->IsDegenerate()) return NULL;
+
+  // Find the loop's p-edge that starts at p-vertex. It'll become the new edge's
+  // next p-edge.
+  PEdgeHandle next_pedge = loop->FindStartPVertex(pvertex);
+  assert(next_pedge != NULL);
+  if (next_pedge == NULL) {
+    // Bad karma; it seems the loop and pvertex have nothing in common.
+    return NULL;
+  }
+
+  // Prepare or create other entities for the new edge.
+  PEdgeHandle prev_pedge = next_pedge->loop_previous();
+  VertexHandle new_vertex = MakeVertex();
+  PVertexHandle new_pvertex = MakePVertex();
+  EdgeHandle new_edge = MakeEdge();
+  PEdgeHandle new_pe_f = MakePEdge();
+  PEdgeHandle new_pe_r = MakePEdge();
+
+  // Connect the entities, rerouting the loop through the new wire edge.
+  new_vertex->set_parent_pvertex(new_pvertex);
+  new_pvertex->Init(new_edge, new_vertex, new_pvertex);
+  new_edge->Init(new_pe_f, pvertex, new_pvertex);
+  new_pe_f->Init(Entity::kPEdgeForward, loop, new_edge, pvertex,
+                 prev_pedge, new_pe_r, new_pe_r, new_pe_r);
+  new_pe_r->Init(Entity::kPEdgeReversed, loop, new_edge, new_pvertex,
+                 new_pe_f, next_pedge, new_pe_f, new_pe_f);
+  return new_edge;
 }
 
 template <class TraitsType>
