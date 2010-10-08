@@ -9,11 +9,10 @@
 // type.  As more smart pointer types are needed, add them here.
 
 #include "boost/shared_ptr.hpp"
-#include "boost/signals2.hpp"
+#include "c_salt/notification.h"
 
 namespace c_salt {
 
-typedef boost::signals2::signal<void (void*)> Notification;
 typedef boost::shared_ptr<Notification> SharedNotification;
 
 }  // namespace c_salt
