@@ -42,7 +42,9 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   PEdgeConstHandle parent_pedge() const { return parent_pedge_; }
   PEdgeHandle parent_pedge() { return parent_pedge_; }
   PVertexConstHandle start_pvertex() const { return start_pvertex_; }
+  PVertexHandle start_pvertex() { return start_pvertex_; }
   PVertexConstHandle end_pvertex() const { return end_pvertex_; }
+  PVertexHandle end_pvertex() { return end_pvertex_; }
 
   // Return true if this is a wire edge and false otherwise.
   bool IsWireEdge() const {

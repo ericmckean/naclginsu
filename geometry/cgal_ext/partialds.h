@@ -229,11 +229,15 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::PEdgeConstHandle           PEdgeConstHandle;
   typedef typename Types::FaceHandle                 FaceHandle;
   typedef typename Types::PFaceHandle                PFaceHandle;
+  typedef typename Types::PFaceConstHandle           PFaceConstHandle;
   typedef typename Types::LoopHandle                 LoopHandle;
   typedef typename Types::LoopConstHandle            LoopConstHandle;
   typedef typename Types::ShellHandle                ShellHandle;
   typedef typename Types::RegionHandle               RegionHandle;
   typedef typename Types::Entity                     Entity;
+
+  typedef typename Types::VertexBase::PVertexCirculator
+                                                     PVertexOfVertexCirculator;
 
   // Euler operator.
   RegionHandle CreateEmptyRegion();
@@ -252,7 +256,10 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   // Both functions return NULL when they fail.
   EdgeHandle CreateWireEdgeInShell(ShellHandle shell, VertexHandle vertex);
   EdgeHandle CreateWireEdgeInLoop(LoopHandle loop, PVertexHandle pvertex);
-  void DeleteWireEdge(EdgeHandle edge);
+  // Delete a wire edge and its singular vertex. If the edge is not connected to
+  // any other entity (i.e. is bounded by two singular vertices), then the
+  // edge's end vertex is deleted, and the start vertex is preserved. 
+  void DeleteWireEdgeAndVertex(EdgeHandle edge);
 
   // List accessors, to iterate over these vertices, edges, etc. E.g. to display
   // the geometry.
