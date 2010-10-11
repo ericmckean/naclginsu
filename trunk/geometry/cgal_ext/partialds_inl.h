@@ -158,7 +158,7 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
 
     v2->set_parent_pvertex(pv2);
     
-    pv2->Init(edge, v2, pv1);
+    pv2->Init(edge, v2, pv2);
     pv1->set_parent_edge(edge);
     edge->set_end_pvertex(pv2);
 
@@ -249,8 +249,78 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DeleteWireEdge(EdgeHandle edge) {
-  // TODO(gwink)
+void PartialDS<TraitsType>::DeleteWireEdgeAndVertex(EdgeHandle edge) {
+  // We can only delete wire edges.
+  assert(edge->IsWireEdge());
+  if (!edge->IsWireEdge()) return;
+
+  // Figure out what end has a singular vertex. That is the vertex we'll delete.
+  // If both vertices are singular, then delete the end vertex.
+  VertexHandle del_vertex, keep_vertex;
+  PVertexHandle del_pvertex, keep_pvertex;
+  del_pvertex = edge->end_pvertex();
+  del_vertex = del_pvertex->vertex();
+  keep_pvertex = edge->start_pvertex();
+  keep_vertex = keep_pvertex->vertex();
+  if (del_vertex->GetPVertexCount() != 1) {
+    std::swap(del_vertex, keep_vertex);
+    std::swap(del_pvertex, keep_pvertex);
+  }
+  assert(del_vertex->GetPVertexCount() == 1);
+  if (del_vertex->GetPVertexCount() != 1) return;
+
+  // Start gathering and deleting entities around del_vertex. Note that
+  // keep_vertex may be singular too, in which case we'll be left with an
+  // isolated vertex. In that case, we get to keep most entities and re-wired
+  // them around keep_vertex.
+  PEdgeHandle del_pe = edge->parent_pedge();
+  PEdgeHandle keep_pe = del_pe->loop_next();
+  LoopHandle loop = keep_pe->parent_loop();
+  assert(keep_pe->loop_next() == del_pe);
+  DestroyPEdge(del_pe);
+  DestroyPVertex(del_pvertex);
+  DestroyVertex(del_vertex);
+  if (keep_vertex->GetPVertexCount() == 1) {
+    // The keep vertex is singular too. Re-wire the edge and one p-edge to form
+    // an isolated vertex.
+    edge->Init(keep_pe, keep_pvertex, keep_pvertex);
+    keep_pe->Init(Entity::kPEdgeUnoriented, keep_pe->parent_loop(), edge,
+                  keep_pvertex, keep_pe, keep_pe, keep_pe, keep_pe);
+    loop->set_boundary_pedge(keep_pe);
+    // We're done. But for good form, lets validate the pface now associated
+    // with the isolated keep_vertex.
+    PFaceConstHandle pface = loop->parent_face()->parent_pface();
+    assert(pface != NULL && pface->mate_pface() == NULL);
+  } else {
+    // keep_vertex isn't singular. We can delete everything but keep_vertex.
+
+    // Take keep_pvertex out of the cloud of p-vertices about keep_vertex.
+    PVertexOfVertexCirculator i, start = keep_vertex->pvertex_begin();
+    for (i = start; ; ++i) {
+      if (i->next_pvertex() == keep_pvertex) {
+        i->set_next_pvertex(keep_pvertex->next_pvertex());
+        break;
+      }
+    }
+    if (keep_vertex->parent_pvertex() == keep_pvertex) {
+      keep_vertex->set_parent_pvertex(keep_pvertex->next_pvertex());
+    }
+
+    // Remove the void shell from the region before deleting it.
+    FaceHandle face = loop->parent_face();
+    PFaceHandle pface = face->parent_pface();
+    ShellHandle shell = pface->parent_shell();
+    shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
+
+    assert(pface->mate_pface() == NULL);
+    DestroyShell(shell);
+    DestroyPFace(pface);
+    DestroyFace(face);
+    DestroyLoop(loop);
+    DestroyPEdge(keep_pe);
+    DestroyEdge(edge);
+    DestroyPVertex(keep_pvertex);
+  }
 }
 
 // Basic (non-topological) make<Item> and Destroy<Item> functions.

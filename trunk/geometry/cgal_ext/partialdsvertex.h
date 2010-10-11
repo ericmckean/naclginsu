@@ -5,6 +5,7 @@
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_VERTEX_H_
 
 #include "CGAL/basic.h"
+#include "geometry/cgal_ext/partialdscirculators.h"
 #include "geometry/cgal_ext/partialdsentity.h"
 
 namespace ginsu {
@@ -32,12 +33,23 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDSTypes::PVertexConstHandle PVertexConstHandle;
   typedef typename PartialDSTypes::EdgeConstHandle    EdgeConstHandle;
 
+  typedef PVertexOfVertexCirculator<PVertexConstHandle> PVertexConstCirculator;
+  typedef PVertexOfVertexCirculator<PVertexHandle> PVertexCirculator;
+
   PartialDSVertex() : parent_pvertex_(NULL) { }
 
   // Accessors
   PVertexConstHandle parent_pvertex() const { return parent_pvertex_; }
   PVertexHandle parent_pvertex() { return parent_pvertex_; }
   const Point& point() const { return p_; }
+
+  // Iterate over the p-vertex about this vertex.
+  PVertexConstCirculator pvertex_begin() const {
+    return PVertexConstCirculator(parent_pvertex());
+  }
+  PVertexCirculator pvertex_begin() {
+    return PVertexCirculator(parent_pvertex());
+  }
 
   // Return true if the vertex is an isolated vertex, and false otherwise.
   bool IsIsolated() const {
@@ -46,6 +58,16 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
     PVertexConstHandle pv = parent_pvertex();
     EdgeConstHandle e = pv->parent_edge();
     return (e->start_pvertex() == pv) && (e->end_pvertex() == pv);
+  }
+
+  // Return the number of p-vertices associated with this vertex.
+  int GetPVertexCount() const {
+    if (parent_pvertex() == NULL) return 0;
+
+    PVertexConstCirculator start = pvertex_begin(), i = start;
+    int count = 0;
+    do { ++count; } while(++i != start);
+    return count;
   }
 
  protected:

@@ -115,6 +115,42 @@ class PEdgeRadialCirculator : public It {
   }
 };
 
+// A circulator to visit the cloud of p-vertices around a vertex. Template
+// class |It| is a PartialDSPVertex iterator - such as PVertexHandle - or an
+// equivalent p-vertex iterator or const version. 
+template <class It>
+class PVertexOfVertexCirculator : public It {
+ public:
+  typedef  It                                  Iterator;
+  typedef  CGAL::Forward_circulator_tag        iterator_category;
+  typedef  PVertexOfVertexCirculator<It>       Self;
+  typedef  std::iterator_traits<It>            Traits;
+  typedef  typename Traits::value_type         value_type;
+  typedef  typename Traits::difference_type    difference_type;
+  typedef  std::size_t                         size_type;
+  typedef  typename Traits::reference          reference;
+  typedef  typename Traits::pointer            pointer;
+
+  PVertexOfVertexCirculator() {}
+  explicit PVertexOfVertexCirculator(It i) : It(i) {}
+  template <class It2>
+  PVertexOfVertexCirculator(const PVertexOfVertexCirculator<It2> &c)
+      : It(static_cast<const It2&>(c)) {}
+
+  bool operator==(const Self& i)    const { return  It::operator==(i); }
+  bool operator!=(const Self& i)    const { return !(*this == i); }
+
+  Self& operator++() {
+    *(static_cast<Iterator*>(this)) = (*this)->next_pvertex();
+    return *this;
+  }
+  Self  operator++(int) {
+    Self tmp = *this;
+    ++*this;
+    return tmp;
+  }
+};
+
 // Stl-style find_if function for circulators.
 template <class Circulator, class Predicate>
 typename Circulator::Iterator find_if(Circulator start, Predicate pred) {

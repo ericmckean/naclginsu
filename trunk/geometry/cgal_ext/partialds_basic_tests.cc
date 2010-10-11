@@ -77,6 +77,8 @@ TEST_F(PartialDSTest, MakeWireEdge) {
   e1 = mesh_->CreateWireEdgeInShell(r->outer_shell(), v);
   ASSERT_TRUE(e1 != NULL);
   ASSERT_TRUE(mesh_->ValidateEdge(e1));
+  ASSERT_TRUE(mesh_->ValidateVertex(e1->start_pvertex()->vertex()));
+  ASSERT_TRUE(mesh_->ValidateVertex(e1->end_pvertex()->vertex()));
   PartialDSTest::PEMesh::PEdgeConstHandle pe1 = e1->parent_pedge();
   ASSERT_TRUE(mesh_->ValidatePEdge(pe1));
   PartialDSTest::PEMesh::LoopConstHandle loop1 = pe1->parent_loop();
@@ -86,6 +88,8 @@ TEST_F(PartialDSTest, MakeWireEdge) {
   e2 = mesh_->CreateWireEdgeInShell(r->outer_shell(), v);
   ASSERT_TRUE(e2 != NULL);
   ASSERT_TRUE(mesh_->ValidateEdge(e2));
+  ASSERT_TRUE(mesh_->ValidateVertex(e2->start_pvertex()->vertex()));
+  ASSERT_TRUE(mesh_->ValidateVertex(e2->end_pvertex()->vertex()));
   PartialDSTest::PEMesh::PEdgeHandle pe2 = e2->parent_pedge();
   ASSERT_TRUE(mesh_->ValidatePEdge(pe2));
   PartialDSTest::PEMesh::LoopHandle loop2 = pe2->parent_loop();
@@ -97,8 +101,11 @@ TEST_F(PartialDSTest, MakeWireEdge) {
   // e3 = mesh_->CreateWireEdgeInLoop(loop2, pe2->start_pvertex());
   // ASSERT_TRUE(e3 != NULL);
 
-  mesh_->DeleteWireEdge(e2);
-  mesh_->DeleteWireEdge(e1);
+  mesh_->DeleteWireEdgeAndVertex(e2);
+  ASSERT_TRUE(mesh_->ValidateVertex(e1->start_pvertex()->vertex()));
+  ASSERT_TRUE(mesh_->ValidateVertex(e1->end_pvertex()->vertex()));
+  mesh_->DeleteWireEdgeAndVertex(e1);
+  ASSERT_TRUE(mesh_->ValidateVertex(v));
   mesh_->DeleteIsolatedVertex(v);
   mesh_->DeleteEmptyRegion(r);
 }
