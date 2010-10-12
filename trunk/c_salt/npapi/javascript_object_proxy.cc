@@ -76,12 +76,12 @@ bool JavaScriptObjectProxy::HasScriptMethod(const std::string& name) {
 }
 
 bool
-JavaScriptObjectProxy::InvokeScriptMethod(const std::string& method_name,
-                                    const SharedVariant* params_begin,
-                                    const SharedVariant* params_end,
-                                    ::c_salt::SharedVariant* return_value) {
+JavaScriptObjectProxy::InvokeScriptMethod(
+    const std::string& method_name,
+    const SharedVariant* params_begin,
+    const SharedVariant* params_end,
+    ::c_salt::SharedVariant* return_value) {
   if (!Valid()) return false;
-  NPIdentifier name_id = NPN_GetStringIdentifier(method_name.c_str());
   // Allocate a vector of NPVariants to hold the parameters and convet the
   // c_salt variants to them.
   std::size_t arg_count = params_end - params_begin;
@@ -97,13 +97,23 @@ JavaScriptObjectProxy::InvokeScriptMethod(const std::string& method_name,
     variant_converter_.ConvertVariantToNPVariant(*params_begin[i],
                                                  &np_var_vector[i]);
   }
+  bool success = false;
   NPVariantSentry return_var;
-  bool success = NPN_Invoke(instance_,
-                            np_object_,
-                            name_id,
-                            &(*np_var_vector.begin()),
-                            np_var_vector.size(),
-                            &return_var.np_variant());
+  if (!method_name.empty()) {
+    NPIdentifier name_id = NPN_GetStringIdentifier(method_name.c_str());
+    success = NPN_Invoke(instance_,
+                         np_object_,
+                         name_id,
+                         &(*np_var_vector.begin()),
+                         np_var_vector.size(),
+                         &return_var.np_variant());
+  } else {
+    success = NPN_InvokeDefault(instance_,
+                                np_object_,
+                                &(*np_var_vector.begin()),
+                                np_var_vector.size(),
+                                &return_var.np_variant());
+  }
   if (success) {
     (*return_value) =
         variant_converter_.CreateVariantFromNPVariant(return_var.np_variant());

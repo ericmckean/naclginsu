@@ -51,6 +51,11 @@ class MethodTester : public c_salt::ScriptableNativeObject {
       const std::string& method_name,
       boost::shared_ptr<c_salt::ScriptingInterface> script_object,
       const c_salt::SharedVariant& parameter);
+
+  // Call the function that is passed in as |script_object| with |parameter|.
+  c_salt::Variant CallAnonymousFunction(
+      boost::shared_ptr<c_salt::ScriptingInterface> script_object,
+      const c_salt::SharedVariant& parameter);
 };
 
 #endif  // C_SALT_INTEGRATION_TESTS_METHOD_TESTER_H_
