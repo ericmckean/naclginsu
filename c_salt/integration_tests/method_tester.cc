@@ -24,6 +24,9 @@ void MethodTester::InitializeMethods(c_salt::ScriptingBridge* bridge) {
   bridge->AddMethodNamed("callMethodOnScriptObject",
                          this,
                          &MethodTester::CallMethodOnScriptObject);
+  bridge->AddMethodNamed("callAnonymousFunction",
+                         this,
+                         &MethodTester::CallAnonymousFunction);
 }
 
 void MethodTester::InitializeProperties(c_salt::ScriptingBridge* bridge) {
@@ -63,5 +66,16 @@ c_salt::Variant MethodTester::CallMethodOnScriptObject(
                                       (&parameter) + 1u,
                                       &return_value);
   }
+  return *return_value;
+}
+
+c_salt::Variant MethodTester::CallAnonymousFunction(
+      boost::shared_ptr<c_salt::ScriptingInterface> script_object,
+      const c_salt::SharedVariant& parameter) {
+  c_salt::SharedVariant return_value;
+  script_object->InvokeScriptMethod("",
+                                    &parameter,
+                                    &parameter + 1u,
+                                    &return_value);
   return *return_value;
 }

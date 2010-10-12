@@ -66,6 +66,9 @@ found in the LICENSE file.
                      methodTester.callMethodOnScriptObject("isOdd", x, 3));
         assertEquals(x.isOdd(-32),
                      methodTester.callMethodOnScriptObject("isOdd", x, -32));
+        assertEquals('Invoked!',
+                     methodTester.callAnonymousFunction(function(x) { return x; },
+                     'Invoked!'));
       } catch(e) {
         fail(e.message);
       }
