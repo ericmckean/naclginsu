@@ -6,6 +6,8 @@
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_VALIDATIONS_INL_H_
 
 #include "geometry/cgal_ext/partialdspedge.h"
+#include "geometry/cgal_ext/partialdsutils.h"
+#include <vector>
 
 namespace ginsu {
 namespace geometry {
@@ -250,7 +252,7 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
 
 template <class TraitsType>
 void PartialDS<TraitsType>::DeleteWireEdgeAndVertex(EdgeHandle edge) {
-  // We can only delete wire edges.
+  // We can only delete wire edges with at least one singular vertex.
   assert(edge->IsWireEdge());
   if (!edge->IsWireEdge()) return;
 
@@ -321,6 +323,66 @@ void PartialDS<TraitsType>::DeleteWireEdgeAndVertex(EdgeHandle edge) {
     DestroyEdge(edge);
     DestroyPVertex(keep_pvertex);
   }
+}
+
+template <class TraitsType>
+typename PartialDS<TraitsType>::VertexHandle
+    PartialDS<TraitsType>::SplitEdgeCreateVertex(EdgeHandle edge) {
+  typedef PartialDSUtils<Types> Utils;
+
+  // We'll certainly need a new edge and vertex.
+  EdgeHandle new_e = MakeEdge();
+  VertexHandle new_v = MakeVertex();
+
+  // We'll need to link all p-vertices around the new vertex together and all
+  // the p-edges around the new edge together. To this end, we accumulate them
+  // in lists for post-processing.
+  std::vector<PVertexHandle> new_pv_list;
+  std::vector<PEdgeHandle> new_pe_list;
+
+  // Every radial p-edge about edge needs to be split. Every bundle of p-edges
+  // that share the same start/end p-vertices will share the same new p-vertex.
+  PEdgeRadialCirculator start_pe = Utils::FindRadialPEdgeBundle(edge);
+  PEdgeRadialCirculator pe = start_pe;
+  PVertexHandle pv1, pv2, split_pv;
+  do {
+    // Each time we start a bundle of p-edges we create a new split p-vertex.
+    if (pe->start_pvertex() != pv1 && pe->start_pvertex() != pv2) {
+      pv1 = pe->start_pvertex();
+      pv2 = pe->end_pvertex();
+      split_pv = MakePVertex();
+      split_pv->set_parent_edge(new_e);
+      new_pv_list.push_back(split_pv);
+    }
+    // Create a new p-edge and insert it into pe's loop.
+    PEdgeHandle new_pe = MakePEdge();
+    new_pe_list.push_back(new_pe);
+    if (pe->orientation() == Entity::kPEdgeForward) {
+      new_pe->set_orientation(Entity::kPEdgeForward);
+      new_pe->set_start_pvertex(split_pv);
+      new_pe->set_loop_previous(pe);
+      new_pe->set_loop_next(pe->loop_next());
+    } else {
+      new_pe->set_orientation(Entity::kPEdgeReversed);
+      new_pe->set_start_pvertex(pe->start_pvertex());
+      new_pe->set_loop_previous(pe->loop_previous());
+      new_pe->set_loop_next(pe);
+    }
+    new_pe->loop_previous()->set_loop_next(new_pe);
+    new_pe->loop_next()->set_loop_previous(new_pe);
+    new_pe->set_parent_loop(pe->parent_loop());
+    ++pe;
+  } while(pe != start_pe);
+
+  // Insert the new edge in its rightful place.
+  new_e->set_start_pvertex(split_pv);
+  new_e->set_end_pvertex(edge->end_pvertex());
+  edge->set_end_pvertex(split_pv);
+  // Link the new p-vertices and p-edges together and to their respective child.
+  Utils::LinkPVertices(new_v, new_pv_list);
+  Utils::LinkRadialPEdges(new_e, new_pe_list);
+
+  return new_v;
 }
 
 // Basic (non-topological) make<Item> and Destroy<Item> functions.
@@ -487,9 +549,8 @@ bool PartialDS<TraitsType>::ValidateEdge(EdgeConstHandle e) {
     return false;
   }
   v = e->end_pvertex();
-  if (v == NULL || v->parent_edge() != e) {
-    assert(!"*** ValidateEdge: end vertex is null or points"
-            " to wrong edge. ***");
+  if (v == NULL) {
+    assert(!"*** ValidateEdge: end vertex is null. ***");
     return false;
   }
 #endif

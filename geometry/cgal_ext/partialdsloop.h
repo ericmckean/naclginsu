@@ -31,8 +31,10 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDSTypes::LoopHandle         LoopHandle;
   typedef typename PartialDSTypes::LoopConstHandle    LoopConstHandle;
 
-  typedef PEdgeLoopCirculator<PEdgeHandle>      PEdgeCirculator;
-  typedef PEdgeLoopCirculator<PEdgeConstHandle> PEdgeConstCirculator;
+  typedef circulator::PEdgeLoopCirculator<PEdgeHandle>
+                                                      PEdgeCirculator;
+  typedef circulator::PEdgeLoopCirculator<PEdgeConstHandle>
+                                                      PEdgeConstCirculator;
 
   PartialDSLoop()
     : parent_face_(NULL), boundary_pedge_(NULL), next_hole_(NULL) { }
@@ -53,7 +55,7 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
 
   // Return true if p-edge pe is found along this loop and false otherwise.
   bool FindPEdge(PEdgeConstHandle pe) const {
-    return ginsu::geometry::find_if(
+    return ginsu::geometry::circulator::find_if(
         begin(), std::bind2nd(std::equal_to<PEdgeConstHandle>(), pe)) != NULL;
   }
 
@@ -66,7 +68,8 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
     }
   };
   PEdgeHandle FindStartPVertex(PVertexConstHandle pv) {
-    return ginsu::geometry::find_if(begin(), equal_to_start_pvertex(pv));
+    return ginsu::geometry::circulator::find_if(
+        begin(), equal_to_start_pvertex(pv));
   }
 
  protected:
