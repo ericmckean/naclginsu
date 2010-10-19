@@ -629,6 +629,81 @@ bool PartialDS<TraitsType>::ValidateLoop(LoopConstHandle loop) {
   return true;
 }
 
+template <class TraitsType>
+bool PartialDS<TraitsType>::ValidateFace(FaceConstHandle f) {
+#if defined(_DEBUG) || defined(_GEOM_TESTS)
+  // Check the outer loop.
+  if (f->outer_loop() == NULL) {
+    assert(!"*** ValidateFace: face doesn't have a valid loop. ***");
+    return false;
+  }
+  if (f->outer_loop()->parent_face() != f) {
+    assert(!"*** ValidateFace: face's loop points to a different parent. ***");
+    return false;
+  }
+  // Check the parent face.
+  if (f->parent_pface() == NULL) {
+    assert(!"*** ValidateFace: face doesn't have a valid parent pface. ***");
+    return false;
+  }
+  if (f->parent_pface()->child_face() != f) {
+    assert(!"*** ValidateFace: face's parent doesn't point to face. ***");
+    return false;
+  }
+#endif
+  return true;
+}
+
+template <class TraitsType>
+bool PartialDS<TraitsType>::ValidatePFace(PFaceConstHandle pf) {
+#if defined(_DEBUG) || defined(_GEOM_TESTS)
+  // Check the parent shell.
+  if (pf->parent_shell() == NULL) {
+    assert(!"*** ValidatePFace: p-face doesn't have a valid parent shell. ***");
+    return false;
+  }
+  if (!pf->parent_shell()->FindPFace(pf)) {
+    assert(!"*** ValidatePFace: p-face parent shell doesn't include pface ***");
+    return false;
+  }
+  // Check the child face.
+  if (pf->child_face() == NULL) {
+    assert(!"*** ValidatePFace: p-face doesn't have a valid child face. ***");
+    return false;
+  }
+  if (pf->child_face()->parent_pface() != pf &&
+      pf->child_face()->parent_pface()->mate_pface() != pf) {
+    assert(!"*** ValidatePFace: p-face child face doesn't link to p-face. ***");
+    return false;
+  }
+  // Check the mate p-face & orientation.
+  if (pf->mate_pface() == NULL) {
+    if (pf->orientation() != Entity::kPFaceUnoriented) {
+      assert(!"*** ValidatePFace: p-face is associted with an isolated vertex"
+              " or wire edge but is not marked 'unoriented'. ***");
+      return false;
+    }
+  } else {
+    if (pf->mate_pface()->child_face() != pf->child_face()) {
+      assert(!"*** ValidatePFace: p-face and its mate do not point to the same"
+              " child face. ***");
+      return false;
+    }
+    if (pf->orientation() == Entity::kPFaceUnoriented) {
+    assert(!"*** ValidatePFace: a p-face with a mate should have an "
+            "orientation. ***");
+    return false;
+    }
+  }
+  // Check the next-p-face link.
+  if (pf->next_pface() == NULL) {
+    assert(!"*** ValidatePFace: p-face doesn't have a valid next p-face. ***");
+    return false;
+  }
+#endif
+  return true;
+}
+
 }  // namespace geometry
 }  // namespace ginsu
 
