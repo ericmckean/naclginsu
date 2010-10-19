@@ -204,7 +204,7 @@ class PartialDSTypes {
 // - TraitTypes: cgal traits, which define the math kernel and geometry upon
 //               which the DS is built.
 template <class TraitsType>
-class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
+class PartialDS {
  public:
   typedef PartialDS<TraitsType>                      Self;
   typedef PartialDSTypes<TraitsType, PartialDSItems> Types;
@@ -228,6 +228,7 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   typedef typename Types::PEdgeHandle                PEdgeHandle;
   typedef typename Types::PEdgeConstHandle           PEdgeConstHandle;
   typedef typename Types::FaceHandle                 FaceHandle;
+  typedef typename Types::FaceConstHandle            FaceConstHandle;
   typedef typename Types::PFaceHandle                PFaceHandle;
   typedef typename Types::PFaceConstHandle           PFaceConstHandle;
   typedef typename Types::LoopHandle                 LoopHandle;
@@ -281,6 +282,8 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   static bool ValidateEdge(EdgeConstHandle e);
   static bool ValidatePEdge(PEdgeConstHandle pe);
   static bool ValidateLoop(LoopConstHandle loop);
+  static bool ValidateFace(FaceConstHandle f);
+  static bool ValidatePFace(PFaceConstHandle pf);
 
  protected:
   // Basic Make<Item> and Destroy<Item> functions. The functions only allocate

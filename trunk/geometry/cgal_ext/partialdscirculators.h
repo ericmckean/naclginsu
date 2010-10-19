@@ -138,11 +138,57 @@ class PVertexOfVertexCirculator : public It {
   PVertexOfVertexCirculator(const PVertexOfVertexCirculator<It2> &c)
       : It(static_cast<const It2&>(c)) {}
 
+  bool operator==(CGAL::Nullptr_t p) const {
+    assert(p == NULL);
+    return It::operator==(It());
+  }
+  bool operator!=(CGAL::Nullptr_t p) const { return !(*this == p); }
   bool operator==(const Self& i)    const { return  It::operator==(i); }
   bool operator!=(const Self& i)    const { return !(*this == i); }
 
   Self& operator++() {
     *(static_cast<Iterator*>(this)) = (*this)->next_pvertex();
+    return *this;
+  }
+  Self  operator++(int) {
+    Self tmp = *this;
+    ++*this;
+    return tmp;
+  }
+};
+
+// A circulator to visit the p-faces that make up a shell. Template class |It|
+// is a PartialDSPFace iterator - such as PFaceHandle - or an equivalent
+// p-vertex iterator or const version. 
+template <class It>
+class PFaceOfShellCirculator : public It {
+ public:
+  typedef  It                                  Iterator;
+  typedef  CGAL::Forward_circulator_tag        iterator_category;
+  typedef  PFaceOfShellCirculator<It>          Self;
+  typedef  std::iterator_traits<It>            Traits;
+  typedef  typename Traits::value_type         value_type;
+  typedef  typename Traits::difference_type    difference_type;
+  typedef  std::size_t                         size_type;
+  typedef  typename Traits::reference          reference;
+  typedef  typename Traits::pointer            pointer;
+
+  PFaceOfShellCirculator() {}
+  explicit PFaceOfShellCirculator(It i) : It(i) {}
+  template <class It2>
+  PFaceOfShellCirculator(const PFaceOfShellCirculator<It2> &c)
+      : It(static_cast<const It2&>(c)) {}
+
+  bool operator==(CGAL::Nullptr_t p) const {
+    assert(p == NULL);
+    return It::operator==(It());
+  }
+  bool operator!=(CGAL::Nullptr_t p) const { return !(*this == p); }
+  bool operator==(const Self& i)    const { return  It::operator==(i); }
+  bool operator!=(const Self& i)    const { return !(*this == i); }
+
+  Self& operator++() {
+    *(static_cast<Iterator*>(this)) = (*this)->next_pface();
     return *this;
   }
   Self  operator++(int) {

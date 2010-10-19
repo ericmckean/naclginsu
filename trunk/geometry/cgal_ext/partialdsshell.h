@@ -30,6 +30,11 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDSTypes::ShellHandle       ShellHandle;
   typedef typename PartialDSTypes::ShellConstHandle  ShellConstHandle;
 
+  typedef circulator::PFaceOfShellCirculator<PFaceHandle>
+                                                     PFaceCirculator;
+  typedef circulator::PFaceOfShellCirculator<PFaceConstHandle>
+                                                     PFaceConstCirculator;
+
   PartialDSShell()
     : parent_region_(NULL), next_void_shell_(NULL), pface_(NULL) { }
 
@@ -39,6 +44,21 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
   RegionConstHandle parent_region() const { return parent_region_; }
   RegionHandle parent_region() { return parent_region_; }
 
+  // Return a circulator for visiting the p-faces that form the shell.
+  PFaceConstCirculator pface_begin() const {
+    return PFaceConstCirculator(pface());
+  }
+  PFaceCirculator pface_begin() {
+    return PFaceCirculator(pface());
+  }
+
+  // Return true if p-face pf is found around this shell and false otherwise.
+  bool FindPFace(PFaceConstHandle pf) const {
+    return ginsu::geometry::circulator::find_if(
+        pface_begin(),
+        std::bind2nd(std::equal_to<PFaceConstHandle>(), pf)) != NULL;
+  }
+
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
 
@@ -46,7 +66,7 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
             PFaceHandle pface) {
     parent_region_ = parent_region;
     next_void_shell_ = next_void_shell;
-    pface = pface_;
+    pface_ = pface;
   }
 
   // Mutators

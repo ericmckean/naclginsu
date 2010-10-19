@@ -94,6 +94,9 @@ TEST_F(PartialDSTest, TestCreateWireEdge) {
   ASSERT_TRUE(mesh_->ValidatePEdge(pe2));
   PartialDSTest::PEMesh::LoopHandle loop2 = pe2->parent_loop();
   ASSERT_TRUE(mesh_->ValidateLoop(loop2));
+  PartialDSTest::PEMesh::FaceHandle face2 = loop2->parent_face();
+  ASSERT_TRUE(mesh_->ValidateFace(face2));
+  ASSERT_TRUE(mesh_->ValidatePFace(face2->parent_pface()));
 
   // This fails because we can't add a vertex to a degenerate loop.
   // TODO(gwink): unit-test CreateWireEdgeInLoop when we can create real faces.
