@@ -55,7 +55,7 @@ class PartialDSRegion : public PartialDSEntity<TypeRefs> {
   bool FindVoidShell(ShellConstHandle void_shell) const {
     VoidShellConstIterator i;
     for (i = void_shell_begin(); i != void_shell_end(); ++i) {
-      if (i.IsEqual(void_shell)) return true;
+      if (i == void_shell) return true;
     }
     return false;
   }

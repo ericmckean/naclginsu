@@ -34,7 +34,7 @@ TEST_F(PartialDSTest, SimpleModelTest) {
   ASSERT_TRUE(mesh_ != NULL);
 }
 
-TEST_F(PartialDSTest, TestMakeRegion) {
+TEST_F(PartialDSTest, TestCreateRegion) {
   PartialDSTest::PEMesh::RegionHandle r;
   r = mesh_->CreateEmptyRegion();
   ASSERT_TRUE(r != NULL);
@@ -43,7 +43,7 @@ TEST_F(PartialDSTest, TestMakeRegion) {
   ASSERT_EQ(mesh_->regions().size(), 0);
 }
 
-TEST_F(PartialDSTest, MakeIsolatedVertex) {
+TEST_F(PartialDSTest, TestCreateIsolatedVertex) {
   PartialDSTest::PEMesh::RegionHandle r;
   r = mesh_->CreateEmptyRegion();
   ASSERT_TRUE(r != NULL);
@@ -65,7 +65,7 @@ TEST_F(PartialDSTest, MakeIsolatedVertex) {
   mesh_->DeleteEmptyRegion(r);
 }
 
-TEST_F(PartialDSTest, MakeWireEdge) {
+TEST_F(PartialDSTest, TestCreateWireEdge) {
   PartialDSTest::PEMesh::RegionHandle r;
   r = mesh_->CreateEmptyRegion();
   ASSERT_TRUE(r != NULL);
@@ -110,4 +110,23 @@ TEST_F(PartialDSTest, MakeWireEdge) {
   mesh_->DeleteEmptyRegion(r);
 }
 
+TEST_F(PartialDSTest, TestSplitEdgeCreateVertex) {
+  // Setup: create a wire edge.
+  PartialDSTest::PEMesh::RegionHandle r;
+  r = mesh_->CreateEmptyRegion();
+  ASSERT_TRUE(r != NULL);
+  PartialDSTest::PEMesh::VertexHandle v;
+  v = mesh_->CreateIsolatedVertex(r);
+  ASSERT_TRUE(v != NULL);
+  PartialDSTest::PEMesh::EdgeHandle e1;
+  e1 = mesh_->CreateWireEdgeInShell(r->outer_shell(), v);
+
+  PartialDSTest::PEMesh::VertexHandle w;
+  w = mesh_->SplitEdgeCreateVertex(e1);
+  ASSERT_TRUE(mesh_->ValidateVertex(w));
+  ASSERT_TRUE(mesh_->ValidateVertex(v));
+  ASSERT_TRUE(mesh_->ValidateEdge(e1));
+  
+  // TODO(gwink): Undo split and validate.
+}
 }  // namespace

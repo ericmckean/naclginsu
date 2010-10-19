@@ -12,6 +12,7 @@ namespace ginsu {
 namespace geometry {
 
 template <class T> class PartialDS;
+template <class T> class PartialDSUtils;
 
 // PartialDSEdge: template class for edge entity in the partial-entity
 // data structure. The template parameters are:
@@ -60,8 +61,16 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
   PEdgeConstHandle radial_next() const { return radial_next_; }
   PEdgeHandle radial_next() { return radial_next_; }
 
+  PVertexConstHandle end_pvertex() const {
+    return loop_next()->start_pvertex();  // Return the p-edge's end p-vertex.
+  }
+  PVertexHandle end_pvertex() {
+    return loop_next()->start_pvertex();  // Return the p-edge's end p-vertex.
+  }
+
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
+  friend class PartialDSUtils<PartialDSTypes>;
 
   void Init(PEdgeOrientation orientation, LoopHandle parent_loop,
             EdgeHandle child_edge, PVertexHandle start_pvertex,

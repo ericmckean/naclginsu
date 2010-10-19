@@ -12,6 +12,7 @@ namespace ginsu {
 namespace geometry {
 
 template <class T> class PartialDS;
+template <class T> class PartialDSUtils;
 
 // PartialDSVertex: template class for vertex entity in the partial-entity
 // data structure.
@@ -33,8 +34,10 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDSTypes::PVertexConstHandle PVertexConstHandle;
   typedef typename PartialDSTypes::EdgeConstHandle    EdgeConstHandle;
 
-  typedef PVertexOfVertexCirculator<PVertexConstHandle> PVertexConstCirculator;
-  typedef PVertexOfVertexCirculator<PVertexHandle> PVertexCirculator;
+  typedef circulator::PVertexOfVertexCirculator<PVertexConstHandle>
+                                                      PVertexConstCirculator;
+  typedef circulator::PVertexOfVertexCirculator<PVertexHandle>
+                                                      PVertexCirculator;
 
   PartialDSVertex() : parent_pvertex_(NULL) { }
 
@@ -72,6 +75,7 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
 
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
+  friend class PartialDSUtils<PartialDSTypes>;
 
   // Mutators
   void set_parent_pvertex(PVertexHandle pvertex) { parent_pvertex_ = pvertex; }

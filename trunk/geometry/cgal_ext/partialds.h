@@ -238,8 +238,10 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
 
   typedef typename Types::VertexBase::PVertexCirculator
                                                      PVertexOfVertexCirculator;
+  typedef typename Types::EdgeBase::PEdgeRadialCirculator
+                                                     PEdgeRadialCirculator;
 
-  // Euler operator.
+  // Euler operators.
   RegionHandle CreateEmptyRegion();
   void DeleteEmptyRegion(RegionHandle region);
 
@@ -260,6 +262,10 @@ class PartialDS : public PartialDSTypes<TraitsType, PartialDSItems> {
   // any other entity (i.e. is bounded by two singular vertices), then the
   // edge's end vertex is deleted, and the start vertex is preserved. 
   void DeleteWireEdgeAndVertex(EdgeHandle edge);
+
+  // Split edge, adding a new vertex. The new vertex between edge and the new
+  // edge:  (edge) ----> (new vertex) -----> (new edge). Returns the new vertex.
+  VertexHandle SplitEdgeCreateVertex(EdgeHandle edge);
 
   // List accessors, to iterate over these vertices, edges, etc. E.g. to display
   // the geometry.

@@ -12,6 +12,7 @@ namespace ginsu {
 namespace geometry {
 
 template <class T> class PartialDS;
+template <class T> class PartialDSUtils;
 
 // PartialDSEdge: template class for edge entity in the partial-entity
 // data structure. The template parameters are:
@@ -32,8 +33,10 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDSTypes::PVertexHandle      PVertexHandle;
   typedef typename PartialDSTypes::PVertexConstHandle PVertexConstHandle;
 
-  typedef PEdgeRadialCirculator<PEdgeConstHandle>
-                                         PEdgeRadialConstCirculator;
+  typedef circulator::PEdgeRadialCirculator<PEdgeConstHandle>
+                                                  PEdgeRadialConstCirculator;
+  typedef circulator::PEdgeRadialCirculator<PEdgeHandle>
+                                                  PEdgeRadialCirculator;
 
   PartialDSEdge()
     : parent_pedge_(NULL), start_pvertex_(NULL), end_pvertex_(NULL) { }
@@ -55,18 +58,22 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   }
 
   // Iterate over p-edges that have this edge as child.
-  PEdgeRadialConstCirculator begin() const {
+  PEdgeRadialConstCirculator pedge_begin() const {
     return PEdgeRadialConstCirculator(parent_pedge_);
+  }
+  PEdgeRadialCirculator pedge_begin() {
+    return PEdgeRadialCirculator(parent_pedge_);
   }
 
   // Return true if pe is a radial edge about this edge, and false otherwise.
   bool FindRadialPEdge(PEdgeConstHandle pe) const {
-    return ginsu::geometry::find_if(
-        begin(), std::bind2nd(std::equal_to<PEdgeConstHandle>(), pe)) != NULL;
+    return ginsu::geometry::circulator::find_if(pedge_begin(),
+        std::bind2nd(std::equal_to<PEdgeConstHandle>(), pe)) != NULL;
   }
 
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
+  friend class PartialDSUtils<PartialDSTypes>;
 
   void Init(PEdgeHandle parent_pedge, PVertexHandle start_pvertex,
             PVertexHandle end_pvertex) {

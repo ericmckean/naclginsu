@@ -28,11 +28,10 @@ class VoidShellIterator : public It {
   VoidShellIterator() {}
   explicit VoidShellIterator(It i) : It(i) {}
   
+  bool operator==(Iterator i) const { return  It::operator==(i); } 
   bool operator==(const Self& i) const { return  It::operator==(i); }
   bool operator!=(const Self& i) const { return !(*this == i); }
   
-  bool IsEqual(Iterator i) const { return  It::operator==(i); } 
-
   Self& operator++() {
     *(static_cast<Iterator*>(this)) = (*this)->next_void_shell();
     return *this;

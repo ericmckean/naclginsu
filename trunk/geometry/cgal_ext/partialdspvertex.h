@@ -11,6 +11,7 @@ namespace ginsu {
 namespace geometry {
 
 template <class T> class PartialDS;
+template <class T> class PartialDSUtils;
 
 // PartialDSPVertex: template class for p-vertex entity in the partial-entity
 // data structure. The template parameter is:
@@ -29,6 +30,7 @@ class PartialDSPVertex : public PartialDSEntity<TypeRefs> {
   typedef typename PartialDSTypes::PVertexConstHandle PVertexConstHandle;
   typedef typename PartialDSTypes::EdgeHandle         EdgeHandle;
   typedef typename PartialDSTypes::EdgeConstHandle    EdgeConstHandle;
+  typedef typename PartialDSTypes::RegionConstHandle  RegionConstHandle;
 
   PartialDSPVertex()
     : parent_edge_(NULL), vertex_(NULL), next_pvertex_(NULL) { }
@@ -40,9 +42,10 @@ class PartialDSPVertex : public PartialDSEntity<TypeRefs> {
   VertexHandle vertex() { return vertex_; }
   PVertexConstHandle next_pvertex() const { return next_pvertex_; }
   PVertexHandle next_pvertex() { return next_pvertex_; }
-  
+
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
+  friend class PartialDSUtils<PartialDSTypes>;
 
   void Init(EdgeHandle parent_edge, VertexHandle vertex,
             PVertexHandle next_pvertex) {

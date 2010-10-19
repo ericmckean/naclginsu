@@ -19,8 +19,8 @@ class PartialDSUtils {
   typedef typename Types::EdgeHandle    EdgeHandle;
   typedef typename Types::PEdgeHandle   PEdgeHandle;
   
-  typedef typename Types::EdgeBase::PEdgeOfEdgeCirculator
-                                        PEdgeOfEdgeCirculator;
+  typedef typename Types::EdgeBase::PEdgeRadialCirculator
+                                        PEdgeRadialCirculator;
 
   // Link vertex to one of the p-vertices and all p-vertices together into
   // a cloud around vertex.
@@ -32,8 +32,7 @@ class PartialDSUtils {
     // as a loop around vertex and link all vertices to vertex.
     vertex->set_parent_pvertex(*pvertices.begin());
     typename PVertexList::iterator current = pvertices.begin();
-    typename PVertexList::iterator next = current;
-    ++next;
+    typename PVertexList::iterator next = current + 1;
     while (current != pvertices.end()) {
       if (next != pvertices.end()) {
         (*current)->set_next_pvertex(*next);
@@ -54,8 +53,7 @@ class PartialDSUtils {
 
     edge->set_parent_pedge(pedges.front());
     typename PEdgeList::iterator current = pedges.begin();
-    typename PEdgeList::iterator next = current;
-    ++next;
+    typename PEdgeList::iterator next = current + 1;
     while (current != pedges.end()) {
       if (next != pedges.end()) {
         (*current)->set_radial_next(*next);
@@ -74,12 +72,12 @@ class PartialDSUtils {
   // p-vertices, either as (start, end) or (end, start). All p-edges in a bundle
   // appear consecutively in the radial arrangment around an edge. This function
   // returns the first p-edge in a bundle around edge.
-  static PEdgeOfEdgeCirculator FindRadialPEdgeBundle(EdgeHandle edge) {
-    PEdgeOfEdgeCirculator start_pe = edge->pedge_begin();
-    PEdgeOfEdgeCirculator pe = start_pe;
+  static PEdgeRadialCirculator FindRadialPEdgeBundle(EdgeHandle edge) {
+    PEdgeRadialCirculator start_pe = edge->pedge_begin();
+    PEdgeRadialCirculator pe = start_pe;
     PVertexHandle start_pv = pe->start_pvertex();
     do {
-      if (pe->start_pvertex() != start_pv && pe->GetEndPVertex() != start_pv) {
+      if (pe->start_pvertex() != start_pv && pe->end_pvertex() != start_pv) {
         break;
       }
       ++pe;

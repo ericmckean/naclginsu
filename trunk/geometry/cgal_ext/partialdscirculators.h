@@ -10,6 +10,7 @@
 
 namespace ginsu {
 namespace geometry {
+namespace circulator {
 
 // A circulator to visit p-edges around a loop. Template class |It| is a
 // PartialDSPEdge iterator - such as PEdgeHandle - or an equivalent p-edge
@@ -170,6 +171,7 @@ typename Circulator::Iterator find_if(Circulator start, Predicate pred) {
   return kNullIterator;
 }
 
+}  // namespace circulator
 }  // namespace geometry
 }  // namespace ginsu
 
