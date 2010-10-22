@@ -267,6 +267,10 @@ class PartialDS {
   // Split edge, adding a new vertex. The new vertex between edge and the new
   // edge:  (edge) ----> (new vertex) -----> (new edge). Returns the new vertex.
   VertexHandle SplitEdgeCreateVertex(EdgeHandle edge);
+  // Dual of above, delete |vertex| and the edge that follows |edge| across
+  // vertex. Fails if vertex has not exactly two incident edges or edge and
+  // vertex are not connected.
+  void DeleteVertexJoinEdge(VertexHandle vertex, EdgeHandle edge);
 
   // List accessors, to iterate over these vertices, edges, etc. E.g. to display
   // the geometry.
@@ -306,6 +310,11 @@ class PartialDS {
   void DestroyShell(ShellHandle s);
   RegionHandle MakeRegion();
   void DestroyRegion(RegionHandle r);
+  
+  // Destroy a vertex and all the its attached p-vertices.
+  void DestroyVertexCloud(VertexHandle v);
+  // Destroy an edge and all its attached radial p-edges.
+  void DestroyEdgeCloud(EdgeHandle e);
   
  private:
   // Template function for making and destroying PartialDS items.

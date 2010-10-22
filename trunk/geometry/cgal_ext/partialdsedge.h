@@ -26,10 +26,13 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   typedef PartialDSEntity<TypeRefs>              Base;
   typedef TypeRefs                               PartialDSTypes;
 
+  typedef typename PartialDSTypes::Entity             Entity;
   typedef typename PartialDSTypes::EdgeHandle         EdgeHandle;
   typedef typename PartialDSTypes::EdgeConstHandle    EdgeConstHandle;
   typedef typename PartialDSTypes::PEdgeHandle        PEdgeHandle;
   typedef typename PartialDSTypes::PEdgeConstHandle   PEdgeConstHandle;
+  typedef typename PartialDSTypes::VertexHandle       VertexHandle;
+  typedef typename PartialDSTypes::VertexConstHandle  VertexConstHandle;
   typedef typename PartialDSTypes::PVertexHandle      PVertexHandle;
   typedef typename PartialDSTypes::PVertexConstHandle PVertexConstHandle;
 
@@ -69,6 +72,33 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   bool FindRadialPEdge(PEdgeConstHandle pe) const {
     return ginsu::geometry::circulator::find_if(pedge_begin(),
         std::bind2nd(std::equal_to<PEdgeConstHandle>(), pe)) != NULL;
+  }
+
+  // Return the edge that follows |this| edge across vertex. Note that this
+  // function is most useful for vertex with exactly two incident edges. If
+  // vertex has more than two incident edges, any of the edges may be returned
+  // indeterminately. 
+  EdgeHandle GetEdgeAcrossVertex(VertexConstHandle vertex) {
+    // We need to follow the parent p-edge around the loop. But the direction we
+    // need to follow depend on whether we want to get across the start or end
+    // vertex and the parent p-edge's orientation. 
+    PEdgeHandle parent_pe = parent_pedge();
+    if (vertex == start_pvertex()->vertex()) {
+      if (parent_pe->orientation() == Entity::kPEdgeForward) {
+        return parent_pe->loop_previous()->child_edge();
+      } else {
+        return parent_pe->loop_next()->child_edge();
+      } 
+    } else if (vertex == end_pvertex()->vertex()) {
+      if (parent_pe->orientation() == Entity::kPEdgeForward) {
+        return parent_pe->loop_next()->child_edge();
+      } else {
+        return parent_pe->loop_previous()->child_edge();
+      }
+    } else {
+      assert(!"Vertex is not connected to this edge.\n");
+      return NULL;
+    }
   }
 
  protected:

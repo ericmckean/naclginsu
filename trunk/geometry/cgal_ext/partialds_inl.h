@@ -7,6 +7,7 @@
 
 #include "geometry/cgal_ext/partialdspedge.h"
 #include "geometry/cgal_ext/partialdsutils.h"
+#include <set>
 #include <vector>
 
 namespace ginsu {
@@ -365,6 +366,7 @@ typename PartialDS<TraitsType>::VertexHandle
     } else {
       new_pe->set_orientation(Entity::kPEdgeReversed);
       new_pe->set_start_pvertex(pe->start_pvertex());
+      pe->set_start_pvertex(split_pv);
       new_pe->set_loop_previous(pe->loop_previous());
       new_pe->set_loop_next(pe);
     }
@@ -383,6 +385,61 @@ typename PartialDS<TraitsType>::VertexHandle
   Utils::LinkRadialPEdges(new_e, new_pe_list);
 
   return new_v;
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DeleteVertexJoinEdge(VertexHandle vertex,
+                                                 EdgeHandle edge) {
+  typedef PartialDSUtils<Types> Utils;
+
+  // Verify that vertex has exactly two incident edges.
+  std::set<EdgeHandle, typename Utils::LT_EdgeConstHandle> edge_set;
+  Utils::VisitVertexEdges(vertex, &edge_set);
+  assert(edge_set.size() == 2);
+  if (edge_set.size() != 2) return;
+
+  // Skip over vertex to the next edge, del_e; that's the one we'll delete.
+  EdgeHandle del_e = edge->GetEdgeAcrossVertex(vertex);
+  assert(del_e != NULL);
+  if (del_e == NULL) return;
+
+  // Visit the radial p-edges about del_e and disconnect them from their loops.
+  PEdgeRadialCirculator start_pe = del_e->pedge_begin();
+  PEdgeRadialCirculator current_pe = start_pe;
+  do {
+    // Disconnect current_pe from its loop.
+    PEdgeHandle prev_pe = current_pe->loop_previous();
+    PEdgeHandle next_pe = current_pe->loop_next();
+    prev_pe->set_loop_next(next_pe);
+    next_pe->set_loop_previous(prev_pe);
+    if (current_pe->start_pvertex()->vertex() == vertex) {
+      // Ensure the remaining p-vertex doesn't point to del_e.
+      if (next_pe->start_pvertex()->parent_edge() == del_e) {
+        next_pe->start_pvertex()->set_parent_edge(prev_pe->child_edge());
+      }
+    } else {
+      assert(current_pe->end_pvertex()->vertex() == vertex);
+      // P-edge next_pe has a new start p-vertex.
+      next_pe->set_start_pvertex(current_pe->start_pvertex());
+      // Ensure the remaining p-vertex doesn't point to del_e.
+      if (next_pe->start_pvertex()->parent_edge() == del_e) {
+        next_pe->start_pvertex()->set_parent_edge(next_pe->child_edge());
+      }
+    }
+    
+    // Ensure the loop doesn't point to the p-edge that'll be deleted.
+    LoopHandle loop = next_pe->parent_loop();
+    if (loop->boundary_pedge() == current_pe) {
+      loop->set_boundary_pedge(next_pe);
+    }
+
+    ++current_pe;
+  } while(current_pe != start_pe);
+
+  // We're ready to destroy old stuff, namely vertex and all its p-vertices
+  // and del_e and all its radial p-edges.
+  DestroyVertexCloud(vertex);
+  DestroyEdgeCloud(del_e);
 }
 
 // Basic (non-topological) make<Item> and Destroy<Item> functions.
@@ -474,6 +531,36 @@ template <class TraitsType> typename PartialDS<TraitsType>::RegionHandle
 template <class TraitsType>
 void PartialDS<TraitsType>::DestroyRegion(RegionHandle r) {
   DestroyItem<RegionHandle, RegionList>(r, &regions_);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyVertexCloud(VertexHandle v) {
+  PVertexOfVertexCirculator start_pv = v->pvertex_begin();
+  PVertexOfVertexCirculator del_pv = start_pv;
+  // Skip start_pv for now; it's our end-of-loop marker.
+  ++del_pv;
+  while(del_pv != start_pv) {
+    PVertexHandle temp = del_pv;
+    ++del_pv;
+    DestroyPVertex(temp);
+  }
+  DestroyPVertex(start_pv);
+  DestroyVertex(v);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyEdgeCloud(EdgeHandle e) {
+  PEdgeRadialCirculator start_pe = e->pedge_begin();
+  PEdgeRadialCirculator del_pe = start_pe;
+  // Skip start_pe for now; it's our end-of-loop marker.
+  ++del_pe;
+  while(del_pe != start_pe) {
+    PEdgeHandle temp = del_pe;
+    ++del_pe;
+    DestroyPEdge(temp);
+  }
+  DestroyPEdge(start_pe);
+  DestroyEdge(e);
 }
 
 // Validation functions.
