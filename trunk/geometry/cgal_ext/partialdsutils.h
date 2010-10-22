@@ -5,6 +5,8 @@
 #ifndef GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_UTILS_INL_H_
 #define GINSU_GEOMETRY_CGAL_EXT_PARTIALDS_UTILS_INL_H_
 
+#include <boost/tr1/unordered_set.hpp>
+
 namespace ginsu {
 namespace geometry {
 
@@ -14,6 +16,7 @@ namespace geometry {
 template <class Types>
 class PartialDSUtils {
  public:
+  // Global PartialDS types.
   typedef typename Types::VertexHandle    VertexHandle;
   typedef typename Types::PVertexHandle   PVertexHandle;
   typedef typename Types::EdgeConstHandle EdgeConstHandle;
@@ -25,13 +28,13 @@ class PartialDSUtils {
   typedef typename Types::VertexBase::PVertexCirculator
                                           PVertexOfVertexCirculator;
 
-  // Less-than functor for EdgeConstHandle; useful for std algorithms.
-  struct LT_EdgeConstHandle {
-    bool operator()(EdgeConstHandle e1, EdgeConstHandle e2) const {
-      return &(*e1) < &(*e2);
-    }
+  // A hash-set for EdgeHandle; used for traversals.
+  struct HashEdgeHandle {
+      size_t operator()(EdgeConstHandle e) const {
+          return reinterpret_cast<size_t>(&(*e));
+      }
   };
-
+  typedef std::tr1::unordered_set<EdgeHandle, HashEdgeHandle> EdgeHandleSet;
 
   // LinkPVertices:
   // Link vertex to one of the p-vertices and all p-vertices together into
@@ -100,29 +103,39 @@ class PartialDSUtils {
   }
 
   // VisitVertexEdges:
-  // Visit all edges incident upon vertex, accumulating them into edge_set.
-  // Template class EdgeSet should be a container with fast insert and find,
-  // such as std::set.
-  template <class EdgeSet>
-  static void VisitVertexEdges(VertexHandle vertex, EdgeSet* edge_set) {
+  // Visit all edges incident upon vertex, accumulating them into list |edges|.
+  // Template class EdgeList is a container that supports push_back, such as
+  // list or vector. To count incident edges, it could also be a custom class
+  // that increment a counter each time push_back is called.
+  template <class EdgeList>
+  static void VisitVertexEdges(VertexHandle vertex, EdgeList* edges) {
+    // We keep track of visited edges in a set rather than tagging them.
+    EdgeHandleSet visited_edges;
     // Visit all p-vertices of vertex. For each such p-vertex, visit the
     // incident edges.
     PVertexOfVertexCirculator start_pv = vertex->pvertex_begin();
     PVertexOfVertexCirculator current_pv = start_pv;
     do {
-      VisitVertexEdgesHelper(current_pv, current_pv->parent_edge(), edge_set);
+      VisitVertexEdgesHelper(current_pv, current_pv->parent_edge(),
+                             &visited_edges);
       ++current_pv;
     } while(current_pv != start_pv);
+
+    // Copy all the visited edges to the edge list.
+    typename EdgeHandleSet::iterator i;
+    for (i = visited_edges.begin(); i != visited_edges.end(); ++i) {
+      edges->push_back(*i);
+    }
   }
 
  protected:
   // Helper for VisitVertexEdges.
-  template <class EdgeSet>
+  template <class EdgeHandleSet>
   static void VisitVertexEdgesHelper(PVertexHandle pvertex,
                                      EdgeHandle edge,
-                                     EdgeSet* edge_set) {
+                                     EdgeHandleSet* visited_edges) {
     // Add edge to the set of visited edges.
-    edge_set->insert(edge);
+    visited_edges->insert(edge);
     // Visit each of the p-edges about edge.
     PEdgeRadialCirculator start_pe = edge->pedge_begin();
     PEdgeRadialCirculator current_pe = start_pe;
@@ -137,8 +150,8 @@ class PartialDSUtils {
         next_e = current_pe->loop_next()->child_edge();
       }
       // If next_e has not already been visited, recursively visit it next.
-      if (edge_set->find(next_e) == edge_set->end()) {
-        VisitVertexEdgesHelper(pvertex, next_e, edge_set);
+      if (visited_edges->find(next_e) == visited_edges->end()) {
+        VisitVertexEdgesHelper(pvertex, next_e, visited_edges);
       }
 
       ++current_pe;

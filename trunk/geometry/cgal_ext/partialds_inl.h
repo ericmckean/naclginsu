@@ -7,7 +7,6 @@
 
 #include "geometry/cgal_ext/partialdspedge.h"
 #include "geometry/cgal_ext/partialdsutils.h"
-#include <set>
 #include <vector>
 
 namespace ginsu {
@@ -393,10 +392,10 @@ void PartialDS<TraitsType>::DeleteVertexJoinEdge(VertexHandle vertex,
   typedef PartialDSUtils<Types> Utils;
 
   // Verify that vertex has exactly two incident edges.
-  std::set<EdgeHandle, typename Utils::LT_EdgeConstHandle> edge_set;
-  Utils::VisitVertexEdges(vertex, &edge_set);
-  assert(edge_set.size() == 2);
-  if (edge_set.size() != 2) return;
+  std::vector<EdgeHandle> incident_edges;
+  Utils::VisitVertexEdges(vertex, &incident_edges);
+  assert(incident_edges.size() == 2);
+  if (incident_edges.size() != 2) return;
 
   // Skip over vertex to the next edge, del_e; that's the one we'll delete.
   EdgeHandle del_e = edge->GetEdgeAcrossVertex(vertex);
