@@ -50,6 +50,7 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
   LoopConstHandle parent_loop() const { return parent_loop_; }
   LoopHandle parent_loop() { return parent_loop_; }
   EdgeConstHandle child_edge() const { return child_edge_; }
+  EdgeHandle child_edge() { return child_edge_; }
   PVertexConstHandle start_pvertex() const { return start_pvertex_; }
   PVertexHandle start_pvertex() { return start_pvertex_; }
   PEdgeConstHandle loop_previous() const { return loop_previous_; }

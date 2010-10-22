@@ -130,6 +130,8 @@ TEST_F(PartialDSTest, TestSplitEdgeCreateVertex) {
   ASSERT_TRUE(mesh_->ValidateVertex(v));
   ASSERT_TRUE(mesh_->ValidateEdge(e1));
   
-  // TODO(gwink): Undo split and validate.
+  mesh_->DeleteVertexJoinEdge(w, e1);
+  ASSERT_TRUE(mesh_->ValidateVertex(v));
+  ASSERT_TRUE(mesh_->ValidateEdge(e1));
 }
 }  // namespace
