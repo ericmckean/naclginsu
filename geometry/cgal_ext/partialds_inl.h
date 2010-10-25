@@ -677,6 +677,20 @@ bool PartialDS<TraitsType>::ValidatePEdge(PEdgeConstHandle pe) {
     scan_pedge = scan_pedge->radial_next();
     if (scan_pedge == start_pedge) break;
   }
+  // Check the start vertex w.r.t. the underlying edge.
+  if (pe->orientation() == Entity::kPEdgeForward) {
+    if (pe->start_pvertex() != edge->start_pvertex()) {
+      assert(!"*** ValidatePEdge: the p-edge start vertex doesn't match "
+              "the child edge's start p-vertex. ***");
+      return false;
+    }
+  } else {
+    if (pe->start_pvertex() != edge->end_pvertex()) {
+      assert(!"*** ValidatePEdge: the p-edge start vertex doesn't match "
+              "the child edge's end p-vertex. ***");
+      return false;
+    }
+  }
 #endif
   return true;
 }
