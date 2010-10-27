@@ -215,16 +215,16 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
 
 template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
     PartialDS<TraitsType>::CreateWireEdgeInLoop(LoopHandle loop,
-                                                PVertexHandle pvertex) {
+                                                VertexHandle vertex) {
   // Before anything else, let's make sure that the loop is not associated with
   // with a wire edge or isolated vertex. We can do that by checking if the face
   // is degenerate.
   assert(!loop->parent_face()->IsDegenerate());
   if (loop->parent_face()->IsDegenerate()) return NULL;
 
-  // Find the loop's p-edge that starts at p-vertex. It'll become the new edge's
+  // Find the loop's p-edge that starts at vertex. It'll become the new edge's
   // next p-edge.
-  PEdgeHandle next_pedge = loop->FindStartPVertex(pvertex);
+  PEdgeHandle next_pedge = loop->FindStartPVertex(vertex);
   assert(next_pedge != NULL);
   if (next_pedge == NULL) {
     // Bad karma; it seems the loop and pvertex have nothing in common.
@@ -232,6 +232,7 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
   }
 
   // Prepare or create other entities for the new edge.
+  PVertexHandle pvertex = next_pedge->start_pvertex();
   PEdgeHandle prev_pedge = next_pedge->loop_previous();
   VertexHandle new_vertex = MakeVertex();
   PVertexHandle new_pvertex = MakePVertex();
