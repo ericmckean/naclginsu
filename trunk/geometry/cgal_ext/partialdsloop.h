@@ -23,6 +23,7 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
   typedef PartialDSLoop<TypeRefs>              Self;
   typedef TypeRefs                             PartialDSTypes;
 
+  typedef typename PartialDSTypes::VertexConstHandle  VertexConstHandle;
   typedef typename PartialDSTypes::PVertexConstHandle PVertexConstHandle;
   typedef typename PartialDSTypes::PEdgeHandle        PEdgeHandle;
   typedef typename PartialDSTypes::PEdgeConstHandle   PEdgeConstHandle;
@@ -59,17 +60,18 @@ class PartialDSLoop : public PartialDSEntity<TypeRefs> {
         begin(), std::bind2nd(std::equal_to<PEdgeConstHandle>(), pe)) != NULL;
   }
 
-  // Return the p-edge that starts at pv or NULL.
-  struct equal_to_start_pvertex {
-    PVertexConstHandle pv_;
-    equal_to_start_pvertex(PVertexConstHandle pv) : pv_(pv) {}
+  // Return the p-edge that starts at vertex or NULL.
+  struct equal_to_start_vertex {
+    VertexConstHandle start_vertex_;
+    explicit equal_to_start_vertex(VertexConstHandle start_vertex)
+        : start_vertex_(start_vertex) {}
     bool operator() (PEdgeConstHandle pe) {
-      return pe->start_pvertex() == pv_;
+      return pe->start_pvertex()->vertex() == start_vertex_;
     }
   };
-  PEdgeHandle FindStartPVertex(PVertexConstHandle pv) {
+  PEdgeHandle FindStartPVertex(VertexConstHandle vertex) {
     return ginsu::geometry::circulator::find_if(
-        begin(), equal_to_start_pvertex(pv));
+        begin(), equal_to_start_vertex(vertex));
   }
 
  protected:

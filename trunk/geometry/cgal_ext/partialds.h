@@ -253,12 +253,12 @@ class PartialDS {
   // Create a wire edge either within a shell or along an existing loop.
   // CreateWireEdgeInShell: connect the wire edge to an existing vertex. Fails
   //   if the vertex doesn't belong to the shell.
-  // CreateWireEdgeInLoop: connect the wire edge to the given p-vertex in a
-  //   loop. Fails if the p-vertex is not along the loop or the loop is
+  // CreateWireEdgeInLoop: connect the wire edge to the given vertex in a
+  //   loop. Fails if the vertex is not along the loop or the loop is
   //   degenerate - i.e. belongs to a wire edge or isolated vertex.
   // Both functions return NULL when they fail.
   EdgeHandle CreateWireEdgeInShell(ShellHandle shell, VertexHandle vertex);
-  EdgeHandle CreateWireEdgeInLoop(LoopHandle loop, PVertexHandle pvertex);
+  EdgeHandle CreateWireEdgeInLoop(LoopHandle loop, VertexHandle vertex);
   // Delete a wire edge and its singular vertex. If the edge is not connected to
   // any other entity (i.e. is bounded by two singular vertices), then the
   // edge's end vertex is deleted, and the start vertex is preserved. 
