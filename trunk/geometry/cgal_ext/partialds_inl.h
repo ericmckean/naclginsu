@@ -12,6 +12,9 @@
 namespace ginsu {
 namespace geometry {
 
+template <class TraitsType>
+bool PartialDS<TraitsType>::s_exhaustive_mode_enabled_ = true;
+
 // Euler operators
 template <class TraitsType> typename PartialDS<TraitsType>::RegionHandle
     PartialDS<TraitsType>::CreateEmptyRegion() {
@@ -393,10 +396,12 @@ void PartialDS<TraitsType>::DeleteVertexJoinEdge(VertexHandle vertex,
   typedef PartialDSUtils<Types> Utils;
 
   // Verify that vertex has exactly two incident edges.
-  std::vector<EdgeHandle> incident_edges;
-  Utils::VisitVertexEdges(vertex, &incident_edges);
-  assert(incident_edges.size() == 2);
-  if (incident_edges.size() != 2) return;
+  if (s_exhaustive_mode_enabled_) {
+    std::vector<EdgeHandle> incident_edges;
+    Utils::VisitVertexEdges(vertex, &incident_edges);
+    assert(incident_edges.size() == 2);
+    if (incident_edges.size() != 2) return;
+  }
 
   // Skip over vertex to the next edge, del_e; that's the one we'll delete.
   EdgeHandle del_e = edge->GetEdgeAcrossVertex(vertex);
@@ -561,6 +566,68 @@ void PartialDS<TraitsType>::DestroyEdgeCloud(EdgeHandle e) {
   }
   DestroyPEdge(start_pe);
   DestroyEdge(e);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
+  assert(e->IsWireEdge());
+  // Gather the entities up to the void shell.
+  PEdgeHandle pe = e->parent_pedge();
+  LoopHandle loop = pe->parent_loop();
+  FaceHandle face = loop->parent(face);
+  PFaceHandle pface = face->parent_pface();
+  ShellHandle shell = pface->parent_shell();
+  // Remove the edge's void shell from the region.
+  shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
+  // Destroy the entities.
+  DestroyShell(shell);
+  DestroyPFace(pface);
+  DestroyFace(face);
+  DestroyLoop(loop);
+  DestroyPEdge(pe);
+  DestroyEdge(e);
+}
+
+template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
+    PartialDS<TraitsType>::MakeWireEdge(PVertexHandle start_pv,
+                                        PVertexHandle end_pv,
+                                        ShellHandle shell) {
+  // Create the various entities a wire edge is made of. 
+  EdgeHandle new_e = MakeEdge();
+  PEdgeHandle new_pe = MakePEdge();
+  LoopHandle loop = MakeLoop();
+  FaceHandle face = MakeFace();
+  PFaceHandle pface = MakePFace();
+  ShellHandle void_shell = MakeShell();
+  // Connect the edge to the given p-vertices and all the entities in the
+  // hierarchy.
+  new_e->Init(new_pe, start_pv, end_pv);
+  new_pe->Init(Entity::kPEdgeForward, loop, new_e, start_pv,
+               NULL, NULL, new_pe, new_pe);
+  loop->Init(face, new_pe, NULL /* no hole */);
+  face->Init(pface, loop);
+  pface->Init(Entity::kPFaceUnoriented, void_shell, face, pface, NULL);
+  void_shell->Init(shell->parent_region(), NULL, pface);
+  shell->AddVoidShell(void_shell);
+
+  return new_e;
+}
+
+template <class TraitsType> typename PartialDS<TraitsType>::PVertexHandle
+    PartialDS<TraitsType>::AddNewPVertex(VertexHandle v) {
+  PVertexHandle pv = v->parent_pvertex();
+  PVertexHandle new_pv = AddNewPVertex(v);
+  new_pv->set_child_vertex(v);
+  if (pv == NULL) {
+    // This is the vertex' first p-vertex.
+    v->set_parent_pvertex(new_pv);
+    new_pv->set_next_pvertex(new_pv);
+  } else {
+    // Add the new p-vertex to the existing p-vertex cloud.
+    new_pv->set_next_pvertex(pv->next_pvertex);
+    pv->set_next_pvertex(new_pv);
+  }
+  return new_pv;
 }
 
 // Validation functions.

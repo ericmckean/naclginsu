@@ -241,6 +241,7 @@ class PartialDS {
                                                      PVertexOfVertexCirculator;
   typedef typename Types::EdgeBase::PEdgeRadialCirculator
                                                      PEdgeRadialCirculator;
+  typedef typename Types::LoopBase::PEdgeCirculator  PEdgeLoopCirculator;
 
   // Euler operators.
   RegionHandle CreateEmptyRegion();
@@ -289,7 +290,17 @@ class PartialDS {
   static bool ValidateFace(FaceConstHandle f);
   static bool ValidatePFace(PFaceConstHandle pf);
 
+  // Enabled/disable exhaustive mode. When enabled (the default) additional,
+  // potentially expensive verification steps are executed before or after each
+  // operation. This is a class-wide setting.
+  static void EnableExhaustiveMode(bool enabled) {
+    s_exhaustive_mode_enabled_ = enabled;
+  }
+
  protected:
+  // Note: Geometric operation defined in the protected section are generally
+  //       non-manifold function.
+
   // Basic Make<Item> and Destroy<Item> functions. The functions only allocate
   // the corresponding item. They do not affect the topology.
   VertexHandle MakeVertex();
@@ -310,12 +321,22 @@ class PartialDS {
   void DestroyShell(ShellHandle s);
   RegionHandle MakeRegion();
   void DestroyRegion(RegionHandle r);
-  
+
   // Destroy a vertex and all the its attached p-vertices.
   void DestroyVertexCloud(VertexHandle v);
   // Destroy an edge and all its attached radial p-edges.
   void DestroyEdgeCloud(EdgeHandle e);
-  
+  // Delete a wire edge and its entire parent hierarchy. The caller is
+  // responsible for re-linking the p-vertices around the edge.
+  void DestroyWireEdge(EdgeHandle e);
+
+  // Make a wire edge from p-vertex pv1 to p-vertex pv2 in shell. The caller is
+  // responsible to properly connecting the p-vertices to the edge.
+  EdgeHandle MakeWireEdge(PVertexHandle start_pv, PVertexHandle end_pv,
+                          ShellHandle shell);
+  // Make a new p-vertex and add it to the cloud of p-vertices around v.
+  PVertexHandle AddNewPVertex(VertexHandle v);
+
  private:
   // Template function for making and destroying PartialDS items.
   template <class ItemHandle, class ItemList>
@@ -334,6 +355,9 @@ class PartialDS {
     item_list->erase(item);
     item_list->get_allocator().destroy(&*item);
   }
+
+  // Enable/disable exhaustive mode (see function EnableExhaustiveMode).
+  static bool s_exhaustive_mode_enabled_;
 
   VertexList vertices_;
   PVertexList pvertices_;

@@ -19,6 +19,7 @@ class PartialDSTest : public ::testing::Test {
 
   virtual void SetUp() {
     mesh_ = new PEMesh();
+    PEMesh::EnableExhaustiveMode(true);
   }
 
   virtual void TearDown() {
