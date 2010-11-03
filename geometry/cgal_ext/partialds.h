@@ -303,24 +303,24 @@ class PartialDS {
 
   // Basic Make<Item> and Destroy<Item> functions. The functions only allocate
   // the corresponding item. They do not affect the topology.
-  VertexHandle MakeVertex();
-  void DestroyVertex(VertexHandle v);
-  PVertexHandle MakePVertex();
-  void DestroyPVertex(PVertexHandle v);
-  EdgeHandle MakeEdge();
-  void DestroyEdge(EdgeHandle e);
-  PEdgeHandle MakePEdge();
-  void DestroyPEdge(PEdgeHandle e);
-  FaceHandle MakeFace();
-  void DestroyFace(FaceHandle f);
-  PFaceHandle MakePFace();
-  void DestroyPFace(PFaceHandle f);
-  LoopHandle MakeLoop();
-  void DestroyLoop(LoopHandle l);
-  ShellHandle MakeShell();
-  void DestroyShell(ShellHandle s);
-  RegionHandle MakeRegion();
-  void DestroyRegion(RegionHandle r);
+  VertexHandle AllocateVertex();
+  void FreeVertex(VertexHandle v);
+  PVertexHandle AllocatePVertex();
+  void FreePVertex(PVertexHandle v);
+  EdgeHandle AllocateEdge();
+  void FreeEdge(EdgeHandle e);
+  PEdgeHandle AllocatePEdge();
+  void FreePEdge(PEdgeHandle e);
+  FaceHandle AllocateFace();
+  void FreeFace(FaceHandle f);
+  PFaceHandle AllocatePFace();
+  void FreePFace(PFaceHandle f);
+  LoopHandle AllocateLoop();
+  void FreeLoop(LoopHandle l);
+  ShellHandle AllocateShell();
+  void FreeShell(ShellHandle s);
+  RegionHandle AllocateRegion();
+  void FreeRegion(RegionHandle r);
 
   // Destroy a vertex and all the its attached p-vertices.
   void DestroyVertexCloud(VertexHandle v);
@@ -338,9 +338,9 @@ class PartialDS {
   PVertexHandle AddNewPVertex(VertexHandle v);
 
  private:
-  // Template function for making and destroying PartialDS items.
+  // Template function for allocating and freeing PartialDS items.
   template <class ItemHandle, class ItemList>
-  ItemHandle MakeItem (ItemList* item_list) {
+  ItemHandle AllocateItem (ItemList* item_list) {
     typedef typename ItemList::pointer Pointer;
     typedef typename ItemList::value_type Entity;
     
@@ -351,7 +351,7 @@ class PartialDS {
   }
   
   template <class ItemHandle, class ItemList>
-  void DestroyItem(ItemHandle item, ItemList* item_list) {
+  void FreeItem(ItemHandle item, ItemList* item_list) {
     item_list->erase(item);
     item_list->get_allocator().destroy(&*item);
   }

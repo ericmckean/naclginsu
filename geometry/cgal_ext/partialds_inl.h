@@ -18,7 +18,7 @@ bool PartialDS<TraitsType>::s_exhaustive_mode_enabled_ = true;
 // Euler operators
 template <class TraitsType> typename PartialDS<TraitsType>::RegionHandle
     PartialDS<TraitsType>::CreateEmptyRegion() {
-  return MakeRegion();
+  return AllocateRegion();
 }
 
 template <class TraitsType>
@@ -28,10 +28,10 @@ void PartialDS<TraitsType>::DeleteEmptyRegion(RegionHandle region) {
   assert(region->IsEmpty() && "Must empty the region first.");
   if (region->IsEmpty()) {
     if (region->outer_shell() != NULL) {
-      DestroyShell(region->outer_shell());
+      FreeShell(region->outer_shell());
       region->set_outer_shell(NULL);
     }
-    DestroyRegion(region);
+    FreeRegion(region);
   }
 }
 
@@ -43,20 +43,20 @@ template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
 
   // Build the entire chain of entities, up to a shell to host the isolated
   // vertex, starting with a vertex:
-  VertexHandle vertex = MakeVertex();
-  PVertexHandle pvertex = MakePVertex();
+  VertexHandle vertex = AllocateVertex();
+  PVertexHandle pvertex = AllocatePVertex();
   vertex->set_parent_pvertex(pvertex);
   pvertex->set_vertex(vertex);
   pvertex->set_next_pvertex(pvertex);
 
   // The edge simply points to the same start and end vertex.
-  EdgeHandle edge = MakeEdge();
+  EdgeHandle edge = AllocateEdge();
   pvertex->set_parent_edge(edge);
   edge->set_start_pvertex(pvertex);
   edge->set_end_pvertex(pvertex);
 
   // The p-edge links to itself, both radially and along the loop.
-  PEdgeHandle pedge = MakePEdge();
+  PEdgeHandle pedge = AllocatePEdge();
   edge->set_parent_pedge(pedge);
   pedge->set_orientation(Entity::kPEdgeUnoriented);
   pedge->set_child_edge(edge);
@@ -67,8 +67,8 @@ template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
   pedge->set_radial_next(pedge);
 
   // The loop and face are degenerate.
-  LoopHandle loop = MakeLoop();
-  FaceHandle face = MakeFace();
+  LoopHandle loop = AllocateLoop();
+  FaceHandle face = AllocateFace();
   pedge->set_parent_loop(loop);
   loop->set_boundary_pedge(pedge);
   loop->set_next_hole(NULL);
@@ -76,7 +76,7 @@ template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
   face->set_outer_loop(loop);
 
   // The p-face is unoriented, links to itself and has no mate.
-  PFaceHandle pface = MakePFace();
+  PFaceHandle pface = AllocatePFace();
   face->set_parent_pface(pface);
   pface->set_orientation(Entity::kPFaceUnoriented);
   pface->set_child_face(face);
@@ -84,7 +84,7 @@ template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
   pface->set_mate_pface(NULL);
 
   // A shell to host it all.
-  ShellHandle shell = MakeShell();
+  ShellHandle shell = AllocateShell();
   pface->set_parent_shell(shell);
   shell->set_pface(pface);
   shell->set_next_void_shell(NULL);
@@ -95,7 +95,7 @@ template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
   shell->set_parent_region(region);
   ShellHandle outer_shell = region->outer_shell();
   if (outer_shell == NULL) {
-    outer_shell = MakeShell();
+    outer_shell = AllocateShell();
     region->set_outer_shell(outer_shell);
     outer_shell->set_parent_region(region);
   }
@@ -109,35 +109,35 @@ void PartialDS<TraitsType>::DeleteIsolatedVertex(VertexHandle vertex) {
   assert(vertex->IsIsolated());
   if (vertex->IsIsolated()) {
     PVertexHandle pv = vertex->parent_pvertex();
-    DestroyVertex(vertex);
+    FreeVertex(vertex);
     assert(pv->next_pvertex() == pv);
     EdgeHandle e = pv->parent_edge();
-    DestroyPVertex(pv);
+    FreePVertex(pv);
 
     PEdgeHandle pe = e->parent_pedge();
-    DestroyEdge(e);
+    FreeEdge(e);
     assert(pe->loop_next() == pe && pe->radial_next() == pe);
     LoopHandle loop = pe->parent_loop();
     assert(loop->boundary_pedge() == pe);
-    DestroyPEdge(pe);
+    FreePEdge(pe);
 
     assert(loop->next_hole() == NULL);
     FaceHandle f = loop->parent_face();
     assert(f->outer_loop() == loop);
-    DestroyLoop(loop);
+    FreeLoop(loop);
     PFaceHandle pf = f->parent_pface();
     assert(pf->child_face() == f);
-    DestroyFace(f);
+    FreeFace(f);
 
     assert(pf->next_pface() == pf && pf->mate_pface() == NULL);
     ShellHandle shell = pf->parent_shell();
     assert(shell->pface() == pf);
-    DestroyPFace(pf);
+    FreePFace(pf);
 
     RegionHandle region = shell->parent_region();
     assert(region->outer_shell() != NULL && region->outer_shell() != shell);
     region->outer_shell()->RemoveVoidShell(shell);
-    DestroyShell(shell);
+    FreeShell(shell);
   }
 }
 
@@ -153,12 +153,12 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
     // The isolated vertex already has a degenerate edge, p-edge, loop, etc.
     // We unwrap those to connect them with the new vertex. We also add a new
     // p-edge to form a void loop around the existing edge.
-    VertexHandle v2 = MakeVertex();
-    PVertexHandle pv2 = MakePVertex();
+    VertexHandle v2 = AllocateVertex();
+    PVertexHandle pv2 = AllocatePVertex();
     PVertexHandle pv1 = v1->parent_pvertex();
     EdgeHandle edge = pv1->parent_edge();
     PEdgeHandle pe1 = edge->parent_pedge();
-    PEdgeHandle pe2 = MakePEdge();
+    PEdgeHandle pe2 = AllocatePEdge();
     LoopHandle loop = pe1->parent_loop();
 
     v2->set_parent_pvertex(pv2);
@@ -177,17 +177,17 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
     // We're adding a wire edge to a vertex that is already attached to other
     // edges. In this case we're creating a new manifold component with a new
     // p-vertex, etc. attached to v1.
-    VertexHandle v2 = MakeVertex();
-    PVertexHandle pv2 = MakePVertex();
-    EdgeHandle edge = MakeEdge();
+    VertexHandle v2 = AllocateVertex();
+    PVertexHandle pv2 = AllocatePVertex();
+    EdgeHandle edge = AllocateEdge();
     PVertexHandle pv1_a = v1->parent_pvertex();
-    PVertexHandle pv1_b = MakePVertex();
-    PEdgeHandle pe_f = MakePEdge();
-    PEdgeHandle pe_r = MakePEdge();
-    LoopHandle loop = MakeLoop();
-    FaceHandle face = MakeFace();
-    PFaceHandle pface = MakePFace();
-    ShellHandle void_shell = MakeShell();
+    PVertexHandle pv1_b = AllocatePVertex();
+    PEdgeHandle pe_f = AllocatePEdge();
+    PEdgeHandle pe_r = AllocatePEdge();
+    LoopHandle loop = AllocateLoop();
+    FaceHandle face = AllocateFace();
+    PFaceHandle pface = AllocatePFace();
+    ShellHandle void_shell = AllocateShell();
 
     // Setup the new vertex and p-vertex. Existing vertex v1 also gets a new
     // p-vertex pv1_b, in addition to a least one existing p-vertex pv1_a.
@@ -237,11 +237,11 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
   // Prepare or create other entities for the new edge.
   PVertexHandle pvertex = next_pedge->start_pvertex();
   PEdgeHandle prev_pedge = next_pedge->loop_previous();
-  VertexHandle new_vertex = MakeVertex();
-  PVertexHandle new_pvertex = MakePVertex();
-  EdgeHandle new_edge = MakeEdge();
-  PEdgeHandle new_pe_f = MakePEdge();
-  PEdgeHandle new_pe_r = MakePEdge();
+  VertexHandle new_vertex = AllocateVertex();
+  PVertexHandle new_pvertex = AllocatePVertex();
+  EdgeHandle new_edge = AllocateEdge();
+  PEdgeHandle new_pe_f = AllocatePEdge();
+  PEdgeHandle new_pe_r = AllocatePEdge();
 
   // Connect the entities, rerouting the loop through the new wire edge.
   new_vertex->set_parent_pvertex(new_pvertex);
@@ -283,9 +283,9 @@ void PartialDS<TraitsType>::DeleteWireEdgeAndVertex(EdgeHandle edge) {
   PEdgeHandle keep_pe = del_pe->loop_next();
   LoopHandle loop = keep_pe->parent_loop();
   assert(keep_pe->loop_next() == del_pe);
-  DestroyPEdge(del_pe);
-  DestroyPVertex(del_pvertex);
-  DestroyVertex(del_vertex);
+  FreePEdge(del_pe);
+  FreePVertex(del_pvertex);
+  FreeVertex(del_vertex);
   if (keep_vertex->GetPVertexCount() == 1) {
     // The keep vertex is singular too. Re-wire the edge and one p-edge to form
     // an isolated vertex.
@@ -319,13 +319,13 @@ void PartialDS<TraitsType>::DeleteWireEdgeAndVertex(EdgeHandle edge) {
     shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
 
     assert(pface->mate_pface() == NULL);
-    DestroyShell(shell);
-    DestroyPFace(pface);
-    DestroyFace(face);
-    DestroyLoop(loop);
-    DestroyPEdge(keep_pe);
-    DestroyEdge(edge);
-    DestroyPVertex(keep_pvertex);
+    FreeShell(shell);
+    FreePFace(pface);
+    FreeFace(face);
+    FreeLoop(loop);
+    FreePEdge(keep_pe);
+    FreeEdge(edge);
+    FreePVertex(keep_pvertex);
   }
 }
 
@@ -335,8 +335,8 @@ typename PartialDS<TraitsType>::VertexHandle
   typedef PartialDSUtils<Types> Utils;
 
   // We'll certainly need a new edge and vertex.
-  EdgeHandle new_e = MakeEdge();
-  VertexHandle new_v = MakeVertex();
+  EdgeHandle new_e = AllocateEdge();
+  VertexHandle new_v = AllocateVertex();
 
   // We'll need to link all p-vertices around the new vertex together and all
   // the p-edges around the new edge together. To this end, we accumulate them
@@ -354,12 +354,12 @@ typename PartialDS<TraitsType>::VertexHandle
     if (pe->start_pvertex() != pv1 && pe->start_pvertex() != pv2) {
       pv1 = pe->start_pvertex();
       pv2 = pe->end_pvertex();
-      split_pv = MakePVertex();
+      split_pv = AllocatePVertex();
       split_pv->set_parent_edge(new_e);
       new_pv_list.push_back(split_pv);
     }
     // Create a new p-edge and insert it into pe's loop.
-    PEdgeHandle new_pe = MakePEdge();
+    PEdgeHandle new_pe = AllocatePEdge();
     new_pe_list.push_back(new_pe);
     if (pe->orientation() == Entity::kPEdgeForward) {
       new_pe->set_orientation(Entity::kPEdgeForward);
@@ -449,93 +449,99 @@ void PartialDS<TraitsType>::DeleteVertexJoinEdge(VertexHandle vertex,
 
 // Basic (non-topological) make<Item> and Destroy<Item> functions.
 template <class TraitsType> typename PartialDS<TraitsType>::VertexHandle
-    PartialDS<TraitsType>::MakeVertex() {
-  return MakeItem<VertexHandle, VertexList>(&vertices_);
+    PartialDS<TraitsType>::AllocateVertex() {
+  return AllocateItem<VertexHandle, VertexList>(&vertices_);
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyVertex(VertexHandle v) {
-  DestroyItem<VertexHandle, VertexList>(v, &vertices_);
+void PartialDS<TraitsType>::FreeVertex(VertexHandle v) {
+  FreeItem<VertexHandle, VertexList>(v, &vertices_);
 }
 
 template <class TraitsType> typename PartialDS<TraitsType>::PVertexHandle
-    PartialDS<TraitsType>::MakePVertex() {
-  return MakeItem<PVertexHandle, PVertexList>(&pvertices_);
+    PartialDS<TraitsType>::AllocatePVertex() {
+  return AllocateItem<PVertexHandle, PVertexList>(&pvertices_);
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyPVertex(PVertexHandle v) {
-  DestroyItem<PVertexHandle, PVertexList>(v, &pvertices_);
+void PartialDS<TraitsType>::FreePVertex(PVertexHandle v) {
+  FreeItem<PVertexHandle, PVertexList>(v, &pvertices_);
 }
 
 template <class TraitsType>
-typename PartialDS<TraitsType>::EdgeHandle PartialDS<TraitsType>::MakeEdge() {
-  return MakeItem<EdgeHandle, EdgeList>(&edges_);
+typename PartialDS<TraitsType>::EdgeHandle
+    PartialDS<TraitsType>::AllocateEdge() {
+  return AllocateItem<EdgeHandle, EdgeList>(&edges_);
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyEdge(EdgeHandle e) {
-  DestroyItem<EdgeHandle, EdgeList>(e, &edges_);
+void PartialDS<TraitsType>::FreeEdge(EdgeHandle e) {
+  FreeItem<EdgeHandle, EdgeList>(e, &edges_);
 }
 
 template <class TraitsType>
-typename PartialDS<TraitsType>::PEdgeHandle PartialDS<TraitsType>::MakePEdge() {
-  return MakeItem<PEdgeHandle, PEdgeList>(&pedges_);
+typename PartialDS<TraitsType>::PEdgeHandle
+    PartialDS<TraitsType>::AllocatePEdge() {
+  return AllocateItem<PEdgeHandle, PEdgeList>(&pedges_);
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyPEdge(PEdgeHandle e) {
-  DestroyItem<PEdgeHandle, PEdgeList>(e, &pedges_);
+void PartialDS<TraitsType>::FreePEdge(PEdgeHandle e) {
+  FreeItem<PEdgeHandle, PEdgeList>(e, &pedges_);
 }
 
 template <class TraitsType>
-typename PartialDS<TraitsType>::FaceHandle PartialDS<TraitsType>::MakeFace() {
-  return MakeItem<FaceHandle, FaceList>(&faces_);
+typename PartialDS<TraitsType>::FaceHandle
+    PartialDS<TraitsType>::AllocateFace() {
+  return AllocateItem<FaceHandle, FaceList>(&faces_);
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyFace(FaceHandle f) {
-  DestroyItem<FaceHandle, FaceList>(f, &faces_);
+void PartialDS<TraitsType>::FreeFace(FaceHandle f) {
+  FreeItem<FaceHandle, FaceList>(f, &faces_);
 }
 
 template <class TraitsType>
-typename PartialDS<TraitsType>::PFaceHandle PartialDS<TraitsType>::MakePFace() {
-  return MakeItem<PFaceHandle, PFaceList>(&pfaces_);
+typename PartialDS<TraitsType>::PFaceHandle
+    PartialDS<TraitsType>::AllocatePFace() {
+  return AllocateItem<PFaceHandle, PFaceList>(&pfaces_);
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyPFace(PFaceHandle f) {
-  DestroyItem<PFaceHandle, PFaceList>(f, &pfaces_);
+void PartialDS<TraitsType>::FreePFace(PFaceHandle f) {
+  FreeItem<PFaceHandle, PFaceList>(f, &pfaces_);
 }
 
 template <class TraitsType>
-typename PartialDS<TraitsType>::LoopHandle PartialDS<TraitsType>::MakeLoop() {
-  return MakeItem<LoopHandle, LoopList>(&loops_);
+typename PartialDS<TraitsType>::LoopHandle
+    PartialDS<TraitsType>::AllocateLoop() {
+  return AllocateItem<LoopHandle, LoopList>(&loops_);
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyLoop(LoopHandle l) {
-  DestroyItem<LoopHandle, LoopList>(l, &loops_);
+void PartialDS<TraitsType>::FreeLoop(LoopHandle l) {
+  FreeItem<LoopHandle, LoopList>(l, &loops_);
 }
 
 template <class TraitsType>
-typename PartialDS<TraitsType>::ShellHandle PartialDS<TraitsType>::MakeShell() {
-  return MakeItem<ShellHandle, ShellList>(&shells_);
+typename PartialDS<TraitsType>::ShellHandle
+    PartialDS<TraitsType>::AllocateShell() {
+  return AllocateItem<ShellHandle, ShellList>(&shells_);
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyShell(ShellHandle s) {
-  DestroyItem<ShellHandle, ShellList>(s, &shells_);
+void PartialDS<TraitsType>::FreeShell(ShellHandle s) {
+  FreeItem<ShellHandle, ShellList>(s, &shells_);
 }
 
 template <class TraitsType> typename PartialDS<TraitsType>::RegionHandle
-    PartialDS<TraitsType>::MakeRegion() {
-  return MakeItem<RegionHandle, RegionList>(&regions_);
+    PartialDS<TraitsType>::AllocateRegion() {
+  return AllocateItem<RegionHandle, RegionList>(&regions_);
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyRegion(RegionHandle r) {
-  DestroyItem<RegionHandle, RegionList>(r, &regions_);
+void PartialDS<TraitsType>::FreeRegion(RegionHandle r) {
+  FreeItem<RegionHandle, RegionList>(r, &regions_);
 }
 
 template <class TraitsType>
@@ -547,10 +553,10 @@ void PartialDS<TraitsType>::DestroyVertexCloud(VertexHandle v) {
   while(del_pv != start_pv) {
     PVertexHandle temp = del_pv;
     ++del_pv;
-    DestroyPVertex(temp);
+    FreePVertex(temp);
   }
-  DestroyPVertex(start_pv);
-  DestroyVertex(v);
+  FreePVertex(start_pv);
+  FreeVertex(v);
 }
 
 template <class TraitsType>
@@ -562,10 +568,10 @@ void PartialDS<TraitsType>::DestroyEdgeCloud(EdgeHandle e) {
   while(del_pe != start_pe) {
     PEdgeHandle temp = del_pe;
     ++del_pe;
-    DestroyPEdge(temp);
+    FreePEdge(temp);
   }
-  DestroyPEdge(start_pe);
-  DestroyEdge(e);
+  FreePEdge(start_pe);
+  FreeEdge(e);
 }
 
 template <class TraitsType>
@@ -580,12 +586,12 @@ void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
   // Remove the edge's void shell from the region.
   shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
   // Destroy the entities.
-  DestroyShell(shell);
-  DestroyPFace(pface);
-  DestroyFace(face);
-  DestroyLoop(loop);
-  DestroyPEdge(pe);
-  DestroyEdge(e);
+  FreeShell(shell);
+  FreePFace(pface);
+  FreeFace(face);
+  FreeLoop(loop);
+  FreePEdge(pe);
+  FreeEdge(e);
 }
 
 template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
@@ -593,12 +599,12 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
                                         PVertexHandle end_pv,
                                         ShellHandle shell) {
   // Create the various entities a wire edge is made of. 
-  EdgeHandle new_e = MakeEdge();
-  PEdgeHandle new_pe = MakePEdge();
-  LoopHandle loop = MakeLoop();
-  FaceHandle face = MakeFace();
-  PFaceHandle pface = MakePFace();
-  ShellHandle void_shell = MakeShell();
+  EdgeHandle new_e = AllocateEdge();
+  PEdgeHandle new_pe = AllocatePEdge();
+  LoopHandle loop = AllocateLoop();
+  FaceHandle face = AllocateFace();
+  PFaceHandle pface = AllocatePFace();
+  ShellHandle void_shell = AllocateShell();
   // Connect the edge to the given p-vertices and all the entities in the
   // hierarchy.
   new_e->Init(new_pe, start_pv, end_pv);
