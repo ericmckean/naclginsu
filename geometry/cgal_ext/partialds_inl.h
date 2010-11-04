@@ -227,7 +227,7 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
 
   // Find the loop's p-edge that starts at vertex. It'll become the new edge's
   // next p-edge.
-  PEdgeHandle next_pedge = loop->FindStartPVertex(vertex);
+  PEdgeHandle next_pedge = loop->FindStartVertex(vertex);
   assert(next_pedge != NULL);
   if (next_pedge == NULL) {
     // Bad karma; it seems the loop and pvertex have nothing in common.
@@ -377,7 +377,7 @@ typename PartialDS<TraitsType>::VertexHandle
     new_pe->loop_next()->set_loop_previous(new_pe);
     new_pe->set_parent_loop(pe->parent_loop());
     ++pe;
-  } while(pe != start_pe);
+  } while (pe != start_pe);
 
   // Insert the new edge in its rightful place.
   new_e->set_start_pvertex(split_pv);
@@ -439,7 +439,7 @@ void PartialDS<TraitsType>::DeleteVertexJoinEdge(VertexHandle vertex,
     }
 
     ++current_pe;
-  } while(current_pe != start_pe);
+  } while (current_pe != start_pe);
 
   // We're ready to destroy old stuff, namely vertex and all its p-vertices
   // and del_e and all its radial p-edges.
@@ -544,56 +544,6 @@ void PartialDS<TraitsType>::FreeRegion(RegionHandle r) {
   FreeItem<RegionHandle, RegionList>(r, &regions_);
 }
 
-template <class TraitsType>
-void PartialDS<TraitsType>::DestroyVertexCloud(VertexHandle v) {
-  PVertexOfVertexCirculator start_pv = v->pvertex_begin();
-  PVertexOfVertexCirculator del_pv = start_pv;
-  // Skip start_pv for now; it's our end-of-loop marker.
-  ++del_pv;
-  while(del_pv != start_pv) {
-    PVertexHandle temp = del_pv;
-    ++del_pv;
-    FreePVertex(temp);
-  }
-  FreePVertex(start_pv);
-  FreeVertex(v);
-}
-
-template <class TraitsType>
-void PartialDS<TraitsType>::DestroyEdgeCloud(EdgeHandle e) {
-  PEdgeRadialCirculator start_pe = e->pedge_begin();
-  PEdgeRadialCirculator del_pe = start_pe;
-  // Skip start_pe for now; it's our end-of-loop marker.
-  ++del_pe;
-  while(del_pe != start_pe) {
-    PEdgeHandle temp = del_pe;
-    ++del_pe;
-    FreePEdge(temp);
-  }
-  FreePEdge(start_pe);
-  FreeEdge(e);
-}
-
-template <class TraitsType>
-void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
-  assert(e->IsWireEdge());
-  // Gather the entities up to the void shell.
-  PEdgeHandle pe = e->parent_pedge();
-  LoopHandle loop = pe->parent_loop();
-  FaceHandle face = loop->parent(face);
-  PFaceHandle pface = face->parent_pface();
-  ShellHandle shell = pface->parent_shell();
-  // Remove the edge's void shell from the region.
-  shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
-  // Destroy the entities.
-  FreeShell(shell);
-  FreePFace(pface);
-  FreeFace(face);
-  FreeLoop(loop);
-  FreePEdge(pe);
-  FreeEdge(e);
-}
-
 template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
     PartialDS<TraitsType>::MakeWireEdge(PVertexHandle start_pv,
                                         PVertexHandle end_pv,
@@ -619,6 +569,26 @@ template <class TraitsType> typename PartialDS<TraitsType>::EdgeHandle
   return new_e;
 }
 
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
+  assert(e->IsWireEdge());
+  // Gather the entities up to the void shell.
+  PEdgeHandle pe = e->parent_pedge();
+  LoopHandle loop = pe->parent_loop();
+  FaceHandle face = loop->parent(face);
+  PFaceHandle pface = face->parent_pface();
+  ShellHandle shell = pface->parent_shell();
+  // Remove the edge's void shell from the region.
+  shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
+  // Destroy the entities.
+  FreeShell(shell);
+  FreePFace(pface);
+  FreeFace(face);
+  FreeLoop(loop);
+  FreePEdge(pe);
+  FreeEdge(e);
+}
+
 template <class TraitsType> typename PartialDS<TraitsType>::PVertexHandle
     PartialDS<TraitsType>::AddNewPVertex(VertexHandle v) {
   PVertexHandle pv = v->parent_pvertex();
@@ -636,6 +606,70 @@ template <class TraitsType> typename PartialDS<TraitsType>::PVertexHandle
   return new_pv;
 }
 
+template <class TraitsType>
+void PartialDS<TraitsType>::DeletePVertex(PVertexHandle pv) {
+  VertexHandle v = pv->vertex();
+  if (v != NULL) {
+    if (pv->next_pvertex() == pv) {
+      // Only one p-vertex.
+      assert(v->parent_pvertex() == pv);
+      v->set_parent_pvertex(NULL);
+      FreePVertex(pv);
+    } else {
+      // Remove pv from the cloud of p-vertices around v.
+      PVertexOfVertexCirculator start_pv = v->pvertex_begin();
+      PVertexOfVertexCirculator current_pv = start_pv;
+      do {
+        if (current_pv->next_pvertex() == pv) {
+          // Found the p-vertex that links to pv. Bypass pv and delete it.
+          current_pv->set_next_pvertex(pv->next_pvertex());
+          if (v->parent_pvertex() == pv) {
+            v->set_parent_pvertex(current_pv);
+          }
+          FreePVertex(pv);
+          break;
+        }
+
+        ++current_pv;
+        assert(current_pv != start_pv);  // Did not find pv around v?
+      } while (current_pv != start_pv);
+    }
+  } else {
+    // No child vertex; caller could have called FreePVertex instead. Oh well.
+    FreePVertex(pv);
+  }
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyVertexCloud(VertexHandle v) {
+  PVertexOfVertexCirculator start_pv = v->pvertex_begin();
+  PVertexOfVertexCirculator del_pv = start_pv;
+  // Skip start_pv for now; it's our end-of-loop marker.
+  ++del_pv;
+  while (del_pv != start_pv) {
+    PVertexHandle temp = del_pv;
+    ++del_pv;
+    FreePVertex(temp);
+  }
+  FreePVertex(start_pv);
+  FreeVertex(v);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DestroyEdgeCloud(EdgeHandle e) {
+  PEdgeRadialCirculator start_pe = e->pedge_begin();
+  PEdgeRadialCirculator del_pe = start_pe;
+  // Skip start_pe for now; it's our end-of-loop marker.
+  ++del_pe;
+  while (del_pe != start_pe) {
+    PEdgeHandle temp = del_pe;
+    ++del_pe;
+    FreePEdge(temp);
+  }
+  FreePEdge(start_pe);
+  FreeEdge(e);
+}
+
 // Validation functions.
 template <class TraitsType>
 bool PartialDS<TraitsType>::ValidateVertex(VertexConstHandle v) {
@@ -648,7 +682,7 @@ bool PartialDS<TraitsType>::ValidateVertex(VertexConstHandle v) {
   // Check that the chain of p-vertices around v all point to v.
   PVertexConstHandle pv0 = v->parent_pvertex();
   PVertexConstHandle pv = pv0;
-  while(1) {
+  while (1) {
     if (pv == NULL) {
       assert(!"*** ValidateVertex: null p-vertex pointer in the chain "
               "of vertices around vertex. ***");
@@ -738,7 +772,7 @@ bool PartialDS<TraitsType>::ValidatePEdge(PEdgeConstHandle pe) {
   // Check the radial next and previous.
   PEdgeConstHandle scan_pedge = pe;
   PEdgeConstHandle start_pedge = scan_pedge;
-  while(1) {
+  while (1) {
     if (scan_pedge->radial_next() == NULL) {
       assert(!"*** ValidatePEdge: radial_next p-edge is NULL. ***");
       return false;
@@ -780,7 +814,7 @@ bool PartialDS<TraitsType>::ValidateLoop(LoopConstHandle loop) {
   }
   // Check the chain of p-edges that form the loop.
   PEdgeConstHandle start_pedge = scan_pedge;
-  while(1) {
+  while (1) {
     if (scan_pedge->loop_next() == NULL) {
       assert(!"*** ValidateLoop: loop_next p-edge is NULL. ***");
       return false;
