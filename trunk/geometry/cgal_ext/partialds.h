@@ -322,20 +322,23 @@ class PartialDS {
   RegionHandle AllocateRegion();
   void FreeRegion(RegionHandle r);
 
+  // Make a wire edge from p-vertex start_pv to p-vertex end_pv in shell and
+  // its counterpart that delete it. If start_pv == end_pv an unoriented edge
+  // is created, suitable for an isolated vertex. With both functions, the
+  // caller is responsible for the p-vertices connected to the wire edge.
+  EdgeHandle MakeWireEdge(PVertexHandle start_pv, PVertexHandle end_pv,
+                          ShellHandle shell);
+  void DestroyWireEdge(EdgeHandle e);
+
+  // Make a new p-vertex and add it to the cloud of p-vertices around v and
+  // its counterpart that removes and delete the p-vertex.
+  PVertexHandle AddNewPVertex(VertexHandle v);
+  void DeletePVertex(PVertexHandle pv);
+
   // Destroy a vertex and all the its attached p-vertices.
   void DestroyVertexCloud(VertexHandle v);
   // Destroy an edge and all its attached radial p-edges.
   void DestroyEdgeCloud(EdgeHandle e);
-  // Delete a wire edge and its entire parent hierarchy. The caller is
-  // responsible for re-linking the p-vertices around the edge.
-  void DestroyWireEdge(EdgeHandle e);
-
-  // Make a wire edge from p-vertex pv1 to p-vertex pv2 in shell. The caller is
-  // responsible to properly connecting the p-vertices to the edge.
-  EdgeHandle MakeWireEdge(PVertexHandle start_pv, PVertexHandle end_pv,
-                          ShellHandle shell);
-  // Make a new p-vertex and add it to the cloud of p-vertices around v.
-  PVertexHandle AddNewPVertex(VertexHandle v);
 
  private:
   // Template function for allocating and freeing PartialDS items.
