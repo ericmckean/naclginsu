@@ -61,6 +61,7 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
     PVertexConstHandle pv = parent_pvertex();
     EdgeConstHandle e = pv->parent_edge();
     return (e->start_pvertex() == pv) && (e->end_pvertex() == pv);
+    // TODO(gwink): rule-out a vertex loop.
   }
 
   // Return the number of p-vertices associated with this vertex.
