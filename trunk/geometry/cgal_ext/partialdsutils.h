@@ -22,6 +22,8 @@ class PartialDSUtils {
   typedef typename Types::EdgeConstHandle EdgeConstHandle;
   typedef typename Types::EdgeHandle      EdgeHandle;
   typedef typename Types::PEdgeHandle     PEdgeHandle;
+  typedef typename Types::ShellHandle     ShellHandle;
+  typedef typename Types::RegionHandle    RegionHandle;
   
   typedef typename Types::EdgeBase::PEdgeRadialCirculator
                                           PEdgeRadialCirculator;
@@ -102,6 +104,29 @@ class PartialDSUtils {
     return pe;
   }
 
+  // GetWireEdgeRegion:
+  // Get the outer region of a wire edge. (Other edges may be adjacent to two
+  // regions.
+  static RegionHandle GetWireEdgeRegion(EdgeHandle wire_edge) {
+    if (wire_edge->IsWireEdge()) {
+      return wire_edge->parent_pedge()->parent_loop()->parent_face()->
+             parent_pface()->parent_shell()->parent_region();
+    }
+    return RegionHandle();
+  }
+
+  // GetIncidentEdgeCount:
+  // Get the number of edges incident upon a vertex.
+  static int GetIncidentEdgeCount(VertexHandle vertex) {
+    if (vertex->IsIsolated()) {
+      return 0;
+    } else {
+      std::vector<EdgeHandle> incident_edges;
+      VisitVertexEdges(vertex, &incident_edges);
+      return static_cast<int>(incident_edges.size());
+    }
+  }
+
   // VisitVertexEdges:
   // Visit all edges incident upon vertex, accumulating them into list |edges|.
   // Template class EdgeList is a container that supports push_back, such as
@@ -136,26 +161,29 @@ class PartialDSUtils {
                                      EdgeHandleSet* visited_edges) {
     // Add edge to the set of visited edges.
     visited_edges->insert(edge);
-    // Visit each of the p-edges about edge.
-    PEdgeRadialCirculator start_pe = edge->pedge_begin();
-    PEdgeRadialCirculator current_pe = start_pe;
-    do {
-      // Follow the loop of edges forward or backward to next_e, the next edge
-      // incident upon the same p-vertex as edge.
-      EdgeHandle next_e;
-      if (current_pe->start_pvertex() == pvertex) {
-        next_e = current_pe->loop_previous()->child_edge();
-      } else {
-        assert(current_pe->end_pvertex() == pvertex);
-        next_e = current_pe->loop_next()->child_edge();
-      }
-      // If next_e has not already been visited, recursively visit it next.
-      if (visited_edges->find(next_e) == visited_edges->end()) {
-        VisitVertexEdgesHelper(pvertex, next_e, visited_edges);
-      }
+    
+    if (!edge->IsWireEdge()) {
+      // Visit each of the p-edges about edge.
+      PEdgeRadialCirculator start_pe = edge->pedge_begin();
+      PEdgeRadialCirculator current_pe = start_pe;
+      do {
+        // Follow the loop of edges forward or backward to next_e, the next edge
+        // incident upon the same p-vertex as edge.
+        EdgeHandle next_e;
+        if (current_pe->start_pvertex() == pvertex) {
+          next_e = current_pe->loop_previous()->child_edge();
+        } else {
+          assert(current_pe->end_pvertex() == pvertex);
+          next_e = current_pe->loop_next()->child_edge();
+        }
+        // If next_e has not already been visited, recursively visit it next.
+        if (visited_edges->find(next_e) == visited_edges->end()) {
+          VisitVertexEdgesHelper(pvertex, next_e, visited_edges);
+        }
 
-      ++current_pe;
-    } while(current_pe != start_pe);
+        ++current_pe;
+      } while(current_pe != start_pe);
+    }
   }
 
 };

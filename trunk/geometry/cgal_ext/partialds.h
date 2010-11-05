@@ -243,7 +243,10 @@ class PartialDS {
                                                      PEdgeRadialCirculator;
   typedef typename Types::LoopBase::PEdgeCirculator  PEdgeLoopCirculator;
 
-  // Euler operators.
+  // Euler operators come in pairs, one to create some entity or entities and
+  // its counterpart to undo the creation.
+
+  // Create an empty region.
   RegionHandle CreateEmptyRegion();
   void DeleteEmptyRegion(RegionHandle region);
 
@@ -251,26 +254,20 @@ class PartialDS {
   VertexHandle CreateIsolatedVertex(RegionHandle region);
   void DeleteIsolatedVertex(VertexHandle vertex);
 
-  // Create a wire edge either within a shell or along an existing loop.
-  // CreateWireEdgeInShell: connect the wire edge to an existing vertex. Fails
-  //   if the vertex doesn't belong to the shell.
-  // CreateWireEdgeInLoop: connect the wire edge to the given vertex in a
-  //   loop. Fails if the vertex is not along the loop or the loop is
-  //   degenerate - i.e. belongs to a wire edge or isolated vertex.
-  // Both functions return NULL when they fail.
-  EdgeHandle CreateWireEdgeInShell(ShellHandle shell, VertexHandle vertex);
-  EdgeHandle CreateWireEdgeInLoop(LoopHandle loop, VertexHandle vertex);
-  // Delete a wire edge and its singular vertex. If the edge is not connected to
-  // any other entity (i.e. is bounded by two singular vertices), then the
-  // edge's end vertex is deleted, and the start vertex is preserved. 
-  void DeleteWireEdgeAndVertex(EdgeHandle edge);
+  // Create a non-manifold wire edge connected to vertex within the given shell.
+  // Fails and returns NULL if vertex is not within the shell.
+  EdgeHandle CreateWireEdgeAndVertex(ShellHandle shell, VertexHandle vertex);
+  void DeleteWireEdgeAndVertex(EdgeHandle edge, VertexHandle vertex);
+
+  // Create a manifold edge connected to vertex within loop. Fails and returns
+  // NULL if the vertex is not along the loop or the loop is degenerate - i.e.
+  // belongs to a wire edge or isolated vertex.
+  EdgeHandle CreateEdgeInLoop(LoopHandle loop, VertexHandle vertex);
+  void DeleteEdgeFromLoop(EdgeHandle edge);
 
   // Split edge, adding a new vertex. The new vertex between edge and the new
   // edge:  (edge) ----> (new vertex) -----> (new edge). Returns the new vertex.
   VertexHandle SplitEdgeCreateVertex(EdgeHandle edge);
-  // Dual of above, delete |vertex| and the edge that follows |edge| across
-  // vertex. Fails if vertex has not exactly two incident edges or edge and
-  // vertex are not connected.
   void DeleteVertexJoinEdge(VertexHandle vertex, EdgeHandle edge);
 
   // List accessors, to iterate over these vertices, edges, etc. E.g. to display
@@ -322,11 +319,11 @@ class PartialDS {
   RegionHandle AllocateRegion();
   void FreeRegion(RegionHandle r);
 
-  // Make a wire edge from p-vertex start_pv to p-vertex end_pv in shell and
-  // its counterpart that delete it. If start_pv == end_pv an unoriented edge
-  // is created, suitable for an isolated vertex. With both functions, the
-  // caller is responsible for the p-vertices connected to the wire edge.
-  EdgeHandle MakeWireEdge(PVertexHandle start_pv, PVertexHandle end_pv,
+  // Make or destroy a wire edge from vertex start_v to vertex end_v in shell.
+  // This function builds the entire entity hierarchy including the p-vertices.
+  // This function can also be used to build the edge around an isolated vertex
+  // by setting start_v == end_v. 
+  EdgeHandle MakeWireEdge(VertexHandle start_v, VertexHandle end_v,
                           ShellHandle shell);
   void DestroyWireEdge(EdgeHandle e);
 
