@@ -46,11 +46,6 @@ class PartialDSFace : public PartialDSEntity<TypeRefs> {
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
 
-  void Init(PFaceHandle parent_pface, LoopHandle outer_loop) {
-    parent_pface_ = parent_pface;
-    outer_loop_ = outer_loop;
-  }
-
   // Mutators
   void set_parent_pface(PFaceHandle pface) { parent_pface_ = pface; }
   void set_outer_loop(LoopHandle loop) { outer_loop_ = loop; }

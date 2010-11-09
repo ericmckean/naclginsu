@@ -42,9 +42,6 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
       radial_previous_(NULL), radial_next_(NULL) { }
 
   PEdgeOrientation orientation() const { return orientation_; }
-  void set_orientation(PEdgeOrientation orientation) {
-    orientation_ = orientation;
-  }
 
   // Accessors
   LoopConstHandle parent_loop() const { return parent_loop_; }
@@ -73,21 +70,10 @@ class PartialDSPEdge : public PartialDSEntity<TypeRefs> {
   friend class PartialDS<typename PartialDSTypes::Traits>;
   friend class PartialDSUtils<PartialDSTypes>;
 
-  void Init(PEdgeOrientation orientation, LoopHandle parent_loop,
-            EdgeHandle child_edge, PVertexHandle start_pvertex,
-            PEdgeHandle loop_previous, PEdgeHandle loop_next,
-            PEdgeHandle radial_previous, PEdgeHandle radial_next) {
-    orientation_ = orientation;
-    parent_loop_ = parent_loop;
-    child_edge_ = child_edge;
-    start_pvertex_ = start_pvertex;
-    loop_previous_ = loop_previous;
-    loop_next_ = loop_next;
-    radial_previous_ = radial_previous;
-    radial_next_ = radial_next;
-  }
-
   // Mutators
+  void set_orientation(PEdgeOrientation orientation) {
+    orientation_ = orientation;
+  }
   void set_parent_loop(LoopHandle loop) { parent_loop_ = loop; }
   void set_child_edge(EdgeHandle edge) { child_edge_ = edge; }
   void set_start_pvertex(PVertexHandle pvertex) { start_pvertex_ = pvertex; }

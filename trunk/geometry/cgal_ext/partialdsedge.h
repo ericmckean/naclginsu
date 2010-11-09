@@ -105,13 +105,6 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   friend class PartialDS<typename PartialDSTypes::Traits>;
   friend class PartialDSUtils<PartialDSTypes>;
 
-  void Init(PEdgeHandle parent_pedge, PVertexHandle start_pvertex,
-            PVertexHandle end_pvertex) {
-    parent_pedge_ = parent_pedge;
-    start_pvertex_ = start_pvertex;
-    end_pvertex_ = end_pvertex;
-  }
-
   // Mutators
   void set_parent_pedge(PEdgeHandle pedge) { parent_pedge_ = pedge; }
   void set_start_pvertex(PVertexHandle pv) { start_pvertex_ = pv; }

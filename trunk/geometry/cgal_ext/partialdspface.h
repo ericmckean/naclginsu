@@ -38,9 +38,6 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
       mate_pface_(NULL), orientation_() { }
 
   PFaceOrientation orientation() const { return orientation_; }
-  void set_orientation(PFaceOrientation orientation) {
-    orientation_ = orientation;
-  }
 
   // Accessors
   ShellConstHandle parent_shell() const { return parent_shell_; }
@@ -52,17 +49,10 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
 
-  void Init(PFaceOrientation orientation, ShellHandle parent_shell,
-            FaceHandle child_face, PFaceHandle next_pface,
-            PFaceHandle mate_pface) {
-    orientation_ = orientation;
-    parent_shell_ = parent_shell;
-    child_face_ = child_face;
-    next_pface_ = next_pface;
-    mate_pface_ = mate_pface;
-  }
-
   // Mutators
+  void set_orientation(PFaceOrientation orientation) {
+    orientation_ = orientation;
+  }
   void set_parent_shell(ShellHandle shell) { parent_shell_ = shell; }
   void set_child_face(FaceHandle face) { child_face_ = face; }
   void set_next_pface(PFaceHandle pface) { next_pface_ = pface; }
