@@ -46,6 +46,9 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
   PVertexHandle parent_pvertex() { return parent_pvertex_; }
   const Point& point() const { return p_; }
 
+  // Set the geometric location. (A non-topological operation, hence public.)
+  void set_point(const Point& p) { p_ = p; }
+
   // Iterate over the p-vertex about this vertex.
   PVertexConstCirculator pvertex_begin() const {
     return PVertexConstCirculator(parent_pvertex());
@@ -80,7 +83,6 @@ class PartialDSVertex : public PartialDSEntity<TypeRefs> {
 
   // Mutators
   void set_parent_pvertex(PVertexHandle pvertex) { parent_pvertex_ = pvertex; }
-  void set_point(const Point& p) { p_ = p; }
 
  private:
   PVertexHandle parent_pvertex_; 

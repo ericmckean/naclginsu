@@ -47,13 +47,6 @@ class PartialDSPVertex : public PartialDSEntity<TypeRefs> {
   friend class PartialDS<typename PartialDSTypes::Traits>;
   friend class PartialDSUtils<PartialDSTypes>;
 
-  void Init(EdgeHandle parent_edge, VertexHandle vertex,
-            PVertexHandle next_pvertex) {
-    parent_edge_ = parent_edge;
-    vertex_ = vertex;
-    next_pvertex_ = next_pvertex;
-  }
-
   // Mutators
   void set_parent_edge(EdgeHandle edge) { parent_edge_ = edge; }
   void set_vertex(VertexHandle vertex) { vertex_ = vertex; }

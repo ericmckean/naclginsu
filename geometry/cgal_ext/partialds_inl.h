@@ -149,11 +149,25 @@ template <class TraitsType>
 
   // Connect the entities, re-routing the loop through the new edge.
   new_pvertex->set_parent_edge(new_edge);
-  new_edge->Init(new_pe_f, pvertex, new_pvertex);
-  new_pe_f->Init(Entity::kPEdgeForward, loop, new_edge, pvertex,
-                 prev_pedge, new_pe_r, new_pe_r, new_pe_r);
-  new_pe_r->Init(Entity::kPEdgeReversed, loop, new_edge, new_pvertex,
-                 new_pe_f, next_pedge, new_pe_f, new_pe_f);
+  new_edge->set_parent_pedge(new_pe_f);
+  new_edge->set_start_pvertex(pvertex);
+  new_edge->set_end_pvertex(new_pvertex);
+  new_pe_f->set_orientation(Entity::kPEdgeForward);
+  new_pe_f->set_parent_loop(loop);
+  new_pe_f->set_child_edge(new_edge);
+  new_pe_f->set_start_pvertex(pvertex);
+  new_pe_f->set_loop_previous(prev_pedge);
+  new_pe_f->set_loop_next(new_pe_r);
+  new_pe_f->set_radial_previous(new_pe_r);
+  new_pe_f->set_radial_next(new_pe_r);
+  new_pe_r->set_orientation(Entity::kPEdgeReversed);
+  new_pe_r->set_parent_loop(loop);
+  new_pe_r->set_child_edge(new_edge);
+  new_pe_r->set_start_pvertex(new_pvertex);
+  new_pe_r->set_loop_previous(new_pe_f);
+  new_pe_r->set_loop_next(next_pedge);
+  new_pe_r->set_radial_previous(new_pe_r);
+  new_pe_r->set_radial_next(new_pe_f);
   prev_pedge->set_loop_next(new_pe_f);
   next_pedge->set_loop_previous(new_pe_r);
 
@@ -447,14 +461,26 @@ template <class TraitsType>
   // Note that if start_pv == end_pv we're creating an unoriented edge.
   start_pv->set_parent_edge(new_e);
   end_pv->set_parent_edge(new_e);
-  new_e->Init(new_pe, start_pv, end_pv);
-  new_pe->Init(
-      (start_pv == end_pv) ? Entity::kPEdgeUnoriented : Entity::kPEdgeForward,
-      loop, new_e, start_pv, NULL, NULL, new_pe, new_pe);
-  loop->Init(face, new_pe, NULL /* no hole */);
-  face->Init(pface, loop);
-  pface->Init(Entity::kPFaceUnoriented, void_shell, face, pface, NULL);
-  void_shell->Init(shell->parent_region(), NULL, pface);
+  new_e->set_parent_pedge(new_pe);
+  new_e->set_start_pvertex(start_pv);
+  new_e->set_end_pvertex(end_pv);
+  new_pe->set_orientation((start_pv == end_pv)? Entity::kPEdgeUnoriented:
+                                                Entity::kPEdgeForward);
+  new_pe->set_parent_loop(loop);
+  new_pe->set_child_edge(new_e);
+  new_pe->set_start_pvertex(start_pv);
+  new_pe->set_radial_previous(new_pe);
+  new_pe->set_radial_next(new_pe);
+  loop->set_parent_face(face);
+  loop->set_boundary_pedge(new_pe);
+  face->set_parent_pface(pface);
+  face->set_outer_loop(loop);
+  pface->set_orientation(Entity::kPFaceUnoriented);
+  pface->set_parent_shell(void_shell);
+  pface->set_child_face(face);
+  pface->set_next_pface(pface);
+  void_shell->set_parent_region(shell->parent_region());
+  void_shell->set_pface(pface);
   shell->AddVoidShell(void_shell);
 
   return new_e;
