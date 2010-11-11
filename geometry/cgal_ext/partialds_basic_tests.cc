@@ -136,4 +136,56 @@ TEST_F(PartialDSTest, TestSplitEdgeCreateVertex) {
 //  ASSERT_TRUE(mesh_->ValidateVertex(v));
 //  ASSERT_TRUE(mesh_->ValidateEdge(e1));
 }
+
+TEST_F(PartialDSTest, TestMakeEdgeCycle) {
+  PartialDSTest::PEMesh::RegionHandle r;
+  r = mesh_->CreateEmptyRegion();
+  ASSERT_TRUE(r != NULL);
+
+  PartialDSTest::PEMesh::VertexHandle v[3];
+  PartialDSTest::PEMesh::EdgeHandle e[3];
+
+  // Build a triangle of edges.
+  v[0] = mesh_->CreateIsolatedVertex(r);
+  e[0] = mesh_->CreateWireEdgeAndVertex(r->outer_shell(), v[0]);
+  v[1] = e[0]->end_pvertex()->vertex();
+  e[1] = mesh_->CreateWireEdgeAndVertex(r->outer_shell(), v[1]);
+  v[2] = e[1]->end_pvertex()->vertex();
+  // Deliberately orienting e[2] against e[0] & e[1].
+  e[2] = mesh_->MakeEdgeCycle(r->outer_shell(), v[0], v[2]);
+  
+  ASSERT_TRUE(mesh_->ValidateEdge(e[0]));
+  ASSERT_TRUE(mesh_->ValidateEdge(e[1]));
+  ASSERT_TRUE(mesh_->ValidateEdge(e[2]));
+  ASSERT_TRUE(mesh_->ValidateVertex(v[0]));
+  ASSERT_TRUE(mesh_->ValidateVertex(v[1]));
+  ASSERT_TRUE(mesh_->ValidateVertex(v[2]));
+
+  // Validate the cycle.
+  std::vector<PartialDSTest::PEMesh::EdgeHandle> cycle;
+  cycle.push_back(e[0]);
+  cycle.push_back(e[1]);
+  cycle.push_back(e[2]);
+  ASSERT_TRUE(PartialDSTest::PEMesh::ValidateEdgeCycle(cycle));
+
+  // Take things apart, validating after each step.
+  mesh_->DeleteEdgeCycle(e[2]);
+  ASSERT_TRUE(mesh_->ValidateEdge(e[0]));
+  ASSERT_TRUE(mesh_->ValidateEdge(e[1]));
+  ASSERT_TRUE(mesh_->ValidateVertex(v[0]));
+  ASSERT_TRUE(mesh_->ValidateVertex(v[1]));
+  ASSERT_TRUE(mesh_->ValidateVertex(v[2]));
+
+  mesh_->DeleteWireEdgeAndVertex(e[1], v[2]);
+  ASSERT_TRUE(mesh_->ValidateEdge(e[0]));
+  ASSERT_TRUE(mesh_->ValidateVertex(v[0]));
+  ASSERT_TRUE(mesh_->ValidateVertex(v[1]));
+
+  mesh_->DeleteWireEdgeAndVertex(e[0], v[1]);
+  ASSERT_TRUE(mesh_->ValidateVertex(v[0]));
+
+  mesh_->DeleteIsolatedVertex(v[0]);
+  ASSERT_TRUE(r->IsEmpty());
+  mesh_->DeleteEmptyRegion(r);
+}
 }  // namespace
