@@ -107,7 +107,7 @@ void PartialDS<TraitsType>::DeleteWireEdgeAndVertex(EdgeHandle edge,
 
   // Get the 'other' vertex.
   VertexHandle keep_v = edge->start_pvertex()->vertex();
-  if (keep_v == vertex) edge->end_pvertex()->vertex();
+  if (keep_v == vertex) keep_v = edge->end_pvertex()->vertex();
   // We may need the region; grab it before deleting the edge.
   RegionHandle region = Utils::GetWireEdgeRegion(edge);
   // Ready to delete the edge and vertex.
@@ -221,6 +221,26 @@ void PartialDS<TraitsType>::DeleteEdgeFromLoop(EdgeHandle edge) {
   // Ready to delete the edge and vertex.
   DestroyEdgeCloud(edge);
   DestroyVertexCloud(del_v);
+}
+
+template <class TraitsType>
+typename PartialDS<TraitsType>::EdgeHandle
+    PartialDS<TraitsType>::MakeEdgeCycle(
+        ShellHandle shell, VertexHandle from_vertex, VertexHandle to_vertex) {
+  // Make sure we do not create a degenerate cycle.
+  assert(from_vertex != to_vertex);
+  if (from_vertex == to_vertex) return NULL;
+  // We simply create a wire edge between the two given vertices.
+  EdgeHandle edge = MakeWireEdge(from_vertex, to_vertex, shell);
+  return edge;
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::DeleteEdgeCycle(EdgeHandle edge) {
+  // Can only delete a wire edge.
+  assert(edge->IsWireEdge());
+  // Get rid of the edge, but keep both end vertices.
+  DestroyWireEdge(edge);
 }
 
 template <class TraitsType>
@@ -488,6 +508,8 @@ template <class TraitsType>
 
 template <class TraitsType>
 void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
+  // It must be either a 'real' wire edge or an edge associated with an
+  // isolated vertex.
   assert(e->IsWireEdge() || e->start_pvertex()->vertex()->IsIsolated());
   // Gather the entities up to the void shell.
   PVertexHandle start_pv = e->start_pvertex();
@@ -500,8 +522,8 @@ void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
   // Remove the edge's void shell from the region.
   shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
   // Destroy the entities.
-  if (start_pv != end_pv) DeletePVertex(end_pv);
-  DeletePVertex(start_pv);
+  if (start_pv != end_pv) DestroyPVertex(end_pv);
+  DestroyPVertex(start_pv);
   FreeShell(shell);
   FreePFace(pface);
   FreeFace(face);
@@ -528,7 +550,7 @@ template <class TraitsType> typename PartialDS<TraitsType>::PVertexHandle
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DeletePVertex(PVertexHandle pv) {
+void PartialDS<TraitsType>::DestroyPVertex(PVertexHandle pv) {
   VertexHandle v = pv->vertex();
   if (v != NULL) {
     if (pv->next_pvertex() == pv) {
@@ -831,6 +853,42 @@ bool PartialDS<TraitsType>::ValidatePFace(PFaceConstHandle pf) {
     assert(!"*** ValidatePFace: p-face doesn't have a valid next p-face. ***");
     return false;
   }
+#endif
+  return true;
+}
+
+template <class TraitsType>
+template <class EdgeListType>
+bool PartialDS<TraitsType>::ValidateEdgeCycle(const EdgeListType& cycle) {
+#if defined(_DEBUG) || defined(_GEOM_TESTS)
+  // Verify that all the edges in cycle form a complete loop. v0 is the first
+  // vertex along the cycle, vi is the 'exploring' vertex as we move along
+  // the cycle.
+  typename EdgeListType::const_iterator it = cycle.begin();
+  VertexConstHandle v0 = (*it)->start_pvertex()->vertex();
+  VertexConstHandle vi = (*it)->end_pvertex()->vertex();
+  // Edges don't have to be oriented consistently along the cycle. So either
+  // v0 or vi could be the vertex in common with the next edge.
+  ++it;
+  if (vi != (*it)->start_pvertex()->vertex() &&
+      vi != (*it)->end_pvertex()->vertex()) {
+    std::swap(v0, vi);
+  }
+  for (; it != cycle.end(); ++it) {
+    // Again, since edges need not be oriented consistently, either of the end
+    // vertices could be vi. However one of them MUST be vi.
+    VertexConstHandle w0 = (*it)->start_pvertex()->vertex();
+    VertexConstHandle w1 = (*it)->end_pvertex()->vertex();
+    if (w0 == vi) {
+      vi = w1;
+    } else if (w1 == vi) {
+      vi = w0;
+    } else {
+      return false;
+    }
+  }
+  // Lastly, verify that the cycle loops back to v0.
+  return vi == v0;
 #endif
   return true;
 }

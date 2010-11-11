@@ -265,6 +265,12 @@ class PartialDS {
   EdgeHandle CreateEdgeInLoop(LoopHandle loop, VertexHandle vertex);
   void DeleteEdgeFromLoop(EdgeHandle edge);
 
+  // Make a cycle by creating a wire edge connecting from_vertex to to_vertex.
+  // Fails and return NULL if from_vertex == to_vertex.
+  EdgeHandle MakeEdgeCycle(ShellHandle shell, VertexHandle from_vertex,
+                           VertexHandle to_vertex);
+  void DeleteEdgeCycle(EdgeHandle edge);
+
   // Split edge, adding a new vertex. The new vertex between edge and the new
   // edge:  (edge) ----> (new vertex) -----> (new edge). Returns the new vertex.
   VertexHandle SplitEdgeCreateVertex(EdgeHandle edge);
@@ -286,6 +292,8 @@ class PartialDS {
   static bool ValidateLoop(LoopConstHandle loop);
   static bool ValidateFace(FaceConstHandle f);
   static bool ValidatePFace(PFaceConstHandle pf);
+  template <class EdgeListType> 
+  static bool ValidateEdgeCycle(const EdgeListType& cycle);
 
   // Enabled/disable exhaustive mode. When enabled (the default) additional,
   // potentially expensive verification steps are executed before or after each
@@ -330,7 +338,7 @@ class PartialDS {
   // Make a new p-vertex and add it to the cloud of p-vertices around v and
   // its counterpart that removes and delete the p-vertex.
   PVertexHandle AddNewPVertex(VertexHandle v);
-  void DeletePVertex(PVertexHandle pv);
+  void DestroyPVertex(PVertexHandle pv);
 
   // Destroy a vertex and all the its attached p-vertices.
   void DestroyVertexCloud(VertexHandle v);
