@@ -41,8 +41,12 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
   // Accessors.
   ShellConstHandle next_void_shell() const { return next_void_shell_; }
   PFaceConstHandle pface() const { return pface_; }
+  PFaceHandle pface() { return pface_; }
   RegionConstHandle parent_region() const { return parent_region_; }
   RegionHandle parent_region() { return parent_region_; }
+
+  // A shell is empty if it has no p-face.
+  bool IsEmpty() const { return pface() == NULL; }
 
   // Return a circulator for visiting the p-faces that form the shell.
   PFaceConstCirculator pface_begin() const {
@@ -66,6 +70,9 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
   void set_next_void_shell(ShellHandle shell) { next_void_shell_ = shell; }
   void set_pface(PFaceHandle pface) { pface_ = pface; }
   void set_parent_region(RegionHandle region) { parent_region_ = region; }
+
+  // TODO(gwink): Move these two functions to PartialDS, next to AddPFaceToShell
+  // etc.
 
   // Add a shell to the list of void shells.
   void AddVoidShell(ShellHandle void_shell) {

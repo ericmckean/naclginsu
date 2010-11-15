@@ -55,9 +55,10 @@ class PartialDSEdge : public PartialDSEntity<TypeRefs> {
   // Return true if this is a wire edge and false otherwise.
   bool IsWireEdge() const {
     // Walk up to the pface and verify that it is degenerate (i.e. has no mate)
-    // and verify that the vertex is not isolated.
+    // and check that the edge's start and end vertices are not the same (other-
+    // wise, we're dealing with a degenerate edge about an isolated vertex).
     return parent_pedge()->parent_loop()->parent_face()->IsDegenerate() &&
-           !start_pvertex()->vertex()->IsIsolated();
+           start_pvertex() != end_pvertex();
   }
 
   // Iterate over p-edges that have this edge as child.

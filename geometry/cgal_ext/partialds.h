@@ -242,6 +242,7 @@ class PartialDS {
   typedef typename Types::EdgeBase::PEdgeRadialCirculator
                                                      PEdgeRadialCirculator;
   typedef typename Types::LoopBase::PEdgeCirculator  PEdgeLoopCirculator;
+  typedef typename Types::ShellBase::PFaceCirculator PFaceOfShellCirculator;
 
   // Euler operators come in pairs, one to create some entity or entities and
   // its counterpart to undo the creation.
@@ -251,7 +252,8 @@ class PartialDS {
   void DeleteEmptyRegion(RegionHandle region);
 
   // Create an isolated vertex within the given region.
-  VertexHandle CreateIsolatedVertex(RegionHandle region);
+  void CreateIsolatedVertex(RegionHandle region,
+                            VertexHandle* new_v, ShellHandle* new_s);
   void DeleteIsolatedVertex(VertexHandle vertex);
 
   // Create a non-manifold wire edge connected to vertex within the given shell.
@@ -327,18 +329,27 @@ class PartialDS {
   RegionHandle AllocateRegion();
   void FreeRegion(RegionHandle r);
 
-  // Make or destroy a wire edge from vertex start_v to vertex end_v in shell.
-  // This function builds the entire entity hierarchy including the p-vertices.
-  // This function can also be used to build the edge around an isolated vertex
-  // by setting start_v == end_v. 
-  EdgeHandle MakeWireEdge(VertexHandle start_v, VertexHandle end_v,
-                          ShellHandle shell);
+  // Make a wire edge from vertex start_v to vertex end_v. This function builds
+  // the entire entity hierarchy up to and including the p-face. It is the
+  // callers responsibility to insert the p-face into a void shell. The
+  // counterpart function DestroyWireEdge removes the p-face from its parent
+  // shell and frees the entire entity hierarchy.
+  void MakeWireEdge(VertexHandle start_v, VertexHandle end_v,
+                    EdgeHandle* new_edge, PFaceHandle* new_pface);
   void DestroyWireEdge(EdgeHandle e);
+
+  // TODO(gwink): Make AddPVertex like AddPFaceToShell. make all 
+  // Add<Entity>To<Entity> and Remove<> consistent.
 
   // Make a new p-vertex and add it to the cloud of p-vertices around v and
   // its counterpart that removes and delete the p-vertex.
   PVertexHandle AddNewPVertex(VertexHandle v);
   void DestroyPVertex(PVertexHandle pv);
+
+  // Add p-face pf to shell and its counterpart that remove the p-face from
+  // its parent shell.
+  void AddPFaceToShell(PFaceHandle pf, ShellHandle shell);
+  void RemovePFaceFromShell(PFaceHandle pf);
 
   // Destroy a vertex and all the its attached p-vertices.
   void DestroyVertexCloud(VertexHandle v);

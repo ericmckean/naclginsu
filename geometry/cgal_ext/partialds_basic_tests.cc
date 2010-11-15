@@ -50,7 +50,8 @@ TEST_F(PartialDSTest, TestCreateIsolatedVertex) {
   ASSERT_TRUE(r != NULL);
 
   PartialDSTest::PEMesh::VertexHandle v;
-  v = mesh_->CreateIsolatedVertex(r);
+  PartialDSTest::PEMesh::ShellHandle s;
+  mesh_->CreateIsolatedVertex(r, &v, &s);
   ASSERT_TRUE(v != NULL);
   ASSERT_TRUE(mesh_->ValidateVertex(v));
   PartialDSTest::PEMesh::PVertexConstHandle pv = v->parent_pvertex();
@@ -72,10 +73,11 @@ TEST_F(PartialDSTest, TestCreateWireEdge) {
   ASSERT_TRUE(r != NULL);
 
   PartialDSTest::PEMesh::VertexHandle v;
-  v = mesh_->CreateIsolatedVertex(r);
+  PartialDSTest::PEMesh::ShellHandle s;
+  mesh_->CreateIsolatedVertex(r, &v, &s);
   ASSERT_TRUE(v != NULL);
   PartialDSTest::PEMesh::EdgeHandle e1;
-  e1 = mesh_->CreateWireEdgeAndVertex(r->outer_shell(), v);
+  e1 = mesh_->CreateWireEdgeAndVertex(s, v);
   ASSERT_TRUE(e1 != NULL);
   ASSERT_TRUE(mesh_->ValidateEdge(e1));
   ASSERT_TRUE(mesh_->ValidateVertex(e1->start_pvertex()->vertex()));
@@ -86,7 +88,7 @@ TEST_F(PartialDSTest, TestCreateWireEdge) {
   ASSERT_TRUE(mesh_->ValidateLoop(loop1));
   
   PartialDSTest::PEMesh::EdgeHandle e2;
-  e2 = mesh_->CreateWireEdgeAndVertex(r->outer_shell(), v);
+  e2 = mesh_->CreateWireEdgeAndVertex(s, v);
   ASSERT_TRUE(e2 != NULL);
   ASSERT_TRUE(mesh_->ValidateEdge(e2));
   ASSERT_TRUE(mesh_->ValidateVertex(e2->start_pvertex()->vertex()));
@@ -144,15 +146,16 @@ TEST_F(PartialDSTest, TestMakeEdgeCycle) {
 
   PartialDSTest::PEMesh::VertexHandle v[3];
   PartialDSTest::PEMesh::EdgeHandle e[3];
+  PartialDSTest::PEMesh::ShellHandle shell;
 
   // Build a triangle of edges.
-  v[0] = mesh_->CreateIsolatedVertex(r);
-  e[0] = mesh_->CreateWireEdgeAndVertex(r->outer_shell(), v[0]);
+  mesh_->CreateIsolatedVertex(r, &v[0], &shell);
+  e[0] = mesh_->CreateWireEdgeAndVertex(shell, v[0]);
   v[1] = e[0]->end_pvertex()->vertex();
-  e[1] = mesh_->CreateWireEdgeAndVertex(r->outer_shell(), v[1]);
+  e[1] = mesh_->CreateWireEdgeAndVertex(shell, v[1]);
   v[2] = e[1]->end_pvertex()->vertex();
   // Deliberately orienting e[2] against e[0] & e[1].
-  e[2] = mesh_->MakeEdgeCycle(r->outer_shell(), v[0], v[2]);
+  e[2] = mesh_->MakeEdgeCycle(shell, v[0], v[2]);
   
   ASSERT_TRUE(mesh_->ValidateEdge(e[0]));
   ASSERT_TRUE(mesh_->ValidateEdge(e[1]));

@@ -36,11 +36,11 @@ void PartialDS<TraitsType>::DeleteEmptyRegion(RegionHandle region) {
 }
 
 template <class TraitsType>
-    typename PartialDS<TraitsType>::VertexHandle
-        PartialDS<TraitsType>::CreateIsolatedVertex(RegionHandle region) {
+void PartialDS<TraitsType>::CreateIsolatedVertex(
+    RegionHandle region, VertexHandle* new_v, ShellHandle* new_s) {
   // Must have a region.
   assert(region != NULL);
-  if (region == NULL) return NULL;
+  if (region == NULL) return;
 
   // We need an outer shell to host the vertex' void shell. If the region
   // doesn't have one, create it.
@@ -51,16 +51,35 @@ template <class TraitsType>
     outer_shell->set_parent_region(region);
   }
 
+  // Create the vertex entity hierarchy.
   VertexHandle vertex = AllocateVertex();
-  EdgeHandle edge = MakeWireEdge(vertex, vertex, outer_shell);
-  return vertex;
+  EdgeHandle edge;
+  PFaceHandle pface;
+  ShellHandle void_shell = AllocateShell();
+  MakeWireEdge(vertex, vertex, &edge, &pface);
+  AddPFaceToShell(pface, void_shell);
+  void_shell->set_parent_region(region);
+  outer_shell->AddVoidShell(void_shell);
+
+  *new_v = vertex;
+  *new_s = void_shell;
 }
 
 template <class TraitsType>
 void PartialDS<TraitsType>::DeleteIsolatedVertex(VertexHandle vertex) {
+  typedef PartialDSUtils<Types> Utils;
+
   assert(vertex->IsIsolated());
   if (vertex->IsIsolated()) {
-    DestroyWireEdge(vertex->parent_pvertex()->parent_edge());
+    EdgeHandle edge = vertex->parent_pvertex()->parent_edge();
+    ShellHandle shell = Utils::GetWireEdgeVoidShell(edge);
+    DestroyWireEdge(edge);
+    // The shell should be empty at this point.
+    assert(shell->IsEmpty());
+    if (shell->IsEmpty()) {
+      shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
+      FreeShell(shell);
+    }
     FreeVertex(vertex);
   }
 }
@@ -69,20 +88,26 @@ template <class TraitsType>
     typename PartialDS<TraitsType>::EdgeHandle
         PartialDS<TraitsType>::CreateWireEdgeAndVertex(ShellHandle shell,
                                                        VertexHandle v1) {
-  // Ensure the vertex lives in the given shell.
-  assert(shell->parent_region()->FindVoidShell(
-         v1->parent_pvertex()->parent_edge()->parent_pedge()->parent_loop()->
-         parent_face()->parent_pface()->parent_shell()));
+  typedef PartialDSUtils<Types> Utils;
+
   if (v1->IsIsolated()) {
-    // The isolated vertex already has an unoriented edge, p-edge, loop, etc.
-    // We need to get rid of them.
-    DestroyWireEdge(v1->parent_pvertex()->parent_edge());
-    assert(v1->GetPVertexCount() == 0);
+    ShellHandle v1_shell = 
+        Utils::GetWireEdgeVoidShell(v1->parent_pvertex()->parent_edge());
+    if (v1_shell == shell) {
+      // We're about the expend the void shell around v1 to encompass the new
+      // wire edge. v1 already has a degenerate wire-edge that we must get
+      // rid of.
+      DestroyWireEdge(v1->parent_pvertex()->parent_edge());
+      assert(v1->GetPVertexCount() == 0);
+    }
   }
 
-  // Create a new wire edge from v1 to v2.
+  // Create a new wire edge from v1 to v2 and add it to the shell.
   VertexHandle v2 = AllocateVertex();
-  EdgeHandle edge = MakeWireEdge(v1, v2, shell);
+  EdgeHandle edge;
+  PFaceHandle pface;
+  MakeWireEdge(v1, v2, &edge, &pface);
+  AddPFaceToShell(pface, shell);
   return edge;
 }
 
@@ -108,14 +133,17 @@ void PartialDS<TraitsType>::DeleteWireEdgeAndVertex(EdgeHandle edge,
   // Get the 'other' vertex.
   VertexHandle keep_v = edge->start_pvertex()->vertex();
   if (keep_v == vertex) keep_v = edge->end_pvertex()->vertex();
-  // We may need the region; grab it before deleting the edge.
-  RegionHandle region = Utils::GetWireEdgeRegion(edge);
+  // Grab the void shell around the edge while we can.
+  ShellHandle shell = Utils::GetWireEdgeVoidShell(edge);
   // Ready to delete the edge and vertex.
   DestroyWireEdge(edge);
   FreeVertex(vertex);
-  // If vertex keep_v is left lonely, we must re-wire it as an isolated vertex.
+  // If vertex keep_v is left bare, we must re-wire it as an isolated vertex.
   if (keep_v->GetPVertexCount() == 0) {
-    MakeWireEdge(keep_v, keep_v, region->outer_shell());
+    EdgeHandle e;
+    PFaceHandle pf;
+    MakeWireEdge(keep_v, keep_v, &e, &pf);
+    AddPFaceToShell(pf, shell);
   }
 }
 
@@ -231,12 +259,17 @@ typename PartialDS<TraitsType>::EdgeHandle
   assert(from_vertex != to_vertex);
   if (from_vertex == to_vertex) return NULL;
   // We simply create a wire edge between the two given vertices.
-  EdgeHandle edge = MakeWireEdge(from_vertex, to_vertex, shell);
+  EdgeHandle edge;
+  PFaceHandle pface;
+  MakeWireEdge(from_vertex, to_vertex, &edge, &pface);
+  AddPFaceToShell(pface, shell);
   return edge;
 }
 
 template <class TraitsType>
 void PartialDS<TraitsType>::DeleteEdgeCycle(EdgeHandle edge) {
+  typedef PartialDSUtils<Types> Utils;
+
   // Can only delete a wire edge.
   assert(edge->IsWireEdge());
   // Get rid of the edge, but keep both end vertices.
@@ -247,7 +280,10 @@ template <class TraitsType>
 typename PartialDS<TraitsType>::VertexHandle
     PartialDS<TraitsType>::SplitEdgeCreateVertex(EdgeHandle edge) {
   typedef PartialDSUtils<Types> Utils;
-  
+
+  // TODO(gwink): Maybe I should allow splitting wire edges. It's not stricktly
+  // necessary; but it'd be nice for regularity.
+
   // Can't split wire edges. You could just use CreateWireEdgeInShell to attach
   // a wire edge to an existing wire edge's vertex instead.
   assert(!edge->IsWireEdge());
@@ -465,45 +501,41 @@ void PartialDS<TraitsType>::FreeRegion(RegionHandle r) {
 }
 
 template <class TraitsType>
-    typename PartialDS<TraitsType>::EdgeHandle
-        PartialDS<TraitsType>::MakeWireEdge(
-            VertexHandle start_v, VertexHandle end_v, ShellHandle shell) {
+void PartialDS<TraitsType>::MakeWireEdge(
+    VertexHandle start_v, VertexHandle end_v,
+    EdgeHandle* new_edge, PFaceHandle* new_pface) {
+
   // Create the various entities a wire edge is made of. 
-  EdgeHandle new_e = AllocateEdge();
-  PEdgeHandle new_pe = AllocatePEdge();
+  EdgeHandle e = AllocateEdge();
+  PEdgeHandle pe = AllocatePEdge();
   LoopHandle loop = AllocateLoop();
   FaceHandle face = AllocateFace();
   PFaceHandle pface = AllocatePFace();
-  ShellHandle void_shell = AllocateShell();
   PVertexHandle start_pv = AddNewPVertex(start_v);
   PVertexHandle end_pv = (start_v == end_v) ? start_pv : AddNewPVertex(end_v);
   // Connect the edge to the p-vertices and all the entities in the hierarchy.
   // Note that if start_pv == end_pv we're creating an unoriented edge.
-  start_pv->set_parent_edge(new_e);
-  end_pv->set_parent_edge(new_e);
-  new_e->set_parent_pedge(new_pe);
-  new_e->set_start_pvertex(start_pv);
-  new_e->set_end_pvertex(end_pv);
-  new_pe->set_orientation((start_pv == end_pv)? Entity::kPEdgeUnoriented:
-                                                Entity::kPEdgeForward);
-  new_pe->set_parent_loop(loop);
-  new_pe->set_child_edge(new_e);
-  new_pe->set_start_pvertex(start_pv);
-  new_pe->set_radial_previous(new_pe);
-  new_pe->set_radial_next(new_pe);
+  start_pv->set_parent_edge(e);
+  end_pv->set_parent_edge(e);
+  e->set_parent_pedge(pe);
+  e->set_start_pvertex(start_pv);
+  e->set_end_pvertex(end_pv);
+  pe->set_orientation((start_pv == end_pv)? Entity::kPEdgeUnoriented:
+                                            Entity::kPEdgeForward);
+  pe->set_parent_loop(loop);
+  pe->set_child_edge(e);
+  pe->set_start_pvertex(start_pv);
+  pe->set_radial_previous(pe);
+  pe->set_radial_next(pe);
   loop->set_parent_face(face);
-  loop->set_boundary_pedge(new_pe);
+  loop->set_boundary_pedge(pe);
   face->set_parent_pface(pface);
   face->set_outer_loop(loop);
   pface->set_orientation(Entity::kPFaceUnoriented);
-  pface->set_parent_shell(void_shell);
   pface->set_child_face(face);
-  pface->set_next_pface(pface);
-  void_shell->set_parent_region(shell->parent_region());
-  void_shell->set_pface(pface);
-  shell->AddVoidShell(void_shell);
 
-  return new_e;
+  *new_edge = e;
+  *new_pface = pface;
 }
 
 template <class TraitsType>
@@ -518,13 +550,11 @@ void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
   LoopHandle loop = pe->parent_loop();
   FaceHandle face = loop->parent_face();
   PFaceHandle pface = face->parent_pface();
-  ShellHandle shell = pface->parent_shell();
-  // Remove the edge's void shell from the region.
-  shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
+  // Remove pface from shell, but let caller deal with the remaining shell.
+  RemovePFaceFromShell(pface);
   // Destroy the entities.
   if (start_pv != end_pv) DestroyPVertex(end_pv);
   DestroyPVertex(start_pv);
-  FreeShell(shell);
   FreePFace(pface);
   FreeFace(face);
   FreeLoop(loop);
@@ -532,7 +562,8 @@ void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
   FreeEdge(e);
 }
 
-template <class TraitsType> typename PartialDS<TraitsType>::PVertexHandle
+template <class TraitsType>
+typename PartialDS<TraitsType>::PVertexHandle
     PartialDS<TraitsType>::AddNewPVertex(VertexHandle v) {
   PVertexHandle pv = v->parent_pvertex();
   PVertexHandle new_pv = AllocatePVertex();
@@ -581,6 +612,50 @@ void PartialDS<TraitsType>::DestroyPVertex(PVertexHandle pv) {
     // No child vertex; caller could have called FreePVertex instead. Oh well.
     FreePVertex(pv);
   }
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::AddPFaceToShell(PFaceHandle pf, ShellHandle shell) {
+  // Add pf to shell's circular list of p-faces.
+  if (shell->pface() == NULL) {
+    shell->set_pface(pf);
+    pf->set_next_pface(pf);
+  } else {
+    pf->set_next_pface(shell->pface()->next_pface());
+    shell->pface()->set_next_pface(pf);
+  }
+  pf->set_parent_shell(shell);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::RemovePFaceFromShell(PFaceHandle pf) {
+  // Get the parent shell from the pface.
+  ShellHandle shell = pf->parent_shell();
+  assert(shell != NULL);
+  if (shell == NULL) return;
+
+  // Check special case: the shell has only one pface.
+  if (pf->next_pface() == pf) {
+    assert(shell->pface() == pf);
+    shell->set_pface(NULL);
+  } else {
+    // Remove pf from the circular list of pfaces.
+    PFaceOfShellCirculator start_pface = shell->pface_begin();
+    PFaceOfShellCirculator current_pface = start_pface;
+    do {
+      if (current_pface->next_pface() == pf) {
+        current_pface->set_next_pface(pf->next_pface());
+        break;
+      }
+      ++current_pface;
+    } while (current_pface != start_pface);
+    // Ensure the shell points to a remaining pface.
+    if (shell->pface() == pf) {
+      shell->set_pface(pf->next_pface());
+    }
+  }
+  pf->set_next_pface(NULL);
+  pf->set_parent_shell(NULL);
 }
 
 template <class TraitsType>
