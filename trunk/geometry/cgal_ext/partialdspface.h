@@ -44,6 +44,7 @@ class PartialDSPFace : public PartialDSEntity<TypeRefs> {
   ShellHandle parent_shell() { return parent_shell_; }
   FaceConstHandle child_face() const { return child_face_; }
   PFaceConstHandle next_pface() const { return next_pface_; }
+  PFaceHandle next_pface() { return next_pface_; }
   PFaceConstHandle mate_pface() const { return mate_pface_; }
 
  protected:

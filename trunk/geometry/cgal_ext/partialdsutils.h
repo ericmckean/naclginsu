@@ -17,18 +17,20 @@ template <class Types>
 class PartialDSUtils {
  public:
   // Global PartialDS types.
-  typedef typename Types::VertexHandle    VertexHandle;
-  typedef typename Types::PVertexHandle   PVertexHandle;
-  typedef typename Types::EdgeConstHandle EdgeConstHandle;
-  typedef typename Types::EdgeHandle      EdgeHandle;
-  typedef typename Types::PEdgeHandle     PEdgeHandle;
-  typedef typename Types::ShellHandle     ShellHandle;
-  typedef typename Types::RegionHandle    RegionHandle;
+  typedef typename Types::VertexHandle     VertexHandle;
+  typedef typename Types::PVertexHandle    PVertexHandle;
+  typedef typename Types::EdgeConstHandle  EdgeConstHandle;
+  typedef typename Types::EdgeHandle       EdgeHandle;
+  typedef typename Types::PFaceConstHandle PFaceConstHandle;
+  typedef typename Types::PFaceHandle      PFaceHandle;
+  typedef typename Types::PEdgeHandle      PEdgeHandle;
+  typedef typename Types::ShellHandle      ShellHandle;
+  typedef typename Types::RegionHandle     RegionHandle;
   
   typedef typename Types::EdgeBase::PEdgeRadialCirculator
-                                          PEdgeRadialCirculator;
+                                           PEdgeRadialCirculator;
   typedef typename Types::VertexBase::PVertexCirculator
-                                          PVertexOfVertexCirculator;
+                                           PVertexOfVertexCirculator;
 
   // A hash-set for EdgeHandle; used for traversals.
   struct HashEdgeHandle {
@@ -104,15 +106,21 @@ class PartialDSUtils {
     return pe;
   }
 
+  // GetWireEdgeVoidShell:
+  // Get the void shell of a wire edge.
+  static ShellHandle GetWireEdgeVoidShell(EdgeHandle wire_edge) {
+    // Check that the p-face has no mate; otherwise there's no unique shell.
+    PFaceHandle pface = wire_edge->parent_pedge()->parent_loop()->
+                        parent_face()->parent_pface();
+    assert(pface->mate_pface() == NULL);
+    return pface->parent_shell();
+  }
+
   // GetWireEdgeRegion:
   // Get the outer region of a wire edge. (Other edges may be adjacent to two
   // regions.
   static RegionHandle GetWireEdgeRegion(EdgeHandle wire_edge) {
-    if (wire_edge->IsWireEdge()) {
-      return wire_edge->parent_pedge()->parent_loop()->parent_face()->
-             parent_pface()->parent_shell()->parent_region();
-    }
-    return RegionHandle();
+    return GetWireEdgeVoidShell(wire_edge)->parent_region();
   }
 
   // GetIncidentEdgeCount:
