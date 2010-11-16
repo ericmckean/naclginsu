@@ -58,8 +58,7 @@ void PartialDS<TraitsType>::CreateIsolatedVertex(
   ShellHandle void_shell = AllocateShell();
   MakeWireEdge(vertex, vertex, &edge, &pface);
   AddPFaceToShell(pface, void_shell);
-  void_shell->set_parent_region(region);
-  outer_shell->AddVoidShell(void_shell);
+  AddVoidShellToOuterShell(void_shell, outer_shell);
 
   *new_v = vertex;
   *new_s = void_shell;
@@ -77,7 +76,7 @@ void PartialDS<TraitsType>::DeleteIsolatedVertex(VertexHandle vertex) {
     // The shell should be empty at this point.
     assert(shell->IsEmpty());
     if (shell->IsEmpty()) {
-      shell->parent_region()->outer_shell()->RemoveVoidShell(shell);
+      RemoveVoidShellFromOuterShell(shell);
       FreeShell(shell);
     }
     FreeVertex(vertex);
@@ -170,12 +169,13 @@ template <class TraitsType>
   PVertexHandle pvertex = next_pedge->start_pvertex();
   PEdgeHandle prev_pedge = next_pedge->loop_previous();
   VertexHandle new_vertex = AllocateVertex();
-  PVertexHandle new_pvertex = AddNewPVertex(new_vertex);
+  PVertexHandle new_pvertex = AllocatePVertex();
   EdgeHandle new_edge = AllocateEdge();
   PEdgeHandle new_pe_f = AllocatePEdge();
   PEdgeHandle new_pe_r = AllocatePEdge();
 
   // Connect the entities, re-routing the loop through the new edge.
+  AddPVertexToVertex(new_pvertex, new_vertex);
   new_pvertex->set_parent_edge(new_edge);
   new_edge->set_parent_pedge(new_pe_f);
   new_edge->set_start_pvertex(pvertex);
@@ -511,10 +511,18 @@ void PartialDS<TraitsType>::MakeWireEdge(
   LoopHandle loop = AllocateLoop();
   FaceHandle face = AllocateFace();
   PFaceHandle pface = AllocatePFace();
-  PVertexHandle start_pv = AddNewPVertex(start_v);
-  PVertexHandle end_pv = (start_v == end_v) ? start_pv : AddNewPVertex(end_v);
+  PVertexHandle start_pv = AllocatePVertex();
+  PVertexHandle end_pv;
+  // If creating a full wire-edge, we need a separate end p-vertex.
+  if (start_v == end_v) {
+    end_pv = start_pv;
+  } else {
+    end_pv = AllocatePVertex();
+    AddPVertexToVertex(end_pv, end_v);
+  }
   // Connect the edge to the p-vertices and all the entities in the hierarchy.
   // Note that if start_pv == end_pv we're creating an unoriented edge.
+  AddPVertexToVertex(start_pv, start_v);
   start_pv->set_parent_edge(e);
   end_pv->set_parent_edge(e);
   e->set_parent_pedge(pe);
@@ -553,8 +561,12 @@ void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
   // Remove pface from shell, but let caller deal with the remaining shell.
   RemovePFaceFromShell(pface);
   // Destroy the entities.
-  if (start_pv != end_pv) DestroyPVertex(end_pv);
-  DestroyPVertex(start_pv);
+  if (start_pv != end_pv) {
+    RemovePVertexFromVertex(end_pv);
+    FreePVertex(end_pv);
+  }
+  RemovePVertexFromVertex(start_pv);
+  FreePVertex(start_pv);
   FreePFace(pface);
   FreeFace(face);
   FreeLoop(loop);
@@ -563,32 +575,29 @@ void PartialDS<TraitsType>::DestroyWireEdge(EdgeHandle e) {
 }
 
 template <class TraitsType>
-typename PartialDS<TraitsType>::PVertexHandle
-    PartialDS<TraitsType>::AddNewPVertex(VertexHandle v) {
-  PVertexHandle pv = v->parent_pvertex();
-  PVertexHandle new_pv = AllocatePVertex();
-  new_pv->set_vertex(v);
-  if (pv == NULL) {
+void PartialDS<TraitsType>::AddPVertexToVertex(PVertexHandle pv,
+                                               VertexHandle v) {
+  PVertexHandle pv_list_head = v->parent_pvertex();
+  pv->set_vertex(v);
+  if (pv_list_head == NULL) {
     // This is the vertex' first p-vertex.
-    v->set_parent_pvertex(new_pv);
-    new_pv->set_next_pvertex(new_pv);
+    v->set_parent_pvertex(pv);
+    pv->set_next_pvertex(pv);
   } else {
     // Add the new p-vertex to the existing p-vertex cloud.
-    new_pv->set_next_pvertex(pv->next_pvertex());
-    pv->set_next_pvertex(new_pv);
+    pv->set_next_pvertex(pv_list_head->next_pvertex());
+    pv_list_head->set_next_pvertex(pv);
   }
-  return new_pv;
 }
 
 template <class TraitsType>
-void PartialDS<TraitsType>::DestroyPVertex(PVertexHandle pv) {
+void PartialDS<TraitsType>::RemovePVertexFromVertex(PVertexHandle pv) {
   VertexHandle v = pv->vertex();
   if (v != NULL) {
     if (pv->next_pvertex() == pv) {
       // Only one p-vertex.
       assert(v->parent_pvertex() == pv);
       v->set_parent_pvertex(NULL);
-      FreePVertex(pv);
     } else {
       // Remove pv from the cloud of p-vertices around v.
       PVertexOfVertexCirculator start_pv = v->pvertex_begin();
@@ -600,7 +609,6 @@ void PartialDS<TraitsType>::DestroyPVertex(PVertexHandle pv) {
           if (v->parent_pvertex() == pv) {
             v->set_parent_pvertex(current_pv);
           }
-          FreePVertex(pv);
           break;
         }
 
@@ -609,8 +617,8 @@ void PartialDS<TraitsType>::DestroyPVertex(PVertexHandle pv) {
       } while (current_pv != start_pv);
     }
   } else {
-    // No child vertex; caller could have called FreePVertex instead. Oh well.
-    FreePVertex(pv);
+    // No child vertex. This looks like bad karma.
+    assert(!"p-vertex does not have a child vertex.");
   }
 }
 
@@ -656,6 +664,34 @@ void PartialDS<TraitsType>::RemovePFaceFromShell(PFaceHandle pf) {
   }
   pf->set_next_pface(NULL);
   pf->set_parent_shell(NULL);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::AddVoidShellToOuterShell(ShellHandle void_shell,
+                                                     ShellHandle shell) {
+  assert(!shell->IsVoidShell());
+  void_shell->set_parent_region(shell->parent_region());
+  void_shell->set_next_void_shell(shell->next_void_shell());
+  shell->set_next_void_shell(void_shell);
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::RemoveVoidShellFromOuterShell(
+    ShellHandle void_shell) {
+  assert(void_shell->IsVoidShell());
+  if (!void_shell->IsVoidShell()) return;
+
+  // Start at the outer shell and look for a node that points to void_shell
+  // as its next link. That's the node we need to patch around void_shell.
+  ShellHandle shell = void_shell->parent_region()->outer_shell();
+  for (; shell != NULL; shell = shell->next_void_shell()) {
+    if (shell->next_void_shell() == void_shell) {
+      shell->set_next_void_shell(void_shell->next_void_shell());
+      void_shell->set_next_void_shell(NULL);
+      void_shell->set_parent_region(NULL);
+      break;
+    }
+  }
 }
 
 template <class TraitsType>
