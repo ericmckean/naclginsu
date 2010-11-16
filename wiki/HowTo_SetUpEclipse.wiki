@@ -30,7 +30,7 @@ export NACL_TOOLCHAIN_ROOT=/usr/local/me/native_client_sdk/toolchain
 export GINSU_ROOT=/usr/local/me/ginsu/trunk
 }}}
   </li>
-  <li>NaClPorts packages installed by running `scripts/setup_naclports_packages.py` in Ginsu.
+  <li>[http://code.google.com/p/naclports/ NaClPorts] packages installed by running `scripts/setup_naclports_packages.py` in Ginsu.
      <blockquote>*Note:* You might see messages such as `Get file gtest-1.5.0/src/gtest-death-test.cc from Perforce with lock? [y]`.  Answer *n* to each of these.</blockquote>
   </li>
 </ul>
