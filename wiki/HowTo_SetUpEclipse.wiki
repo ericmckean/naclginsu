@@ -21,7 +21,7 @@ After following the steps below, you should have an Eclipse project that will bu
   <li>The shell environment variable `NACL_SDK_BASE` set to the absolute path of the toolchain within the NaClSDK.  For example:
 {{{
 export NACL_SDK_BASE=/usr/local/me/native_client_sdk/toolchain/linux_x86
-export NACL_TOOLCHAIN_ROOT=/usr/local/me/native_client_sdk/toolchain
+export NACL_TOOLCHAIN_ROOT=$NACL_SDK_BASE
 }}}
   </li>
   <li>Local copy of the Ginsu repository.</li>
