@@ -40,6 +40,7 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
 
   // Accessors.
   ShellConstHandle next_void_shell() const { return next_void_shell_; }
+  ShellHandle next_void_shell() { return next_void_shell_; }
   PFaceConstHandle pface() const { return pface_; }
   PFaceHandle pface() { return pface_; }
   RegionConstHandle parent_region() const { return parent_region_; }
@@ -63,6 +64,12 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
         std::bind2nd(std::equal_to<PFaceConstHandle>(), pf)) != NULL;
   }
 
+  // Return true iff the shell is a void shell.
+  bool IsVoidShell() const {
+    // A shell is void if it's not the parent region's outershell.
+    return &(*parent_region()->outer_shell()) != this;
+  }
+
  protected:
   friend class PartialDS<typename PartialDSTypes::Traits>;
 
@@ -71,26 +78,6 @@ class PartialDSShell : public PartialDSEntity<TypeRefs> {
   void set_pface(PFaceHandle pface) { pface_ = pface; }
   void set_parent_region(RegionHandle region) { parent_region_ = region; }
 
-  // TODO(gwink): Move these two functions to PartialDS, next to AddPFaceToShell
-  // etc.
-
-  // Add a shell to the list of void shells.
-  void AddVoidShell(ShellHandle void_shell) {
-    void_shell->set_next_void_shell(next_void_shell_);
-    next_void_shell_ = void_shell;
-  }
-
-  // Remove void_shell from the list of shells headed at this node.
-  // Note that void_shell can not be the head.
-  void RemoveVoidShell(ShellHandle void_shell) {
-    for (Self* s = this; s != NULL; s = &*(s->next_void_shell_)) {
-      if (s->next_void_shell_ == void_shell) {
-        s->next_void_shell_ = void_shell->next_void_shell_;
-        break;
-      }
-    }
-  }
-  
  private:
   RegionHandle parent_region_;  // Parent region.
   ShellHandle next_void_shell_;  // Next void shell.

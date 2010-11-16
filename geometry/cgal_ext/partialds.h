@@ -338,18 +338,18 @@ class PartialDS {
                     EdgeHandle* new_edge, PFaceHandle* new_pface);
   void DestroyWireEdge(EdgeHandle e);
 
-  // TODO(gwink): Make AddPVertex like AddPFaceToShell. make all 
-  // Add<Entity>To<Entity> and Remove<> consistent.
-
-  // Make a new p-vertex and add it to the cloud of p-vertices around v and
-  // its counterpart that removes and delete the p-vertex.
-  PVertexHandle AddNewPVertex(VertexHandle v);
-  void DestroyPVertex(PVertexHandle pv);
-
-  // Add p-face pf to shell and its counterpart that remove the p-face from
-  // its parent shell.
+  // Add<Entity>To<OtherEntity> and Remove<Entity>From<OtherEntity>
+  // These functions add some entity to a related, usually parent or child
+  // entity, such as AddPVertexToVertex. Each Add function has a Remove
+  // counterpart that undoes the operation. In each case parent/sibling/child
+  // pointers are updated to reflect the relationship. Note that it is the
+  // caller's responsibility to allocate or free entities.
+  void AddPVertexToVertex(PVertexHandle pv, VertexHandle v);
+  void RemovePVertexFromVertex(PVertexHandle pv);
   void AddPFaceToShell(PFaceHandle pf, ShellHandle shell);
   void RemovePFaceFromShell(PFaceHandle pf);
+  void AddVoidShellToOuterShell(ShellHandle void_shell, ShellHandle shell);
+  void RemoveVoidShellFromOuterShell(ShellHandle void_shell);
 
   // Destroy a vertex and all the its attached p-vertices.
   void DestroyVertexCloud(VertexHandle v);
