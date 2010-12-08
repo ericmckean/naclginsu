@@ -350,6 +350,13 @@ class PartialDS {
   void RemovePFaceFromShell(PFaceHandle pf);
   void AddVoidShellToOuterShell(ShellHandle void_shell, ShellHandle shell);
   void RemoveVoidShellFromOuterShell(ShellHandle void_shell);
+  // Add pe to the circular list of radial p-edges about edge. If after_pe
+  // is non-null, pe is inserted right after after_pe in the list (i.e. becomes
+  // after_pe's next radial p-edge). P-edge after_pe can be NULL for a new edge
+  // or if you don't care where pe is inserted. Fails and does nothing if
+  // after_pe is not a p-edge about edge.
+  void AddPEdgeToEdge(PEdgeHandle pe, EdgeHandle edge, PEdgeHandle after_pe);
+  void RemovePEdgeFromEdge(PEdgeHandle pe);
 
   // Destroy a vertex and all the its attached p-vertices.
   void DestroyVertexCloud(VertexHandle v);

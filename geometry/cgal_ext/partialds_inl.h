@@ -695,6 +695,54 @@ void PartialDS<TraitsType>::RemoveVoidShellFromOuterShell(
 }
 
 template <class TraitsType>
+void PartialDS<TraitsType>::AddPEdgeToEdge(
+    PEdgeHandle pe, EdgeHandle edge, PEdgeHandle after_pe) {
+  // If an after_pe p-edge is given, let's make sure it's valid. If none
+  // is given, we'll use the edge's parent p-edge.
+  if (after_pe != NULL) {
+    assert(after_pe->child_edge() == edge);
+    if (after_pe->child_edge() != edge) return;
+  } else if (edge->parent_pedge() != NULL) {
+    after_pe = edge->parent_pedge();
+  }
+
+  pe->set_child_edge(edge);
+  if (after_pe == NULL) {
+    // First p-edge; create the circular list of p-edges.
+    edge->set_parent_pedge(pe);
+    pe->set_radial_next(pe);
+    pe->set_radial_previous(pe);
+  } else {
+    // Add pe to the circular list, as after_pe's next radial p-edge.
+    pe->set_radial_next(after_pe->radial_next());
+    pe->set_radial_previous(after_pe);
+    after_pe->radial_next()->set_radial_previous(pe);
+    after_pe->set_radial_next(pe);
+  }
+}
+
+template <class TraitsType>
+void PartialDS<TraitsType>::RemovePEdgeFromEdge(PEdgeHandle pe) {
+  EdgeHandle edge = pe->child_edge();
+  assert(edge != NULL);
+  if (pe->radial_next() == pe) {
+    // Removing the sole radial p-edge.
+    edge->set_parent_pedge(NULL);
+  } else {
+    // Make sure edge doesn't point to pe.
+    if (edge->parent_pedge() == pe) {
+      edge->set_parent_pedge(pe->radial_next());
+    }
+    // Patch circular list around pe.
+    pe->radial_previous()->set_radial_next(pe->radial_next());
+    pe->radial_next()->set_radial_previous(pe->radial_previous());
+  }
+  pe->set_child_edge(NULL);
+  pe->set_radial_next(NULL);
+  pe->set_radial_previous(NULL);
+}
+
+template <class TraitsType>
 void PartialDS<TraitsType>::DestroyVertexCloud(VertexHandle v) {
   PVertexOfVertexCirculator start_pv = v->pvertex_begin();
   PVertexOfVertexCirculator del_pv = start_pv;
