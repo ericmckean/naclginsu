@@ -4,6 +4,10 @@
 
 #include "view/view.h"
 
+#include <stdio.h>
+
+#include "c_salt/notification_center.h"
+#include "c_salt/opengl_context.h"
 #include "c_salt/scripting_bridge.h"
 #include "osg/Matrix"
 #include "osg/Vec3"
@@ -13,13 +17,15 @@
 namespace ginsu {
 namespace view {
 
-View::View(model::Model* model) : model_(model) {
+View::View(const c_salt::Instance& instance, model::Model* model)
+    : OpenGLView(instance), model_(model) {
 }
 
 View::~View() {
 }
 
-void View::InitGL() {
+void View::InitializeOpenGL(const c_salt::OpenGLContext& context) {
+printf("View::InitializeOpenGL\n");
   assert(model_ != NULL);
 
   scene_.reset(new Scene(model_));
@@ -39,23 +45,29 @@ void View::InitGL() {
   scene_view_->SetLookAt(eye, target, up);
 }
 
-void View::ReleaseGL() {
+void View::ReleaseOpenGL(const c_salt::OpenGLContext& context) {
+printf("View::ReleaseOpenGL\n");
   scene_view_.reset();
   scene_.reset();
 }
 
-void View::SetWindowSize(int width, int height) {
-  scene_view_->SetViewport(0, 0, width, height);
-
+void View::ResizeViewport() {
+printf("View::ResizeViewport\n");
+  opengl_context()->MakeContextCurrent();
+  int32_t view_width = width();
+  int32_t view_height = height();
+  scene_view_->SetViewport(0, 0, view_width, view_height);
   float fovy = 30.0f;
-  float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
+  float aspect_ratio =
+      static_cast<float>(view_width) / static_cast<float>(view_height);
   float z_near = 1.0f;
   float z_far = 1000.0f;
   scene_view_->SetProjectionMatrix(osg::Matrix::perspective(
       fovy, aspect_ratio, z_near, z_far));
 }
 
-void View::Draw() {
+void View::RenderOpenGL(const c_salt::OpenGLContext& context) {
+printf("View::RenderOpenGL\n");
   scene_->Update();
   scene_view_->Draw();
 }

@@ -4,7 +4,6 @@
 
 #include "ginsu/ginsu.h"
 
-#include <string.h>
 #include <sys/time.h>
 
 #include <cassert>
@@ -15,17 +14,10 @@
 #include "model/model.h"
 #include "view/view.h"
 
-NPDevice* NPN_AcquireDevice(NPP instance, NPDeviceID device);
-
 namespace {
-const int32_t kCommandBufferSize = 1024 * 1024;
-
 // The minimum time in between frames.  Measured in milliseconds.
 const double kFrameElapsedTime = 1.0/15.0 * 1000.0;
 const uint32_t kQuaternionElementCount = 4;
-
-// Keys for properties that are exposed ot the browser.
-const char* kViewKey = "view";
 }  // namespace
 
 // Helper function to return the current time in milliseconds.  If there is an
@@ -41,31 +33,20 @@ static double TimeNow() {
 namespace ginsu {
 
 Ginsu::Ginsu(const NPP& npp_instance)
-    : c_salt::Instance(npp_instance),
-      device3d_(NULL) {
-  memset(&context3d_, 0, sizeof(context3d_));
+    : c_salt::Instance(npp_instance) {
   model_.reset(new model::Model);
   model_->InitDemo();
-  view_.reset(new view::View(model_.get()));
+  view_.reset(new view::View(*this, model_.get()));
   this->CreateScriptingBridgeForObject(view_);
   last_update_ = TimeNow();
 }
 
 Ginsu::~Ginsu() {
-  pglMakeCurrent(pgl_context_);
-  view_->ReleaseGL();
-  pglMakeCurrent(PGL_NO_CONTEXT);
-  DestroyContext();
 }
 
 bool Ginsu::InstanceDidLoad(int width, int height) {
-  device3d_ = NPN_AcquireDevice(npp_instance(), NPPepper3DDevice);
-  assert(device3d_);
-  if (!pgl_context_) {
-    CreateContext();
-    // Schedule first call to Tick.
-    NPN_PluginThreadAsyncCall(npp_instance(), TickCallback, this);
-  }
+  // Schedule first call to Tick.
+  NPN_PluginThreadAsyncCall(npp_instance(), TickCallback, this);
   return true;
 }
 
@@ -74,12 +55,7 @@ void Ginsu::InitializeMethods(c_salt::ScriptingBridge* bridge) {
 }
 
 void Ginsu::WindowDidChangeSize(int width, int height) {
-  view_->SetWindowSize(width, height);
-}
-
-void Ginsu::RepaintCallback(NPP npp, NPDeviceContext3D* /* context */) {
-  Ginsu* ginsu = static_cast<Ginsu*>(npp->pdata);
-  ginsu->Paint();
+  view_->SetSize(width, height);
 }
 
 void Ginsu::TickCallback(void* data) {
@@ -98,42 +74,7 @@ void Ginsu::Tick() {
 }
 
 void Ginsu::Paint() {
-  if (!pglMakeCurrent(pgl_context_) && pglGetError() == PGL_CONTEXT_LOST) {
-    DestroyContext();
-    CreateContext();
-    pglMakeCurrent(pgl_context_);
-  }
-
-  view_->Draw();
-  pglSwapBuffers();
-  pglMakeCurrent(PGL_NO_CONTEXT);
-}
-
-void Ginsu::CreateContext() {
-  assert(pgl_context_ == PGL_NO_CONTEXT);
-
-  // Initialize a 3D context.
-  NPDeviceContext3DConfig config;
-  config.commandBufferSize = kCommandBufferSize;
-  device3d_->initializeContext(npp_instance(), &config, &context3d_);
-  context3d_.repaintCallback = RepaintCallback;
-
-  // Create a PGL context.
-  pgl_context_ = pglCreateContext(npp_instance(), device3d_, &context3d_);
-
-  // Initialize GL resources.
-  pglMakeCurrent(pgl_context_);
-  view_->InitGL();
-  pglMakeCurrent(PGL_NO_CONTEXT);
-}
-
-void Ginsu::DestroyContext() {
-  assert(pgl_context_ != PGL_NO_CONTEXT);
-
-  pglDestroyContext(pgl_context_);
-  pgl_context_ = PGL_NO_CONTEXT;
-
-  device3d_->destroyContext(npp_instance(), &context3d_);
+  view_->SetNeedsRedraw(true);
 }
 
 bool Ginsu::UpdateAnimation() {
