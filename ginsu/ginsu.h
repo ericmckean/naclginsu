@@ -8,8 +8,6 @@
 #include <time.h>
 #include <nacl/nacl_npapi.h>
 #include <nacl/npruntime.h>
-#include <nacl/npapi_extensions.h>
-#include <pgl/pgl.h>
 
 #include <map>
 #include <string>
@@ -44,20 +42,12 @@ class Ginsu : public c_salt::Instance {
 
  private:
   Ginsu();  // Not implemented, do not use.
-  static void RepaintCallback(NPP npp, NPDeviceContext3D* context);
   static void TickCallback(void* data);
   void Paint();
   void Tick();
 
   // Returns true if anything was updated.
   bool UpdateAnimation();
-
-  // TODO(dspringer): Move this into a c_salt View3D class.
-  void CreateContext();
-  void DestroyContext();
-  NPDevice* device3d_;
-  NPDeviceContext3D context3d_;
-  PGLContext pgl_context_;
 
   boost::scoped_ptr<model::Model> model_;
   boost::shared_ptr<view::View> view_;

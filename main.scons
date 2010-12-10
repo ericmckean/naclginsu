@@ -10,17 +10,34 @@
 import os
 import sys
 
-if os.getenv('NACL_TOOLCHAIN_ROOT') is None:
-  sys.stderr.write('NACL_TOOLCHAIN_ROOT must be defined as the root directory'
-                   ' of NaCl toolchain.\n')
+if os.getenv('NACL_SDK_ROOT') is None:
+  sys.stderr.write('NACL_SDK_ROOT must be defined as the root directory'
+                   ' of NaCl SDK.\n')
   sys.exit(1)
 
-# Check to make sure the necessary naclports packages are installed.
-naclports_include = os.path.join(os.getenv('NACL_TOOLCHAIN_ROOT'),
+# Build a string representing the NaCl toolchain root.  This root points at the
+# platform-specific directory.
+def GetToolchainRoot(sdk_root=None):
+  if sdk_root is None:
+    sdk_root = os.getenv('NACL_SDK_ROOT', '')
+  if sys.platform == 'cygwin' or sys.platform.startswith('win'):
+    variant = 'win_x86'
+  elif sys.platform in ['darwin', 'macos']:
+    variant = 'mac_x86'
+  elif sys.platform in ['linux', 'linux2']:
+    variant = 'linux_x86'
+  else:
+    sys.stderr.write('Unrecognized build platform: %s\n' % sys.platform)
+    return ''
+
+  return os.path.join(sdk_root, 'toolchain', variant)
+
+
+# Check to make sure the necessary packages are installed.
+naclports_include = os.path.join(GetToolchainRoot(os.getenv('NACL_SDK_ROOT')),
                                  'nacl', 'usr', 'include')
-packages = ['boost', 'osg', 'gmock', 'gtest']
-for p in packages:
-  if not os.path.exists(os.path.join(naclports_include, p)):
+for package in ['boost', 'gmock', 'gtest']:
+  if not os.path.exists(os.path.join(naclports_include, package)):
     sys.stderr.write('Your NaCl toolchain does not have the necessary packages\n'
                      'or the packages are not current.\n'
                      'Run scripts/setup_naclports_packages.py\n')
@@ -45,7 +62,7 @@ base_env = Environment(
     'BOOST_ALL_NO_LIB',
     'CGAL_NO_AUTOLINK_CGAL'
   ],
-  NACL_TOOLCHAIN_ROOT = os.getenv('NACL_TOOLCHAIN_ROOT')
+  NACL_TOOLCHAIN_ROOT = GetToolchainRoot(os.getenv('NACL_SDK_ROOT')),
 )
 
 #-----------------------------------------------------------------------------
@@ -58,7 +75,8 @@ nacl_env = base_env.Clone(
             'google_nacl_npruntime',
             'pthread',
             'srpc'],
-    NATIVE_CLIENT_SDK_DEFAULT_MODE='custom:' + os.getenv('NACL_TOOLCHAIN_ROOT'),
+    NATIVE_CLIENT_SDK_DEFAULT_MODE = 'custom:' +
+                                     base_env['NACL_TOOLCHAIN_ROOT'],
     CFLAGS = ['-m32'],
 )
 

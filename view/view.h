@@ -11,6 +11,7 @@
 #include "boost/scoped_ptr.hpp"
 #include "c_salt/scriptable_native_object.h"
 #include "c_salt/scripting_bridge_ptrs.h"
+#include "view/opengl_view.h"
 
 namespace ginsu {
 
@@ -23,15 +24,17 @@ namespace view {
 class Scene;
 class SceneView;
 
-class View : public c_salt::ScriptableNativeObject {
+class View : public ginsu::view::OpenGLView,
+             public c_salt::ScriptableNativeObject {
  public:
-  explicit View(model::Model* model);
+  View(const c_salt::Instance& instance, model::Model* model);
   ~View();
 
-  void InitGL();
-  void ReleaseGL();
-  void SetWindowSize(int width, int height);
-  void Draw();
+  // OpenGLView methods.
+  virtual void InitializeOpenGL(const c_salt::OpenGLContext& context);
+  virtual void ReleaseOpenGL(const c_salt::OpenGLContext& context);
+  virtual void RenderOpenGL(const c_salt::OpenGLContext& context);
+  virtual void ResizeViewport();
 
   // Methods to implement ScriptableNativeObject
   virtual void InitializeMethods(c_salt::ScriptingBridge* bridge);
